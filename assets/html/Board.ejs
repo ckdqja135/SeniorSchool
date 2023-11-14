@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!-- <link rel="icon" href="../../../../favicon.ico"> -->
+
+    <title>교회 오빠</title>
+    <!-- Bootstrap js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.3.js"></script>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="../css/jumbotron.css" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    
+    <!-- Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
+
+    <!-- Kakao Map -->
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=80d6fac198542c9021cd4229a30df6b2"></script>
+    <!-- sha256 -->
+    <script	src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
+    <!-- 기타 CSS -->
+    <link rel="stylesheet"  href="../css/board.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+    
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <a class="navbar-brand" href="/">교회오빠</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+<!--        <div class="collapse navbar-collapse" id="navbarsExampleDefault">-->
+<!--            <ul class="navbar-nav mr-auto">-->
+<!--            </ul>-->
+<!--            <form class="form-inline my-2 my-lg-0">-->
+<!--            <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">-->
+<!--            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>-->
+<!--            </form>-->
+<!--        </div>-->
+    </nav>
+
+    <div class="container">
+        <!-- 전체 테두리 -->
+        <!-- 글 읽기 Form -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel2">교회 후기</h5>
+            </div>
+
+        <div class="modal-body" id="modal">
+            <!-- 이벤트를 확인하기 위한 dropdown 컨트롤 -->  
+            <!-- 이벤트는 event-dropdown 클래스로 걸었다. -->  
+            <div class="dropdown event-dropdown float-right b-2"> 
+                <a href="#" class="dropdown-toggle" id="settings" data-toggle="dropdown"> 설정
+                    <span class="caret"></span>    
+                </a>    
+                <ul class="dropdown-menu">      
+                    <li><a href="javascript:correct_board_button_event();">수정</a></li>      
+                    <li><a href="javascript:delete_board_button_event();">삭제</a></li>    
+                </ul>  
+            </div>  
+        </div>
+        <div class="row ml-auto mr-auto" width ="100%" id="reply_area">
+            <ul class="list-group list-group-flush">
+                <table class="comment_table">
+                    <tr reply_type="all"><!-- 뒤에 댓글 붙이기 쉽게 선언 -->
+                        <td colspan="4"></td>
+                    </tr>
+                    <!-- 댓글이 들어갈 공간 -->
+                </table>
+                <!-- <table border="1" width="1200px" bordercolor="#46AA46">
+                    <tr>
+                        <td width="500px">
+                            이름: <input type="text" id="reply_writer" name="reply_writer" style="width:170px;" maxlength="10" placeholder="작성자"/>
+                            패스워드: <input type="password" id="reply_password" name="reply_password" style="width:170px;" maxlength="10" placeholder="패스워드"/>
+                            <button id="reply_save" name="reply_save">댓글 등록</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <textarea id="reply_content" name="reply_content" rows="4" cols="50" placeholder="댓글을 입력하세요."></textarea>
+                        </td>
+                    </tr>
+                </table> -->
+            </div>
+          
+        <footer>
+            <div class="row pt-5">
+                <div class="comment_div">
+                    <li class="list-group-item">
+                        <div class="form-inline pb-3" >
+                            <label for="replyId"><i class="fa fa-user-circle-o fa"></i></label>
+                            <input type="text" class="form-control ml-1" placeholder="Enter your ID"  id="reply_writer" name="reply_writer" maxlength="10">
+                            <label for="replyPassword"><i class="fa fa-unlock-alt fa mr-2 pl-2"></i></label>
+                            <input type="password" id="reply_password" class="form-control ml-1" placeholder="Enter password" maxlength="8">
+                        </div>
+                        <div class="row pl-2">
+                            <textarea class="form-control" id="reply_content" rows="3" maxlength="100" placeholder="최대 100자까지 작성가능."></textarea>
+                            <div class="col_comment">
+                                <button type="button" class="btn btn-dark" id="reply_save" style="position: relative; left: 100px;" onclick="insert_comment()">댓글 달기</button>
+                            </div>
+                        </div>
+                    </li>
+                </div>
+            </div>
+            <div class="row pt-3">
+                <button type="button" class="btn btn-secondary" id="BackBtn" onclick="location.href = document.referrer;" style="position: relative; left: 20px;">뒤로가기</button>
+            </div>
+        </footer>
+    </div>
+
+
+    <!-- confirm Modal HTML -->
+    <div class="modal fade" id="confirmModal" >
+        <div class="modal-dialog modal-confirm">
+            <div class="modal-content">
+                <div class="modal-header flex-column">
+                    <div class="icon-box">
+                        <i class="material-icons">&#xE5CD;</i>
+                    </div>						
+                    <h4 class="modal-title w-100">삭제 확인</h4>	
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+                <div>
+                    <p>정말로 삭제 하시겠습니까?</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="Deletebtn" onclick="del_comment();">삭제</button>
+                </div>
+            </div>
+        </div>
+    </div>     
+
+    <!-- confirm Modal HTML -->
+    <div class="modal fade" id="delete_check_Modal" >
+        <div class="modal-dialog modal-confirm">
+            <div class="modal-content">
+                <div class="modal-header flex-column">
+                    <div class="icon-box">
+                        <i class="material-icons">&#xE5CD;</i>
+                    </div>						
+                    <h4 class="modal-title w-100">삭제 확인</h4>	
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+                <div>
+                    <p>이 게시물을 정말로 삭제 하시겠습니까?</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="Deletebtn" onclick="delete_board_event();">삭제</button>
+                </div>
+            </div>
+        </div>
+    </div>     
+
+    <!-- Delete Compleate Modal HTML -->
+    <div class="modal fade" id="DeleteModal" >
+        <div class="modal-dialog modal-confirm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="icon-box">
+                        <i class="material-icons">done</i>
+                    </div>				
+                    <h4 class="modal-title w-100">삭제 완료</h4>	
+                </div>
+                <div>
+                    <p class="text-center">삭제되었습니다.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success btn-block" data-dismiss="modal" onclick="location.reload();">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- Delete Compleate Modal HTML -->
+        <div class="modal fade" id="Delete_Modal" >
+            <div class="modal-dialog modal-confirm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="icon-box">
+                            <i class="material-icons">done</i>
+                        </div>				
+                        <h4 class="modal-title w-100">삭제 완료</h4>	
+                    </div>
+                    <div>
+                        <p class="text-center">삭제되었습니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-success btn-block" data-dismiss="modal" onclick="location.href = document.referrer;">확인</button>
+                    </div>
+                </div>
+            </div>
+        </div>   
+
+        <!-- Delete Compleate Modal HTML -->
+        <div class="modal fade" id="correctModal" >
+            <div class="modal-dialog modal-confirm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="icon-box">
+                            <i class="material-icons">done</i>
+                        </div>				
+                        <h4 class="modal-title w-100">수정 완료</h4>	
+                    </div>
+                    <div>
+                        <p class="text-center">수정되었습니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-success btn-block" data-dismiss="modal" onclick="location.reload();">확인</button>
+                    </div>
+                </div>
+            </div>
+        </div>       
+
+        <!-- Fail Modal HTML -->
+        <div class="modal fade" id="FailModal" >
+            <div class="modal-dialog modal-confirm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="icon-box">
+                            <i class="material-icons">&#xE5CD;</i>
+                        </div>				
+                        <h4 class="modal-title w-100">비밀번호 오류</h4>	
+                    </div>
+                    <div>
+                        <p class="text-center">비밀번호가 일치하지 않습니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-danger btn-block" data-dismiss="modal">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fail Modal HTML -->
+        <div class="modal fade" id="nullModal" >
+            <div class="modal-dialog modal-confirm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="icon-box">
+                            <i class="material-icons">&#xE5CD;</i>
+                        </div>
+                        <h4 class="modal-title w-100">비밀번호 오류</h4>	
+                    </div>
+                    <div>
+                        <p class="text-center">비밀번호를 입력 해주세요.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-danger btn-block" data-dismiss="modal">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript" src="../js/Board.js"></script>
+    </body>
+</html>

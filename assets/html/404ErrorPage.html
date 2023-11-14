@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oops!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <style>
+      *{margin:0;}
+        body{width: 100%; height: 100%;}
+        #error_bigbox{width: 100%; height: 100%;}
+        #error_textbox{width: 1280px; height: 470px; margin: 240px auto 10px; background: url('/assets/images/404error.png') no-repeat; background-position: right; background-size:contain;}
+        #box_up{width: 100%; height: 5px; margin-bottom: 80px;}
+        #blue_line{width: 30px; height: 4px; margin-left: 5px; margin-bottom: 5px; background: #4f6dfa;}
+        #error_txt{margin: 0; font-size: 45px; font-weight: 500; font-family: 'Comfortaa', cursive;}
+        #error_btbox{width: 100%; height: auto; margin-top: 25px;}
+        #back_click{display: inline-block; padding: 10px 25px; border: 1px solid #727272; font-size: 16px; text-decoration: none; color: #000; font-family: 'Comfortaa', cursive;}
+        #home_click{display: inline-block; padding: 11px 55px; text-decoration: none; font-size: 16px; background: #4f6dfa; color: #fff; font-family: 'Comfortaa', cursive;}
+        .code_text{margin-top: 50px !important; letter-spacing: -1.5px; font-size: 22px; font-weight: 900; font-family: 'Comfortaa',AppleSDGothicNeo,sans-serif; color: #000;}
+    </style>
+    <div id="error_bigbox">
+        <div id="error_textbox">
+            <div id="box_up"></div>
+            <div id="blue_line"></div>
+            <p id="error_txt">
+                Oops!<br>
+                We can't seem to find the page<br>
+                You're looking for.<br>
+                You can go back our home.<br>
+            </p>
+            <div id="error_btbox">
+                <a href="javascript:history.back();" id="back_click">Back</a>
+                <a href="/" id="home_click">Home</a>
+            </div>
+            <p class="code_text">Error code : <span class="code_number">404</span></p>
+        </div>
+    </div>
+</body>
+</html>

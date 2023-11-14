@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!-- <link rel="icon" href="../../../../favicon.ico"> -->
+
+    <title>학교 선배</title>
+    <!-- Bootstrap js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+    <!-- Bootstrap core CSS -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="../css/jumbotron.css" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    
+    <!-- Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
+
+    <!-- Kakao Map -->
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=80d6fac198542c9021cd4229a30df6b2"></script>
+
+    <!-- icon -->
+    <!-- <script src="https://use.fontawesome.com/releases/v5.2.0/js/all.js"></script> -->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="../js/popper.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/schoolPage.js"></script>
+    <link href="../css/schoolPage.css" rel="stylesheet">
+    <script src="../js/common.js"></script>
+    
+    <!-- <script src="https://unpkg.com/bootstrap-table@1.20.2/dist/extensions/auto-refresh/bootstrap-table-auto-refresh.min.js"></script> -->
+    <!-- <script type="module" src="../js/sha256.js"></script>
+    -->
+    <script>
+
+</script>
+
+    <script>
+        $(document).ready(function() {
+            let church_result = search_church();
+            window.church_data = church_result;
+            // 검색된 교회 정보값 가져오기.
+            var lateX = church_result[0].ChurchLateX; 
+            var lateY = church_result[0].ChurchLateY;
+
+            var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
+            mapOption = { 
+                center: new kakao.maps.LatLng(lateX, lateY), // 지도의 중심좌표
+                level: 2 // 지도의 확대 레벨
+            };
+
+            var map = new kakao.maps.Map(mapContainer, mapOption); // 지도를 생성합니다
+
+            // 일반 지도와 스카이뷰로 지도 타입을 전환할 수 있는 지도타입 컨트롤을 생성합니다
+            var mapTypeControl = new kakao.maps.MapTypeControl();
+
+            // 지도에 컨트롤을 추가해야 지도위에 표시됩니다
+            // kakao.maps.ControlPosition은 컨트롤이 표시될 위치를 정의하는데 TOPRIGHT는 오른쪽 위를 의미합니다
+            map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
+
+            // 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성합니다
+            var zoomControl = new kakao.maps.ZoomControl();
+            map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+            // 37.549219 127.128118
+            // 지도에 마커를 표시합니다 
+            var marker = new kakao.maps.Marker({
+                map: map, 
+                position: new kakao.maps.LatLng(lateX, lateY)
+            });
+
+            // 커스텀 오버레이에 표시할 컨텐츠 입니다
+            // 커스텀 오버레이는 아래와 같이 사용자가 자유롭게 컨텐츠를 구성하고 이벤트를 제어할 수 있기 때문에
+            // 별도의 이벤트 메소드를 제공하지 않습니다 
+            var content = '<div class="wrap">' + 
+                '    <div class="info">' + 
+                '        <div class="title">' + 
+                            `${church_result[0].ChurchName}` + 
+                '            <div class="close" onclick="closeOverlay()" title="닫기"></div>' + 
+                '        </div>' + 
+                '        <div class="body">' + 
+                '            <div class="img">' +
+                `                <img src="${church_result[0].ChurchMapIMG}" width="73" height="70">` +
+                '           </div>' + 
+                '            <div class="desc">' + 
+                '                <div class="ellipsis"><%=church.ChurchAddr%></div>' + 
+                `                <div class="jibun ellipsis">${church_result[0].ChurchJibun}</div>` + 
+                `                <div><a href="${church_result[0].ChurchHome}" target="_blank" class="link">홈페이지</a></div>` + 
+                '            </div>' + 
+                '        </div>' + 
+                '    </div>' +    
+                '</div>';
+            // 마커 위에 커스텀오버레이를 표시합니다
+            // 마커를 중심으로 커스텀 오버레이를 표시하기위해 CSS를 이용해 위치를 설정했습니다
+            var overlay = new kakao.maps.CustomOverlay({
+                content: content,
+                map: map,
+                position: marker.getPosition()
+            });
+
+            // 마커를 클릭했을 때 커스텀 오버레이를 표시합니다
+            kakao.maps.event.addListener(marker, 'click', function() {
+                overlay.setMap(map);
+            });
+
+            // 커스텀 오버레이를 닫기 위해 호출되는 함수입니다 
+            function closeOverlay() {
+                overlay.setMap(null);
+            }
+        });
+        
+        var search = '<%=church%>';
+
+        // 검색된 교회 데이터 가져오기
+        function search_church() {
+            $.ajax({
+                url : '/ajax/search',
+                type : "POST",
+                async: false,
+                data : {
+                    church_name : search
+                },
+                success : function(result) {
+
+                    let church_info = $(".church_info");
+                    let establishment = "";
+
+                    if (result) {
+
+                        if (result[0].ChurchEstablish == "")
+                            establishment = "정보 없음.";
+                        else
+                            establishment = result[0].ChurchEstablish + "주년";
+
+                        church_data = result;
+                        inquiry_board(church_data);
+                        let str = "";
+                        str = ` <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">위치 : ${result[0].ChurchLocate}</button>
+                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">교단 : ${result[0].ChurchReli}</button>
+                                <div class="col mb-2">
+                                </div>
+                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">설립 : ${establishment}</button>
+                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">담임목사 : ${result[0].ChurchPastor}</button>
+                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">전화번호 : ${result[0].ChurchTel}</button>
+                                <br />
+                                <br />
+                                <br />
+                                <button type="button" class="btn btn-outline-dark center" onfocus="this.blur();" onclick="window.open('${result[0].ChurchHome}')">교회 홈페이지</button>`
+                        church_info.append(str);
+                    }
+                },
+                error : function(request,status,error) {
+                    console.log(request+"\n",status,"\n",error, "\n")
+                }
+            });
+            return church_data;
+        }
+
+    </script>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <a class="navbar-brand" href="/">교회오빠</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+        <!-- <li class="nav-item active">
+            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Link</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link disabled" href="#">Disabled</a>
+        </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown</a>
+            <div class="dropdown-menu" aria-labelledby="dropdown01">
+            <a class="dropdown-item" href="#">Action</a>
+            <a class="dropdown-item" href="#">Another action</a>
+            <a class="dropdown-item" href="#">Something else here</a>
+            </div>
+        </li> -->
+<!--        </ul>-->
+<!--        <form class="form-inline my-2 my-lg-0">-->
+<!--        <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">-->
+<!--        <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>-->
+<!--        </form>-->
+    </div>
+    </nav>
+
+    <!-- <main role="main"> -->
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="container">
+        <!-- 전체 테두리 -->
+        
+        <div class="row p-2">
+            <div class="col p-3 col-6">
+                <div>
+                    <h3 id="ChuchTittle"></h3>
+                    
+                    <br />
+                </div>
+                <!-- 좌측 컨텐츠 -->
+                <h4>교회 정보</h4>
+                <div class="church_info mt-4">
+
+                </div>
+                <div class="mt-5">
+                    <p class="map_title">위치</p>
+                    <!-- 카카오 Map 들어가는 자리 -->
+                    <div id="map" style="width:80%;height:350px"></div>
+                </div>
+                    <p class="share_title">교회 공유하기</p>
+                    <div class="share_div">
+                        <a href="javascript:shareTwitter();" class="sns_btn" id="twitter"> 
+                            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="currentColor" class="bi bi-twitter" viewBox="0 0 16 16">
+                                <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"/>
+                            </svg>
+                        </a>
+                        <a href="javascript:shareFacebook();" class="sns_btn" id="facebook">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="currentColor" class="bi bi-facebook" viewBox="0 0 16 16">
+                                <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"/>
+                            </svg>
+                        </a>
+                        <a href="javascript:shareLink();" class="sns_btn" id="link">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+                                <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                            </svg>
+                        </a>
+                    </div>
+            </div>
+                <!-- 우측 컨텐츠 -->
+                <div class="col p-0 col-6">
+                </br />
+                </br />
+                    <h4>후기</h4>
+                    <div class="form-row float-right" style="padding: 10px;">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#reviewModal" onclick="initButton();">글쓰기</button>
+                    </div>
+                    <div id="tablediv">
+                        <table class="table table-hover" id="table">
+                            <tbody class="board">
+                            </tbody>
+                        </table>
+                    </div>
+                        
+                    <ul class="pagination">
+    
+                    </ul>
+                        <!-- 글 쓰기 Form -->
+                        <div class="modal fade" id="reviewModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">교회 후기</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body" id="modal">
+                                <form>
+                                    <div class="form-group">
+                                        <label for="recipient-name" class="col-form-label">title</label>
+                                        <input type="text" class="form-control" id="recipient-title" maxlength='40'>
+                                    </div>
+                                    <div class="form-group">
+                                        <h6 style="font-size: 12px;">
+                                            다른 사람의 인격권을 침해하거나 명예를 훼손하게 하는 글, 불쾌감을 주는 욕설 또는 비방하는 글, 유언비어나 허위사실을 유포하는 글, 도배성 글의 경우 글이 삭제되거나 이용제재를 받을 수 있습니다.
+                                        </h6>
+                                        <label for="message-text" class="col-form-label">Content</label>
+                                        <textarea class="form-control" id="message-text" maxlength='700'></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">
+                                        <div class="form-inline mb-1 ml-1">
+                                            <label for="replyId"><i class="fa fa-user-circle-o fa"></i></label>
+                                            <input type="text" class="form-control ml-1" placeholder="Enter your ID" id="replyId" size="12">
+                                            <label for="replyPassword"><i class="fa fa-unlock-alt fa mr-2 pl-2"></i></label>
+                                            <input type="password" class="form-control ml-1" placeholder="Enter password" id="replyPassword" size="12">
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+                                <button type="button" class="btn btn-primary" onclick="create_board();">글쓰기</button>
+                            </div>
+                        </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+   
+        <!-- <div class="container">
+            <div class="row pt-1">
+                <div id="map" style="width:40%;height:350px">
+            </div>
+        </div> -->
+        <script	src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
+    <!-- <footer class="container">
+        <div class="container row" style="float: none; margin:100 auto;">
+            <div class="col-md-3" style="float: none; margin:0 auto;">
+            <p>&copy; Company 2017-2018</p>
+        </div>
+        </div>
+    </footer> -->
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- <script>window.jQuery || document.write('<script src="../assets/js/jquery-slim.min.js"><\/script>')</script> -->
+
+</body>
+</html>

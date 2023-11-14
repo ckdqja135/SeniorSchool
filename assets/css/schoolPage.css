@@ -1,0 +1,16 @@
+.sns_btn {
+    text-decoration: none;
+    padding : 15px;
+}
+.sns_btn:hover { text-decoration:none !important }
+
+.share_title {
+    font-size: 16px;
+    margin-top: 20px;
+    color:lightcoral;
+    font-weight: 700;
+}
+
+.map_title {
+    font-size: 25px;
+}

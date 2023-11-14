@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>교회 오빠</title>
+        <!-- Bootstrap -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+        <!-- jQuery -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+        <link rel="stylesheet" type="text/css" href="../css/index.css">
+        <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+        <!-- 구글 웹 폰트 -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
+    <style>
+    </style>
+    </head>   
+    <!-- Coded with love by Mutiullah Samim-->
+    <body>
+        <div class="imgDiv">
+            <img class="titleIMG" src="../../images/titleIMG.jpg" alt="Title Image">
+            <div class="d-flex justify-content-center align-items-center">
+                <div class="titleText">
+                    <h1 class="font">세상 모든 대학교 정보, 학교선배가 알려줄게</h1>
+                        <form role="form" autocomplete="on" id="form-buscar" method="get" action="search">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <input id="search" class="form-control" type="text" name="name" placeholder="Search..." required/>
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-success" type="submit" >
+                                            <i class="glyphicon glyphicon-search" aria-hidden="true"></i> Search
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                        </form>
+
+                        <script>
+                            $(document).ready(function() {
+                                $( "#search" ).autocomplete({
+                                    source: function(request, response) {
+                                        var _keyword = $("#search").val();
+                                        $.ajax({
+                                            url : '/ajax/auto',
+                                            type : "POST",
+                                            async: false, 
+                                            data : {
+                                                keyword : isEmpty(_keyword) ? "''" : _keyword
+                                            },
+                                            success: function(data) {
+                                                response($.map(data, function(item) {
+                                                    console.log("item", item)
+                                                    return {
+                                                        label: item.ChurchName,
+                                                        value: item.ChurchName,
+                                                        gubun: item.ChurchLocate
+                                                    }
+                                                }));
+                                            }
+                                        });
+                                    },
+                                    minLength: 1,
+                                    error : function(request,status,error) {
+                                        console.log(request+"\n",status,"\n",error, "\n")
+                                    }
+                                })
+                            })
+
+                    
+
+                            function auto_search() {
+                                var _keyword = $("#search").val();
+
+                                $.ajax({
+                                    url : '/ajax/auto',
+                                    type : "POST",
+                                    async: false, 
+                                    data : {
+                                        keyword : isEmpty(_keyword) ? "''" : _keyword
+                                    },
+                                    success : function(result) {
+                                        if (result.length > 0) {
+                                            for (let i = 0; i < result.length; i++) {
+                                                $( "#search" ).autocomplete({
+                                                    source: [ result[i].ChurchName + " / " +result[i].ChurchLocate],
+                                                    response: function(event, ui) {
+                                                        // console.log(ui.content)
+                                                        if (ui.content.length === 0) {
+                                                            console.log("검색결과 없어.")
+                                                        }
+                                                    }
+                                                });
+                                            } 
+                                        } else {
+
+                                        }
+                                    },
+                                    error : function(request,status,error) {
+                                        console.log(request+"\n",status,"\n",error, "\n")
+                                    }
+                                });
+                                // return church_data;
+                            }
+
+                            function isEmpty(val){
+                                return (val === undefined || val == null || val.length <= 0) ? true : false; 
+                            }
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
