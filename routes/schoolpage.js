@@ -5,7 +5,7 @@ var db_service = require('../services/db_services');
 
 router.all('/', function(req, res, next) {
     console.log("req", req.query.name )
-    res.render('html/schoolPage', { title: 'ChurchOppa', church : req.query.name });
+    res.render('html/schoolPage', { title: 'SchoolOppa', church : req.query.name });
 });
 
 
