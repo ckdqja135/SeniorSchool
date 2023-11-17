@@ -119,7 +119,7 @@
 
     function shareTwitter(){
 		// var sendText = window.location.href.split('/')[5];
-		let sendText = "교회 추천합니다.";
+		let sendText = "이 대학교 추천합니다.";
 		//var sendUrl = "www.mysoftwiz.com/en/openVacanciesDetail/"+seq; // 전달할 URL
 		window.open("https://twitter.com/intent/tweet?text=" + sendText + "&url=" + window.location.href);
 		// window.open("https://twitter.com/intent/tweet?&url=" + makeUrl());
