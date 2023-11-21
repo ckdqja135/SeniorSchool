@@ -44,13 +44,15 @@
                             $(document).ready(function() {
                                 $( "#search" ).autocomplete({
                                     source: function(request, response) {
-                                        var _keyword = $("#search").val();
+                                        var keyword = $("#search").val();
+                                        var backendURL = 'http://localhost:3000';  // 백엔드의 주소
+
                                         $.ajax({
-                                            url : '/ajax/auto',
-                                            type : "POST",
+                                            url : backendURL + '/search/auto',
+                                            type : "GET",
                                             async: false, 
                                             data : {
-                                                keyword : isEmpty(_keyword) ? "''" : _keyword
+                                                keyword: isEmpty(keyword) ? "''" : keyword // 인코딩된 키워드 전달
                                             },
                                             success: function(data) {
                                                 response($.map(data, function(item) {
@@ -70,42 +72,6 @@
                                     }
                                 })
                             })
-
-                    
-
-                            function auto_search() {
-                                var _keyword = $("#search").val();
-
-                                $.ajax({
-                                    url : '/ajax/auto',
-                                    type : "POST",
-                                    async: false, 
-                                    data : {
-                                        keyword : isEmpty(_keyword) ? "''" : _keyword
-                                    },
-                                    success : function(result) {
-                                        if (result.length > 0) {
-                                            for (let i = 0; i < result.length; i++) {
-                                                $( "#search" ).autocomplete({
-                                                    source: [ result[i].ChurchName + " / " +result[i].ChurchLocate],
-                                                    response: function(event, ui) {
-                                                        // console.log(ui.content)
-                                                        if (ui.content.length === 0) {
-                                                            console.log("검색결과 없어.")
-                                                        }
-                                                    }
-                                                });
-                                            } 
-                                        } else {
-
-                                        }
-                                    },
-                                    error : function(request,status,error) {
-                                        console.log(request+"\n",status,"\n",error, "\n")
-                                    }
-                                });
-                                // return church_data;
-                            }
 
                             function isEmpty(val){
                                 return (val === undefined || val == null || val.length <= 0) ? true : false; 
