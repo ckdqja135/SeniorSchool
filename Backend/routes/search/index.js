@@ -23,8 +23,6 @@ router.get('/auto', async (req, res) => {
             limit: 10,
         });
 
-        console.log("schools ", schools)
-
         return res.status(200).json(schools);
     } catch (error) {
         console.error(error);
