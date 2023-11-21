@@ -6,6 +6,7 @@ const { Op } = require("sequelize");
 router.get('/auto', async (req, res) => {
     try {
         const { keyword } = req.query;
+        const decodedKeyword = decodeURIComponent(keyword);
 
         if (!keyword) {
             return res.status(400).json({ error: 'Keyword is required' });
@@ -20,7 +21,7 @@ router.get('/auto', async (req, res) => {
             },
             limit: 10,
         });
-
+        console.log("seach/auto", decodedKeyword)
         return res.status(200).json(schools);
     } catch (error) {
         console.error(error);

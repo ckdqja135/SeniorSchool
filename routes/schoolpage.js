@@ -4,9 +4,9 @@ var db_service = require('../services/db_services');
 /* GET home page. */
 
 router.all('/', function(req, res, next) {
-    res.render('html/schoolPage', { title: 'SchoolOppa', church : req.query.name });
+    res.render('html/schoolPage', {title: 'SchoolOppa', church: req.query.name});
 
-
+});
 // router.all('/name=?', function(req, res) {
 //     console.log("req", req)
 //     res.render('html/churchpage', { title: 'ChurchOppa', church : req.query.name});

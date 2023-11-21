@@ -12,6 +12,9 @@ var app = express();
 
 
 app.use(logger('dev'));
+app.use(cors({
+    origin: '*', // 모든 출처 허용 옵션. true 를 써도 된다.
+}));
 app.use('/', routes);
 
 // log 기록하기
@@ -47,7 +50,13 @@ app.use(helmet.permittedCrossDomainPolicies());
 app.use(helmet.referrerPolicy());
 app.use(helmet.xssFilter());
 app.disable('x-powered-by');
-// CORS 처리.
-app.use(cors());
+// CORS 처리
+// const corsOptions = {
+//     origin: 'http://localhost:3001', // 허용할 도메인
+//     optionsSuccessStatus: 200, // CORS preflight 응답 성공 상태
+// };
+
+
+
 
 module.exports = app;
