@@ -45,11 +45,11 @@
 
     <script>
         $(document).ready(function() {
-            let church_result = search_church();
-            window.church_data = church_result;
+            let univResult = search_univ();
+            window.univData = univResult;
             // 검색된 교회 정보값 가져오기.
-            var lateX = church_result[0].ChurchLateX; 
-            var lateY = church_result[0].ChurchLateY;
+            var lateX = univResult.UnivLateX;
+            var lateY = univResult.UnivLateY;
 
             var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
             mapOption = { 
@@ -82,17 +82,17 @@
             var content = '<div class="wrap">' + 
                 '    <div class="info">' + 
                 '        <div class="title">' + 
-                            `${church_result[0].ChurchName}` + 
+                            `${univResult.UnivName}` +
                 '            <div class="close" onclick="closeOverlay()" title="닫기"></div>' + 
                 '        </div>' + 
                 '        <div class="body">' + 
                 '            <div class="img">' +
-                `                <img src="${church_result[0].ChurchMapIMG}" width="73" height="70">` +
+                `                <img src="${univResult.UnivMapIMG}" width="73" height="70">` +
                 '           </div>' + 
                 '            <div class="desc">' + 
-                '                <div class="ellipsis"><%=church.ChurchAddr%></div>' + 
-                `                <div class="jibun ellipsis">${church_result[0].ChurchJibun}</div>` + 
-                `                <div><a href="${church_result[0].ChurchHome}" target="_blank" class="link">홈페이지</a></div>` + 
+                `                <div class="ellipsis">${univResult.UnivAddr}</div>` +
+                `                <div class="jibun ellipsis">${univResult.UnivLotAddr}</div>` +
+                `                <div><a href="${univResult.UnivPageURL}" target="_blank" class="link">홈페이지</a></div>` +
                 '            </div>' + 
                 '        </div>' + 
                 '    </div>' +    
@@ -116,51 +116,51 @@
             }
         });
         
-        var search = '<%=church%>';
+        var search = '<%=univ%>';
 
-        // 검색된 교회 데이터 가져오기
-        function search_church() {
+        // 검색된 학교 데이터 가져오기
+        function search_univ() {
+            var backendURL = 'http://localhost:3000';  // 백엔드의 주소
+
             $.ajax({
-                url : '/ajax/search',
-                type : "POST",
+                url : backendURL + '/search/school',
+                type : "GET",
                 async: false,
                 data : {
-                    church_name : search
+                    univName : search
                 },
                 success : function(result) {
-
-                    let church_info = $(".church_info");
+                    console.log("result ", result)
                     let establishment = "";
 
                     if (result) {
-
-                        if (result[0].ChurchEstablish == "")
+                        if (result.UnivEstablish == "")
                             establishment = "정보 없음.";
                         else
-                            establishment = result[0].ChurchEstablish + "주년";
+                            establishment = result.UnivEstablish + "년";
 
-                        church_data = result;
-                        inquiry_board(church_data);
+                        univData = result;
+                        // inquiry_board(univData);
+                        let univInfo = $(".univInfo");
                         let str = "";
-                        str = ` <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">위치 : ${result[0].ChurchLocate}</button>
-                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">교단 : ${result[0].ChurchReli}</button>
+                        str = ` <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">위치 : ${result.UnivLocate}</button>
+                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">구분 : ${result.UnivType}</button>
                                 <div class="col mb-2">
                                 </div>
                                 <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">설립 : ${establishment}</button>
-                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">담임목사 : ${result[0].ChurchPastor}</button>
-                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">전화번호 : ${result[0].ChurchTel}</button>
+                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">총장 : ${result.UnivPresident}</button>
                                 <br />
                                 <br />
                                 <br />
-                                <button type="button" class="btn btn-outline-dark center" onfocus="this.blur();" onclick="window.open('${result[0].ChurchHome}')">교회 홈페이지</button>`
-                        church_info.append(str);
+                                <button type="button" class="btn btn-outline-dark center" onfocus="this.blur();" onclick="window.open('${result.UnivPageURL}')">학교 홈페이지</button>`
+                        univInfo.append(str);
                     }
                 },
                 error : function(request,status,error) {
                     console.log(request+"\n",status,"\n",error, "\n")
                 }
             });
-            return church_data;
+            return univData;
         }
 
     </script>
@@ -168,7 +168,7 @@
 
 <body>
     <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
-    <a class="navbar-brand" href="/">교회오빠</a>
+    <a class="navbar-brand" href="/">학교오빠</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -208,13 +208,13 @@
         <div class="row p-2">
             <div class="col p-3 col-6">
                 <div>
-                    <h3 id="ChuchTittle"></h3>
+                    <h3 id="univTitle"></h3>
                     
                     <br />
                 </div>
                 <!-- 좌측 컨텐츠 -->
-                <h4>교회 정보</h4>
-                <div class="church_info mt-4">
+                <h4>대학교 정보</h4>
+                <div class="univInfo mt-4">
 
                 </div>
                 <div class="mt-5">
@@ -222,7 +222,7 @@
                     <!-- 카카오 Map 들어가는 자리 -->
                     <div id="map" style="width:80%;height:350px"></div>
                 </div>
-                    <p class="share_title">교회 공유하기</p>
+                    <p class="share_title">대학교 공유하기</p>
                     <div class="share_div">
                         <a href="javascript:shareTwitter();" class="sns_btn" id="twitter"> 
                             <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="currentColor" class="bi bi-twitter" viewBox="0 0 16 16">
@@ -246,7 +246,7 @@
                 <div class="col p-0 col-6">
                 </br />
                 </br />
-                    <h4>후기</h4>
+                    <h4>대학교 입학 후기</h4>
                     <div class="form-row float-right" style="padding: 10px;">
                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#reviewModal" onclick="initButton();">글쓰기</button>
                     </div>
@@ -265,7 +265,7 @@
                             <div class="modal-dialog" role="document">
                                 <div class="modal-content">
                                 <div class="modal-header">
-                                <h5 class="modal-title" id="exampleModalLabel">교회 후기</h5>
+                                <h5 class="modal-title" id="exampleModalLabel">대학교 입학 후기</h5>
                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
                                 </button>

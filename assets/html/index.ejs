@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>교회 오빠</title>
+        <title>대학 오빠</title>
         <!-- Bootstrap -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
@@ -58,9 +58,9 @@
                                                 response($.map(data, function(item) {
                                                     console.log("item", item)
                                                     return {
-                                                        label: item.ChurchName,
-                                                        value: item.ChurchName,
-                                                        gubun: item.ChurchLocate
+                                                        label: item.UnivName,
+                                                        value: item.UnivName,
+                                                        gubun: item.UnivLocate
                                                     }
                                                 }));
                                             }

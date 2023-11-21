@@ -1,76 +1,76 @@
 const Sequelize = require('sequelize');
 
-module.exports = class ChurchInfo extends Sequelize.Model {
+module.exports = class UniversityInfo extends Sequelize.Model {
     static init(sequelize) {
         return super.init(
             {
-                ChurchNo: {
-                    type: Sequelize.BIGINT,
+                UnivNo: {
+                    type: Sequelize.INTEGER,
                     primaryKey: true,
                     autoIncrement: true,
                     allowNull: false,
                 },
-                ChurchName: {
+                UnivName: {
+                    type: Sequelize.STRING(60),
+                    allowNull: false,
+                },
+                UnivLocate: {
                     type: Sequelize.STRING(45),
                     allowNull: false,
                 },
-                ChurchLocate: {
+                UnivType: {
                     type: Sequelize.STRING(45),
                     allowNull: false,
                 },
-                ChurchReli: {
+                UnivEstablish: {
                     type: Sequelize.STRING(45),
                     allowNull: false,
                 },
-                ChurchEstablish: {
-                    type: Sequelize.INTEGER,
-                    allowNull: false,
-                },
-                ChurchPastor: {
+                UnivPresident: {
                     type: Sequelize.STRING(45),
                     allowNull: false,
                 },
-                ChurchTel: {
+                UnivCampos: {
                     type: Sequelize.STRING(45),
                     allowNull: false,
                 },
-                ChurchLateX: {
+                UnivLateX: {
                     type: Sequelize.DOUBLE,
                     allowNull: false,
                 },
-                ChurchLateY: {
+                UnivLateY: {
                     type: Sequelize.DOUBLE,
                     allowNull: false,
                 },
-                ChurchHome: {
+                UnivPageURL: {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
-                ChurchSerIMG: {
+                UnivIMG: {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
-                ChurchJibun: {
+                UnivLotAddr: {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
-                ChurchAddr: {
+                UnivAddr: {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
-                ChurchMapIMG: {
+                UnivMapIMG: {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
             },
             {
                 sequelize,
-                modelName: "ChurchInfo",
-                tableName: "churchinfo",
-                charset: "utf8",
-                timestamps: false
+                modelName: 'UniversityInfo',
+                tableName: 'universityinfo',
+                charset: 'utf8',
+                timestamps: false,
             }
         );
     }
-    static associate(db){}
+    static associate(db) {}
 };

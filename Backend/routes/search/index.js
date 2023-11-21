@@ -1,6 +1,6 @@
 var express = require('express');
 const router = express.Router();
-var { Church } = require('../../model/index');
+const { University } = require('../../model/index');
 const { Op } = require("sequelize");
 
 router.get('/auto', async (req, res) => {
@@ -12,16 +12,19 @@ router.get('/auto', async (req, res) => {
             return res.status(400).json({ error: 'Keyword is required' });
         }
 
-        const schools = await Church.findAll({
+        const schools = await University.findAll({
+            attributes: ['UnivName', 'UnivLocate'],
             where: {
-                ChurchName: {
+                UnivName: {
                     [Op.not]: '',
-                    [Op.like]: `%${keyword}%`,
+                    [Op.like]: `%${decodedKeyword}%`,
                 },
             },
             limit: 10,
         });
-        console.log("seach/auto", decodedKeyword)
+
+        console.log("schools ", schools)
+
         return res.status(200).json(schools);
     } catch (error) {
         console.error(error);
@@ -30,16 +33,17 @@ router.get('/auto', async (req, res) => {
 });
 router.get('/school', async (req, res) => {
     try {
-        const { schoolName } = req.query;
+        const { univName } = req.query;
+        const decodedKeyword = decodeURIComponent(univName);
 
-        if (!schoolName) {
+        if (!univName) {
             return res.status(400).json({ error: 'schoolName is required' });
         }
 
-        const schoolInfo = await Church.findOne({
+        const schoolInfo = await University.findOne({
             where: {
-                ChurchName: {
-                    [Op.eq]: schoolName,
+                UnivName: {
+                    [Op.eq]: decodedKeyword,
                 },
             },
         });
