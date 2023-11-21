@@ -4,4 +4,6 @@
 ------------------------------------------
 대학교 리뷰 사이트 백엔드 API 구조 리팩토링 중
 
+
+호출 API 문서
 https://developdoc.notion.site/09c3467832e2473c8f995e32c89caaee?v=b19f76269b6b48fd80ef6e63344bb84d&pvs=4
