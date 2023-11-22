@@ -1,4 +1,5 @@
 (function (window) {
+    let backendURL = 'http://localhost:3000';  // 백엔드의 주소
     $(document).ready(function(){
         get_board();
     });
@@ -326,44 +327,39 @@
         
     // 게시판 상세조회.
     function get_board() {
-        var _board_no = window.location.href.split('/')[4];
+        var boardNo = window.location.href.split('/')[4];
 
         // Fetch 통신 시작
-        fetch('/ajax/board_detail', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                board_no: _board_no
-            })
+        fetch(backendURL + '/board/detail?boardNo=' + boardNo, {
+            method: 'GET',
         })
             .then(response => response.json()) // 응답 데이터를 JSON으로 파싱
             .then(result => {
-                let board_body = $(".modal-body");
+                let boardBody = $(".modal-body");
                 if (result) {
+                    console.log("result" , result);
                     var str = `
-            <h2 class="board_title"> ${result[0].boardTitle} </h2>
-            <h2 class="hits"> ${result[0].boardHits}</h2>
-
-            <div class="form-group">
-                <div class="input-group" style="display:none">
-                    <span class="input-group-text">비밀번호 입력</span> 
-                    <form><input type="password" class="form-control" id="writer_pw" autoComplete="off"></form>
-                </div>
-
-                <button type="button" class="btn btn-primary float-right" id="cancel_btn" onclick="correct_cancel_event()" style="margin:10px; display:none">취소</button>
-                <button type="button" class="btn btn-primary float-right" id="correct_btn" onclick="correct_borad_event();" style="margin:10px; display:none">수정</button>
-                <button type="button" class="btn btn-primary float-right" id="delete_btn" onclick="delete_confirm();" style="margin:10px; display:none">삭제</button>
-                <textarea type="text" class="board-form-control" id="board-content" readonly="true">${result[0].boardContent}</textarea> 
-                <label for="message-text" class="write_id" id="writer_id">${result[0].writerId}</label>
-                <br />
-                <h7 class="reg_date">${result[0].BoardRegDate}</h7>
-            </div>
-            `
+                    <h2 class="board_title"> ${result.BoardTitle} </h2>
+                    <h2 class="hits"> ${result.BoardHits}</h2>
+        
+                    <div class="form-group">
+                        <div class="input-group" style="display:none">
+                            <span class="input-group-text">비밀번호 입력</span> 
+                            <form><input type="password" class="form-control" id="writer_pw" autoComplete="off"></form>
+                        </div>
+        
+                        <button type="button" class="btn btn-primary float-right" id="cancel_btn" onclick="correct_cancel_event()" style="margin:10px; display:none">취소</button>
+                        <button type="button" class="btn btn-primary float-right" id="correct_btn" onclick="correct_borad_event();" style="margin:10px; display:none">수정</button>
+                        <button type="button" class="btn btn-primary float-right" id="delete_btn" onclick="delete_confirm();" style="margin:10px; display:none">삭제</button>
+                        <textarea type="text" class="board-form-control" id="board-content" readonly="true">${result.BoardContent}</textarea> 
+                        <label for="message-text" class="write_id" id="writer_id">${result.WriterId}</label>
+                        <br />
+                        <h7 class="reg_date">${result.BoardRegDate}</h7>
+                    </div>
+                    `
                 }
-                board_body.append(str);
-                get_board_comment(_board_no);
+                boardBody.append(str);
+                // get_board_comment(boardNo);
             })
             .catch(error => {
                 console.error('Fetch Error:', error);

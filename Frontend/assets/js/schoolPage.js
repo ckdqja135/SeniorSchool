@@ -1,4 +1,5 @@
 (function (window) {
+    let backendURL = 'http://localhost:3000';  // 백엔드의 주소
     function likeEvent() {
         let heartSpan = document.querySelectorAll('.icon');
         
@@ -37,7 +38,7 @@
         }
 
         let xhr = new XMLHttpRequest();
-        let backendURL = 'http://localhost:3000';  // 백엔드의 주소
+
         xhr.open('GET', `${backendURL}/board/?UnivNo=${univNo}`, true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.setRequestHeader('Cache-Control', 'no-cache'); // Cache-Control 헤더 추가
@@ -84,28 +85,30 @@
         return (n < 10 ? '0' : '') + n;
     }
 
+    // 훅기 작성
     function create_board() {
         //  오늘 날짜 포맷 만들기.
         var date = new Date();
         var month = day_month_format(date.getMonth()+1); //months (0-11)
         var day = day_month_format(date.getDate()); //day (1-31)
         var year = date.getFullYear();
-        var date_format =  year + "-" + month + "-" + day;
+        var dateFormat =  year + "-" + month + "-" + day;
 
-        var board_data = {
-            church_no : window.univData.UnivNo,
-            board_title : $('#recipient-title').val().trim(),
-            board_content : $('#message-text').val(),
-            board_reg : date_format,
-            board_like : 0,
-            board_hits : 0,
-            board_id : $('#replyId').val().trim(),
-            board_pw : sha256($('#replyPassword').val().trim()),
+        var boardData = {
+            univNo : window.univData.UnivNo,
+            boardTitle : $('#recipient-title').val().trim(),
+            boardContent : $('#message-text').val(),
+            boardReg : dateFormat,
+            boardLike : 0,
+            boardHits : 0,
+            boardId : $('#replyId').val().trim(),
+            boardPw : sha256($('#replyPassword').val().trim()),
         };
         $.ajax({
-            url : '/ajax/create_board',
+            url : backendURL + '/board/insert',
             type : "POST",
-            data : board_data,
+            contentType: "application/json", // JSON 형태로 데이터 전송 설정
+            data: JSON.stringify(boardData), // 객체를 JSON 문자열로 변환하여 전송
             success : function(result) {
                 console.log(result);
                 $('#reviewModal').modal("hide");

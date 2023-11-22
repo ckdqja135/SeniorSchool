@@ -8,7 +8,10 @@ var logger = require('morgan');
 var fs = require('fs');
 const routes = require('./routes/index');
 require('dotenv').config();
+const bodyParser = require('body-parser');
 var app = express();
+app.use(bodyParser.json()); // JSON 형태의 요청 body를 파싱
+app.use(bodyParser.urlencoded({ extended: true })); // URL-encoded 형태의 요청 body를 파싱
 
 
 app.use(logger('dev'));
