@@ -19,8 +19,7 @@ router.get('/auto', async (req, res) => {
                     [Op.not]: '',
                     [Op.like]: `%${decodedKeyword}%`,
                 },
-            },
-            limit: 10,
+            }
         });
 
         return res.status(200).json(schools);

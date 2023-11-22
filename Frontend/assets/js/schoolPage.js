@@ -28,22 +28,24 @@
     }
 
     // 게시판 조회하기.
-    function inquiry_board(church_data) {
-        let _church_no;
-        if (church_data == null) {
-            _church_no = window.church_data[0].ChurchNo;
+    function inquiry_board(univData) {
+        let univNo;
+        if (univData == null) {
+            univNo = window.univData.UnivNo;
         } else {
-            _church_no = church_data[0].ChurchNo;
+            univNo = univData.UnivNo;
         }
 
         let xhr = new XMLHttpRequest();
-        xhr.open('POST', '/ajax/inquiry_board', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        let backendURL = 'http://localhost:3000';  // 백엔드의 주소
+        xhr.open('GET', `${backendURL}/board/?UnivNo=${univNo}`, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.setRequestHeader('Cache-Control', 'no-cache'); // Cache-Control 헤더 추가
+
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 let result = JSON.parse(xhr.responseText);
-                let church_board = document.querySelector('.board');
+                let univBoard = document.querySelector('.board');
                 for (let i = 0; i < result.length; i++) {
                     let tr = document.createElement('tr');
                     tr.innerHTML = `<td id="title" style="cursor: pointer;">
@@ -55,7 +57,7 @@
             <td id="Regdate"><h6>${result[i].BoardRegDate}</h6></td>
             <td id="hits"><h6>${result[i].BoardHits}</h6></td>
             `;
-                    church_board.appendChild(tr);
+                    univBoard.appendChild(tr);
                 }
 
                 // Clear the existing pagination elements
@@ -72,7 +74,8 @@
             //     </button>
             // </td>
         };
-        xhr.send(`church_no=${_church_no}`);
+
+        xhr.send();
     }
 
 
@@ -90,7 +93,7 @@
         var date_format =  year + "-" + month + "-" + day;
 
         var board_data = {
-            church_no : window.church_data[0].ChurchNo,
+            church_no : window.univData.UnivNo,
             board_title : $('#recipient-title').val().trim(),
             board_content : $('#message-text').val(),
             board_reg : date_format,

@@ -11,3 +11,6 @@
 ::1 - - [21/Nov/2023:07:07:33 +0000] "GET /search/search?search=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90 HTTP/1.1" 404 152
 ::1 - - [21/Nov/2023:07:07:37 +0000] "GET /search/search?search=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90 HTTP/1.1" 404 152
 ::1 - - [21/Nov/2023:07:07:37 +0000] "GET /search/search?search=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90 HTTP/1.1" 404 152
+::1 - - [22/Nov/2023:08:35:35 +0000] "GET / HTTP/1.1" 404 139
+::1 - - [22/Nov/2023:12:07:44 +0000] "GET / HTTP/1.1" 404 139
+::1 - - [22/Nov/2023:12:07:44 +0000] "GET / HTTP/1.1" 404 139

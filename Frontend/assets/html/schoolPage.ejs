@@ -130,7 +130,6 @@
                     univName : search
                 },
                 success : function(result) {
-                    console.log("result ", result)
                     let establishment = "";
 
                     if (result) {
@@ -140,7 +139,7 @@
                             establishment = result.UnivEstablish + "년";
 
                         univData = result;
-                        // inquiry_board(univData);
+                        inquiry_board(univData);
                         let univInfo = $(".univInfo");
                         let str = "";
                         str = ` <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">위치 : ${result.UnivLocate}</button>
