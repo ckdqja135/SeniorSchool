@@ -24,7 +24,7 @@ Backend서버 실행 순서
 ``` shell
   nodemon ./bin/www
 ```
-
+(https://github.com/ckdqja135/SeniorSchool/assets/33046341/3c8df188-9c70-4a10-aaf6-006ba90f6740)
 ------------------------------------------
 대학교 리뷰 사이트 백엔드 API 구조 리팩토링 중
 호출 API 문서
