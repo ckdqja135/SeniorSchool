@@ -624,10 +624,10 @@
     // 게시글 수정 이벤트 -> 수정 버튼 클릭 이벤트.
     function correct_borad_event() {
          //값 셋팅
-        let obj_params = {
-            board_id        : window.location.href.split('/')[4],
-            writer_password  : sha256($("#writer_pw").val().trim()),
-            board_content   : $('#board-content').val().trim()
+        let objParams = {
+            boardNo        : window.location.href.split('/')[4],
+            writerPw       : sha256($("#writer_pw").val().trim()),
+            boardContent   : $('#board-content').val().trim()
         };
         if ($("#writer_pw").val().trim() == '') {
             jQuery.noConflict();
@@ -635,11 +635,11 @@
         } else {
             //ajax 호출 (여기에 댓글을 저장하는 로직을 개발)
             $.ajax({
-                url         :   "/ajax/correct_borad",
-                type        :   "POST",
-                data        :   obj_params,
+                url         :   backendURL + "/board/correct",
+                type        :   "PUT",
+                data        :   objParams,
                 success     :   function(result){
-                if(result.affectedRows > 0) {
+                if(result.success === true) {
                     jQuery.noConflict();
                     $('#confirmModal').modal('hide');
                     $('#correctModal').modal('show');
