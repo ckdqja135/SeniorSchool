@@ -61,8 +61,7 @@ router.post('/insert', async (req, res) => {
 
         // 트랜잭션 시작
         const transaction = await sequelize.transaction({ autocommit: false });
-        console.log(req.body);
-        console.log(transaction);
+
         try {
             // Board 모델에 레코드 삽입
             const board = await UnivBoard.create({
@@ -107,7 +106,6 @@ router.put('/correct', async (req, res) => {
     try {
         const { boardNo, boardContent, writerPw } = req.body;
         // 트랜잭션 시작
-        console.log("Dddd ", boardNo, boardContent, writerPw)
         const transaction = await sequelize.transaction();
 
         try {

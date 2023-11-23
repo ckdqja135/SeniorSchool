@@ -359,7 +359,7 @@
                     `
                 }
                 boardBody.append(str);
-                // get_board_comment(boardNo);
+                get_board_comment(boardNo);
             })
             .catch(error => {
                 console.error('Fetch Error:', error);
@@ -368,18 +368,13 @@
     
     /**
      * fuction : 게시글의 댓글들을 조회하는 함수.
-     * 사용자에게 보여지는 정보를 요청할 때는 보안 및 데이터 노출을 피하기 위해 POST 요청하였음.
      * */
-    function get_board_comment(_board_no) {
-        // '/ajax/get_board_comment' 주소로 POST 요청을 보냄
-        fetch('/ajax/get_board_comment', {
-            method: 'POST', // POST 메서드를 사용
+    function get_board_comment(boardNo) {
+        fetch(backendURL + '/comment/?boardNo=' + boardNo, {
+            method: 'GET', // Use the GET method
             headers: {
-                'Content-Type': 'application/json' // 요청의 헤더에 JSON 형식을 사용하도록 지정
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                board_idx: _board_no // 요청 본문에 게시판 번호를 JSON 형식으로 포함
-            })
         })
             .then(response => {
                 // 응답이 성공적인지 확인
@@ -391,7 +386,6 @@
             })
             .then(result => {
                 // 성공적으로 JSON 데이터를 받아 처리한 후 실행됨
-                console.log("result", result);
                 var comments = build_comment_hierarchy(result); // 계층적인 댓글 구조를 생성
                 display_comments(comments); // 댓글을 화면에 표시
             })
