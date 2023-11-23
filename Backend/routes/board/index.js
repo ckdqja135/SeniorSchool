@@ -1,6 +1,6 @@
 var express = require('express');
 const router = express.Router();
-const { UnivBoard, UnivBoardDetail,sequelize } = require('../../model/index');
+const { UnivBoard, UnivBoardDetail,sequelize, UnivComment } = require('../../model/index');
 // Sequelize 쿼리 로거 활성화
 sequelize.options.logging = console.log;
 router.get('/',async (req,res) => {
@@ -126,6 +126,69 @@ router.put('/correct', async (req, res) => {
             await transaction.commit();
 
             return res.status(200).json({ success: true, message: 'Board updated successfully' });
+        } catch (error) {
+            // 트랜잭션 롤백
+            await transaction.rollback();
+            throw error;
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+router.delete('/delete', async (req, res) => {
+    try {
+        const { boardNo, writerPw } = req.body;
+
+        // 트랜잭션 시작
+        const transaction = await sequelize.transaction();
+
+        try {
+            // board_detail 조회
+            const detailResult = await UnivBoardDetail.findOne({
+                where: {
+                    BoardNo: boardNo,
+                    WriterPw: writerPw
+                },
+                transaction
+            });
+
+            if (detailResult) {
+                // UnivBoardDetail.destroy 실행
+                await UnivBoardDetail.destroy({
+                    where: {
+                        BoardNo: boardNo,
+                        WriterPw: writerPw
+                    },
+                    transaction
+                });
+
+                // UnivBoard.destroy 실행
+                const boardResult = await UnivBoard.destroy({
+                    where: {
+                        BoardNo: boardNo
+                    },
+                    transaction
+                });
+
+                // UnivBoardComment.destroy 실행
+                await UnivComment.destroy({
+                    where: {
+                        BoardNo: boardNo
+                    },
+                    transaction
+                });
+
+                // 트랜잭션 커밋
+                await transaction.commit();
+
+                return res.status(200).json({ success: true, message: 'Board deleted successfully' });
+            } else {
+                // detailResult가 없으면 롤백
+                await transaction.rollback();
+                return res.status(400).json({ error: 'No matching record found for boardId and writerPw' });
+            }
         } catch (error) {
             // 트랜잭션 롤백
             await transaction.rollback();
