@@ -733,12 +733,12 @@
         $('#delete_check_Modal').modal('show');
     }
 
-    // 글 삭제 버튼 이벤트.
+    // 게시글 삭제 버튼 이벤트.
     function delete_board_event() {
             //값 셋팅
         var objParams = {
-            board_idx        : window.location.href.split('/')[4],
-            writer_password  : sha256($("#writer_pw").val().trim())
+            boardNo        : window.location.href.split('/')[4],
+            writerPw       : sha256($("#writer_pw").val().trim())
         };
 
         if($("#writer_pw").val().trim() == '') {
@@ -747,20 +747,20 @@
         } else {
             //ajax 호출 (여기에 댓글을 저장하는 로직을 개발)
             $.ajax({
-                url         :   "/ajax/delete_board",
-                type        :   "POST",
+                url         :   backendURL + "/board/delete",
+                type        :   "DELETE",
                 data        :   objParams,
                 success     :   function(result){
                     // console.log(result)
-                if (result[0].affectedRows > 0 ) {
-                    jQuery.noConflict();
-                    $('#delete_check_Modal').modal('hide');
-                    $('#Delete_Modal').modal('show');
-                } else {
-                    jQuery.noConflict();
-                    $('#delete_check_Modal').modal('hide');
-                    $('#FailModal').modal('show');
-                }
+                    if (result.success === true ) {
+                        jQuery.noConflict();
+                        $('#delete_check_Modal').modal('hide');
+                        $('#Delete_Modal').modal('show');
+                    } else {
+                        jQuery.noConflict();
+                        $('#delete_check_Modal').modal('hide');
+                        $('#FailModal').modal('show');
+                    }
                 },
 
                 error       :   function(request, status, error){
