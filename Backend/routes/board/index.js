@@ -1,7 +1,8 @@
 var express = require('express');
 const router = express.Router();
 const { UnivBoard, UnivBoardDetail,sequelize } = require('../../model/index');
-
+// Sequelize 쿼리 로거 활성화
+sequelize.options.logging = console.log;
 router.get('/',async (req,res) => {
     try {
         let univNo = req.query.UnivNo;
@@ -102,7 +103,38 @@ router.post('/insert', async (req, res) => {
     }
 });
 
+router.put('/correct', async (req, res) => {
+    try {
+        const { boardNo, boardContent, writerPw } = req.body;
+        // 트랜잭션 시작
+        console.log("Dddd ", boardNo, boardContent, writerPw)
+        const transaction = await sequelize.transaction();
 
+        try {
 
+            const result = await UnivBoardDetail.update(
+                { BoardContent: boardContent },
+                {
+                    where: {
+                        BoardNo: boardNo,
+                        WriterPw: writerPw
+                    }
+                }
+            );
+
+            // 트랜잭션 커밋
+            await transaction.commit();
+
+            return res.status(200).json({ success: true, message: 'Board updated successfully' });
+        } catch (error) {
+            // 트랜잭션 롤백
+            await transaction.rollback();
+            throw error;
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 
 module.exports = router;
