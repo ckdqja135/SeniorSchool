@@ -151,23 +151,23 @@
 
             //값 셋팅
             var objParams = {
-                board_idx       : window.location.href.split('/')[4],
-                parent_idx       : $(this).attr("reply_id"), 
-                depth           : "1",
-                reply_writer    : reply_reply_writer.val(),
-                reply_password  : sha256(reply_reply_password.val().trim()),
-                reply_content   : reply_reply_content_val,
-                reply_like : 0
+                boardNo           : window.location.href.split('/')[4],
+                parentId         : $(this).attr("reply_id"),
+                depth             : 1,
+                commentWriter     : reply_reply_writer.val(),
+                commentPw         : sha256(reply_reply_password.val().trim()),
+                commentContent    : reply_reply_content_val,
+                commentLike       : 0
             };
-            console.log("objParams", objParams)
+
             var reply_id;
 
             $.ajax({
-                url         :   "/ajax/nested_comment",
+                url         :   backendURL + "/comment/insert",
                 type        :   "post",
                 data        :   objParams,
                 success     :   function(result){
-                if(result.length > 0) {
+                if(result.success === true) {
                     console.log(result)
                     reply_id = result.insertId; 
     
@@ -299,8 +299,8 @@
         } else {
             //ajax 호출
             $.ajax({
-                url         :   "/ajax/correct_comments",
-                type        :   "post",
+                url         :   backendURL + "/comment/modify",
+                type        :   "put",
                 data        :   objParams,
                 success     :   function(result){
                     if (result.affectedRows > 0) {
@@ -337,7 +337,6 @@
             .then(result => {
                 let boardBody = $(".modal-body");
                 if (result) {
-                    console.log("result" , result);
                     var str = `
                     <h2 class="board_title"> ${result.BoardTitle} </h2>
                     <h2 class="hits"> ${result.BoardHits}</h2>
@@ -387,6 +386,7 @@
             .then(result => {
                 // 성공적으로 JSON 데이터를 받아 처리한 후 실행됨
                 var comments = build_comment_hierarchy(result); // 계층적인 댓글 구조를 생성
+
                 display_comments(comments); // 댓글을 화면에 표시
             })
             .catch(error => {
@@ -401,33 +401,32 @@
     function build_comment_hierarchy(comments) {
         // 댓글을 ID를 기준으로 매핑할 객체
         const commentMap = {};
-
         // 모든 댓글을 commentMap에 추가하고 부모-자식 관계 설정
+
         comments.forEach(comment => {
             // children 배열 생성
-            comment.children = []; 
-
+            comment.children = [];
             // commentMap에 댓글 추가
+
             commentMap[comment.CommentId] = comment;
             // 부모 댓글이 있는 경우, 부모 댓글의 children 배열에 자신 추가
             if (comment.CommentDepth !== "0") {
-                const parentComment = commentMap[comment.Commnetperent];
-
+                const parentComment = commentMap[comment.CommnetPerent];
                 if (parentComment) {
+
                     parentComment.children.push(comment);
                 }
             }
         });
-
         const rootComments = [];
 
         // 최상위 댓글 찾기
         comments.forEach(comment => {
-            if (comment.CommentDepth === "0") {
+            if (comment.CommentDepth === 0) {
                 rootComments.push(comment);
             }
         });
-    
+
         return rootComments;
     }
     
@@ -439,7 +438,7 @@
             // 댓글의 HTML 코드를 저장할 변수
             let commentHTML = '';
         // 댓글의 깊이가 0일 경우
-        if (comment.CommentDepth == "0") {
+        if (comment.CommentDepth === 0) {
             commentHTML += `<tr reply_type="main">
                                 <td width="800px" style="word-break:break-all">
                                     <textarea type="text" class="comment-form-control" id="comment_content_${comment.CommentId}" readonly="true">${comment.CommentContent}</textarea>
@@ -461,7 +460,7 @@
                             </tr>;`
             }
             // 댓글의 깊이가 1일 경우 (대댓글)
-            if (comment.CommentDepth == "1") {
+            if (comment.CommentDepth === 1) {
                 commentHTML += `<tr reply_type="sub">
                                     <td width="820px"> →
                                         <textarea type="text" class="comment-form-control" id="reply_reply_content_${comment.CommentId}" readonly="true">${comment.CommentContent}</textarea>
@@ -537,55 +536,55 @@
             }
 
             //개행처리
-            let comment_content = $("#reply_content").val().replace("\n", "<br>");
+            let commentContent = $("#reply_content").val().replace("\n", "<br>");
             // 댓글 id
             let comment_id;
             
             //값 셋팅
             let objParams = {
-                board_idx        : window.location.href.split('/')[4],
-                parent_id       : "0",  
-                depth           : "0",
-                comment_writer    : $("#reply_writer").val().trim(),
-                comment_password  : sha256($("#reply_password").val().trim()),
-                comment_content   : comment_content,
-                comment_like      : 0
+                boardNo          : window.location.href.split('/')[4],
+                parentId         : 0,
+                depth            : 0,
+                commentWriter    : $("#reply_writer").val().trim(),
+                commentPw        : sha256($("#reply_password").val().trim()),
+                commentContent   : commentContent,
+                commentLike      : 0
             };
 
             $.ajax({
-            url         :   "/ajax/board_comment",
+            url         :   backendURL + "/comment/insert",
             type        :   "post",
             data        :   objParams,
             success     :   function(result){
-            if(result.length > 0) {
+            if(result.success === true) {
                 console.log(result)
-                comment_id = result[0].insertId; 
-            let comment_area = $("#reply_area");
+                commentId = result.insertId;
+            let commentArea = $("#reply_area");
             let comment = 
                 `<tr reply_type="main">
                     <td width="800px" style="word-break:break-all">
-                        ${comment_content}
+                        ${commentContent}
                     </td>
                     <td width="100px">
                         ${$("#reply_writer").val()}
                     </td>
                     <td width="100px">
                         <form>
-                            <input type="password" id="reply_password_${comment_id}" style="width:100px;" maxlength="10" placeholder="패스워드" autoComplete="off"/>
+                            <input type="password" id="reply_password_${commentId}" style="width:100px;" maxlength="10" placeholder="패스워드" autoComplete="off"/>
                         </form>
-                        <button type="button" class="btn btn-danger" id="delete_btn_${comment_id}" onclick="del_comment(${comment_id});">삭제</button>
-                        <button type="button" class="btn btn-warning" id="modify_btn_${comment_id}" onclick="correct_comments(${comment_id});">수정</button>
-                        <button type="button" class="btn btn-success" id="cancel_btn_${comment_id}" onclick="comment_cancel_event(${comment_id});">취소</button>
+                        <button type="button" class="btn btn-danger" id="delete_btn_${commentId}" onclick="del_comment(${commentId});">삭제</button>
+                        <button type="button" class="btn btn-warning" id="modify_btn_${commentId}" onclick="correct_comments(${commentId});">수정</button>
+                        <button type="button" class="btn btn-success" id="cancel_btn_${commentId}" onclick="comment_cancel_event(${commentId});">취소</button>
                     </td>
                     <td width="300px">
-                        <button name="reply_reply" type="button" class="btn btn-primary" reply_id="${comment_id}" id="comment_${comment_id}">댓글</button>
-                        <button name="reply_modify" type="button" class="btn btn-warning" r_type="main" reply_id="${comment_id}" id="mod_${comment_id}">수정</button>
-                        <button name="reply_del" type="button" class="btn btn-danger" reply_id="${comment_id}" onclick="delete_comment_show_event();" id="del_${comment_id}">삭제</button>
+                        <button name="reply_reply" type="button" class="btn btn-primary" reply_id="${commentId}" id="comment_${commentId}">댓글</button>
+                        <button name="reply_modify" type="button" class="btn btn-warning" r_type="main" reply_id="${commentId}" id="mod_${commentId}">수정</button>
+                        <button name="reply_del" type="button" class="btn btn-danger" reply_id="${commentId}" onclick="delete_comment_show_event();" id="del_${commentId}">삭제</button>
                     </td>
                 </tr>`;
 
                 if($('#reply_area').contents().size()==0){
-                    comment_area.append(comment);
+                    commentArea.append(comment);
                 } else {
                     $('#reply_area tr:last').after(comment);
                 }

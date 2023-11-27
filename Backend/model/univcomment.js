@@ -20,7 +20,7 @@ module.exports = class UnivComment extends Sequelize.Model {
                     defaultValue: 0,
                 },
                 CommentDepth: {
-                    type: Sequelize.STRING(45),
+                    type: Sequelize.BIGINT,
                     allowNull: true,
                 },
                 WriterId: {
@@ -32,7 +32,7 @@ module.exports = class UnivComment extends Sequelize.Model {
                     allowNull: false,
                 },
                 CommnetPerent: {
-                    type: Sequelize.STRING(45),
+                    type: Sequelize.BIGINT,
                     allowNull: true,
                 },
                 CommentContent: {
