@@ -35,7 +35,7 @@ Backend서버 실행 순서
 ![](https://github.com/ckdqja135/SeniorSchool/assets/33046341/17ff2b90-5b1c-4877-939b-becdd4a99716)
 
 ### 디테일 페이지
-![](https://github.com/ckdqja135/SeniorSchool/assets/33046341/9b807465-75df-4140-80dd-fa5e160c5735)
+![]([https://github.com/ckdqja135/SeniorSchool/assets/33046341/9b807465-75df-4140-80dd-fa5e160c5735](https://github.com/ckdqja135/SeniorSchool/assets/33046341/652756bb-8af2-4567-919f-78e3fe917cda))
 
 ------------------------------------------
 대학교 리뷰 사이트 백엔드 API 구조 리팩토링 중
