@@ -73,4 +73,30 @@ router.post('/insert', async (req, res) => {
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+router.put('/modify', async (req, res) => {
+    try {
+        const { replyPw, commentNo, commentContent } = req.body;
+
+        // 댓글 업데이트
+        const [updateCount, updateResult] = await UnivComment.update(
+            { CommentContent: commentContent },
+            {
+                where: {
+                    CommentId: commentNo,
+                    WriterPw: replyPw
+                }
+            }
+        );
+
+        if (updateCount > 0) {
+            return res.status(200).json({ success: true, message: 'Comment updated successfully' });
+        } else {
+            return res.status(404).json({ error: 'Comment not found or password incorrect' });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 module.exports = router;

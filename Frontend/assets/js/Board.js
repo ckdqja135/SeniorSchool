@@ -266,13 +266,13 @@
     });
 
     // 댓글 수정 함수
-    function correct_comments(comment_idx) {
+    function correct_comments(commentIdx) {
         // var reply_idx = $(this).attr("reply_id");
-        var r_type = $(this).attr("r_type");
-        var reply_password = sha256($(`#reply_password_${comment_idx}`).val().trim());
-        var comment_content = $(`#comment_content_${comment_idx}`).val();
+        var rType = $(this).attr("r_type");
+        var replyPw = sha256($(`#reply_password_${commentIdx}`).val().trim());
+        var commentContent = $(`#comment_content_${commentIdx}`).val();
 
-        if(r_type=="main"){    
+        if(rType=="main"){
             parent_id = "0";
             depth = "0";
         }else{
@@ -288,12 +288,12 @@
         //패스워드와 아이디를 넘겨 패스워드 확인
         //값 셋팅
         var objParams = {
-            reply_pw  : reply_password,
-            reply_idx       : comment_idx,
-            reply_content   : comment_content
+            replyPw        : replyPw,
+            commentNo       : commentIdx,
+            commentContent   : commentContent
         };
 
-        if($(`#reply_password_${comment_idx}`).val().trim() == '') {
+        if($(`#reply_password_${commentIdx}`).val().trim() == '') {
             jQuery.noConflict();
             $('#nullModal').modal('show');
         } else {
@@ -303,15 +303,15 @@
                 type        :   "put",
                 data        :   objParams,
                 success     :   function(result){
-                    if (result.affectedRows > 0) {
+                    if (result.success === true) {
                         console.log(result)
                         jQuery.noConflict();
                         $('#confirmModal').modal('hide');
                         $('#correctModal').modal('show');
-                        $(`#comment_content_${comment_idx}`).attr('readonly', true);
-                        $(`#reply_password_${comment_idx}`).hide();
-                        $(`#modify_btn_${comment_idx}`).hide();
-                        $(`#cancel_btn_${comment_idx}`).hide();
+                        $(`#comment_content_${commentIdx}`).attr('readonly', true);
+                        $(`#reply_password_${commentIdx}`).hide();
+                        $(`#modify_btn_${commentIdx}`).hide();
+                        $(`#cancel_btn_${commentIdx}`).hide();
                     } else {
                         jQuery.noConflict();
                         $('#confirmModal').modal('hide');
