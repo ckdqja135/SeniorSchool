@@ -99,4 +99,31 @@ router.put('/modify', async (req, res) => {
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+router.put('/delete', async (req, res) => {
+    try {
+        const { commentPw, commentNo } = req.body;
+
+        // 댓글 삭제
+        const [updateCount, updateResult] = await UnivComment.update(
+            { CommentContent: '작성자가 삭제한 글입니다.' },
+            {
+                where: {
+                    CommentId: commentNo,
+                    WriterPw: commentPw
+                }
+            }
+        );
+
+        if (updateCount > 0) {
+            return res.status(200).json({ success: true, message: 'Comment deleted successfully' });
+        } else {
+            return res.status(404).json({ error: 'Comment not found or password incorrect' });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 module.exports = router;

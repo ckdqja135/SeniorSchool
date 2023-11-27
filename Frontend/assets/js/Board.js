@@ -198,10 +198,10 @@
                     //댓글 초기화
                     reply_reply_writer.val("");
                     reply_reply_content.val("");
-                    $(`#reply_reply_password${result.parent_idx}`).hide();
-                    $(`#delete_btn_${result.parent_idx}`).hide();
-                    $(`#cancel_btn_${result.parent_idx}`).hide();
-                    $(`#modify_btn_${result.parent_idx}`).hide();
+                    $(`#reply_reply_password${result.parentId}`).hide();
+                    $(`#delete_btn_${result.parentId}`).hide();
+                    $(`#cancel_btn_${result.parentId}`).hide();
+                    $(`#modify_btn_${result.parentId}`).hide();
                     $("#reply_reply_password").hide();
                     $("#reply_add").remove();
                 }
@@ -228,8 +228,8 @@
         //패스워드와 인덱스 넘겨 삭제를 한다.
         //값 셋팅
         var objParams = {
-                reply_pw         : sha256($(`#reply_password_${comment_id}`).val().trim()),
-                reply_idx        : comment_idx
+                commentPw         : sha256($(`#reply_password_${comment_id}`).val().trim()),
+                commentNo         : comment_idx
         };
 
         if($(`#reply_password_${comment_id}`).val().trim() == '') {
@@ -238,11 +238,11 @@
         } else {
             //ajax 호출
             $.ajax({
-                url         :   "/ajax/delete_comment",
-                type        :   "post",
+                url         :   backendURL + "/comment/delete",
+                type        :   "put",
                 data        :   objParams,
                 success     :   function(result){
-                    if(result.affectedRows > 0) {
+                    if(result.success === true) {
                         jQuery.noConflict();
                         $('#confirmModal').modal('hide');
                         $('#DeleteModal').modal('show');
