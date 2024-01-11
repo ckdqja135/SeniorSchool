@@ -207,7 +207,7 @@
                 }
             },
                 error       :   function(request, status, error){
-                    console.log("AJAX_ERROR");
+                    console.log("AJAX_ERROR", request);
                 }
             });
         });
