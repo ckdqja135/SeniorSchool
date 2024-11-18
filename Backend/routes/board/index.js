@@ -105,22 +105,30 @@ router.post('/insert', async (req, res) => {
 router.put('/correct', async (req, res) => {
     try {
         const { boardNo, boardContent, writerPw } = req.body;
+
         // 트랜잭션 시작
         const transaction = await sequelize.transaction();
 
         try {
 
-            const result = await UnivBoardDetail.update(
+            const [affectedCount] = await UnivBoardDetail.update(
                 { BoardContent: boardContent },
                 {
                     where: {
                         BoardNo: boardNo,
                         WriterPw: writerPw
-                    }
+                    },
+                    transaction
                 }
             );
+            console.log("affectedCount ", affectedCount);
 
-            // 트랜잭션 커밋
+            if (affectedCount === 0) {
+                // 조건에 맞는 데이터가 없는 경우 롤백
+                await transaction.rollback();
+                return res.status(404).json({ success: false, message: 'No matching board found' });
+            }
+
             await transaction.commit();
 
             return res.status(200).json({ success: true, message: 'Board updated successfully' });
