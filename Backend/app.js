@@ -6,10 +6,11 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var fs = require('fs');
-const routes = require('./routes/index');
+const routes = require('./routes/delete');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 var app = express();
+
 app.use(bodyParser.json()); // JSON 형태의 요청 body를 파싱
 app.use(bodyParser.urlencoded({ extended: true })); // URL-encoded 형태의 요청 body를 파싱
 
@@ -22,11 +23,16 @@ app.use('/', routes);
 
 // log 기록하기
 app.use(
-  logger('common', {
-    stream: fs.createWriteStream('./access.log', { flags: 'a' }) 
-		// flags : a => 로그를 계속 덧붙인다
-  })
+    logger('common', {
+        stream: fs.createWriteStream('./access.log', { flags: 'a' })
+    // flags : a => 로그를 계속 덧붙인다
+    })
 );
+
+app.use((err, req, res, next) => {
+    res.status(err.status || 500);
+    res.json({ message: err.message, error: err });
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

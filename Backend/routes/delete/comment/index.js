@@ -1,6 +1,6 @@
 var express = require('express');
 const router = express.Router();
-const { UnivComment, sequelize } = require('../../model/index');
+const { UnivComment, sequelize } = require('../../../model');
 
 router.get('/', async (req, res) => {
     try {

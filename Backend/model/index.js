@@ -32,5 +32,19 @@ UnivBoard.associate(db);
 University.associate(db);
 UnivBoardDetail.associate(db);
 UnivComment.associate(db);
+sequelize.authenticate()
+    .then(() => console.log('데이터베이스 연결 성공'))
+    .catch((error) => console.error('데이터베이스 연결 실패:', error));
+
+// 모든 테이블 동기화
+// sequelize.sync({ force: true })
+//     .then(() => {
+//         console.log('모든 테이블이 성공적으로 생성되었습니다.');
+//     })
+//     .catch(error => {
+//         console.error('테이블 생성 중 에러 발생:', error);
+//     });
+
+
 // const createTableSQL = UnivComment.sync({ force: true }).toString();
 module.exports = db;

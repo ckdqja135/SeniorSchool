@@ -1,6 +1,6 @@
 var express = require('express');
 const router = express.Router();
-const { UnivBoard, UnivBoardDetail,sequelize, UnivComment } = require('../../model/index');
+const { UnivBoard, UnivBoardDetail,sequelize, UnivComment } = require('../../../model');
 // Sequelize 쿼리 로거 활성화
 sequelize.options.logging = console.log;
 router.get('/',async (req,res) => {
