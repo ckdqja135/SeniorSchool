@@ -1,5 +1,7 @@
 (function (window) {
-    let backendURL = 'http://localhost:3000';  // 백엔드의 주소
+    const backendPort = 3000; // 백엔드 포트
+    const backendURL = `${window.location.protocol}//${window.location.hostname}:${backendPort}`;
+
     $(document).ready(function(){
         get_board();
     });

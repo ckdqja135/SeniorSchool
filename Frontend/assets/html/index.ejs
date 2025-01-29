@@ -45,7 +45,8 @@
                                 $( "#search" ).autocomplete({
                                     source: function(request, response) {
                                         var keyword = $("#search").val();
-                                        var backendURL = 'http://localhost:3000';  // 백엔드의 주소
+                                        const backendPort = 3000; // 백엔드 포트
+                                        const backendURL = `${window.location.protocol}//${window.location.hostname}:${backendPort}`;
 
                                         $.ajax({
                                             url : backendURL + '/search/auto',
