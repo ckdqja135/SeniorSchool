@@ -4,6 +4,8 @@ const University = require('./universityinfo');
 const UnivBoardDetail = require('./univBoardDetail');
 const UnivComment = require('./univcomment');
 const config = require('../conf/sequelize');
+const logger = require('../utils/logger');
+
 const db = {};
 
 const sequelize = new Sequelize(config.database, config.username, config.password, {
@@ -13,7 +15,7 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
             requestTimeout: 3000
         }
     },
-    logging: console.log
+    logging: (msg) => logger.info(msg)  // Sequelize 쿼리 로그도 PM2에 기록
 });
 
 db.sequelize = sequelize;
@@ -33,8 +35,8 @@ University.associate(db);
 UnivBoardDetail.associate(db);
 UnivComment.associate(db);
 sequelize.authenticate()
-    .then(() => console.log('데이터베이스 연결 성공'))
-    .catch((error) => console.error('데이터베이스 연결 실패:', error));
+    .then(() => logger.info('✅ 데이터베이스 연결 성공'))
+    .catch((error) => logger.error(`❌ 데이터베이스 연결 실패: ${error.message}`));
 
 // 모든 테이블 동기화
 // sequelize.sync({ force: true })
