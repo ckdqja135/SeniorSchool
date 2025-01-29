@@ -1,4 +1,5 @@
 const commentService = require('../service/commentService');
+const logger = require('../utils/logger'); // Winston 기반 로거 추가
 
 exports.getComments = async (req, res) => {
     try {
@@ -11,7 +12,7 @@ exports.getComments = async (req, res) => {
         const comments = await commentService.getComments(boardNo);
         return res.status(200).json(comments);
     } catch (error) {
-        console.error(error);
+        logger.error(`[getComments] ${error.message}`);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -42,7 +43,7 @@ exports.insertComment = async (req, res) => {
         await commentService.insertComment(commentData);
         return res.status(200).json({ success: true, message: 'Comment inserted successfully' });
     } catch (error) {
-        console.error(error);
+        logger.error(`[insertComment] ${error.message}`);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -59,7 +60,7 @@ exports.modifyComment = async (req, res) => {
             return res.status(404).json({ error: 'Comment not found or password incorrect' });
         }
     } catch (error) {
-        console.error(error);
+        logger.error(`[modifyComment] ${error.message}`);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -76,7 +77,7 @@ exports.deleteComment = async (req, res) => {
             return res.status(404).json({ error: 'Comment not found or password incorrect' });
         }
     } catch (error) {
-        console.error(error);
+        logger.error(`[deleteComment] ${error.message}`);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 };

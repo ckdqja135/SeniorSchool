@@ -1,47 +1,44 @@
-var createError = require('http-errors');
+const createError = require('http-errors');
 const helmet = require('helmet');
-var express = require('express');
+const express = require('express');
 const cors = require('cors');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-var fs = require('fs');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('./utils/logger'); // winston 기반 로거 추가
 const routes = require('./routes/delete');
 require('dotenv').config();
 const bodyParser = require('body-parser');
-var app = express();
 
-app.use(bodyParser.json()); // JSON 형태의 요청 body를 파싱
-app.use(bodyParser.urlencoded({ extended: true })); // URL-encoded 형태의 요청 body를 파싱
+const app = express();
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(logger('dev'));
-app.use(cors({
-    origin: '*', // 모든 출처 허용 옵션. true 를 써도 된다.
-}));
+// CORS 설정
+app.use(cors({ origin: '*' }));
+
+// 요청 로깅 (모든 요청 기록)
+app.use((req, res, next) => {
+    logger.info(`${req.method} ${req.url}`);
+    next();
+});
+
+// API 경로 연결
 app.use('/', routes);
 
-// log 기록하기
-app.use(
-    logger('common', {
-        stream: fs.createWriteStream('./access.log', { flags: 'a' })
-    // flags : a => 로그를 계속 덧붙인다
-    })
-);
-
+// Winston 기반 요청 로그 기록
 app.use((err, req, res, next) => {
+    logger.error(`[${req.method}] ${req.url} - ${err.message}`);
     res.status(err.status || 500);
     res.json({ message: err.message, error: err });
 });
 
+// JSON & URL 파싱
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// use routes
-
-// security 처리
-// helmet -> Header 설정 바꿔주는 Module.
+// Helmet 보안 설정
 app.use(helmet());
 app.use(helmet.contentSecurityPolicy());
 app.use(helmet.crossOriginEmbedderPolicy());
@@ -59,13 +56,5 @@ app.use(helmet.permittedCrossDomainPolicies());
 app.use(helmet.referrerPolicy());
 app.use(helmet.xssFilter());
 app.disable('x-powered-by');
-// CORS 처리
-// const corsOptions = {
-//     origin: 'http://localhost:3001', // 허용할 도메인
-//     optionsSuccessStatus: 200, // CORS preflight 응답 성공 상태
-// };
-
-
-
 
 module.exports = app;
