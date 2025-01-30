@@ -1,6 +1,6 @@
 (function (window) {
     const backendPort = window.location.hostname.startsWith('192.168.') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 3000 : 6000;
+        ? 3000 : 9000;
     const backendURL = `${window.location.protocol}//${window.location.hostname}:${backendPort}`;
     function likeEvent() {
         let heartSpan = document.querySelectorAll('.icon');
