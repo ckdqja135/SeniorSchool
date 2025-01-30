@@ -1,5 +1,6 @@
 (function (window) {
-    const backendPort = 3000; // 백엔드 포트
+    const backendPort = window.location.hostname.startsWith('192.168.') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 3000 : 6000;
     const backendURL = `${window.location.protocol}//${window.location.hostname}:${backendPort}`;
 
     $(document).ready(function(){
