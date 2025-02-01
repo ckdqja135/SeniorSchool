@@ -55,6 +55,14 @@ app.use(helmet.originAgentCluster());
 app.use(helmet.permittedCrossDomainPolicies());
 app.use(helmet.referrerPolicy());
 app.use(helmet.xssFilter());
+
+app.use(
+    helmet({
+        contentSecurityPolicy: false,
+        crossOriginResourcePolicy: false,
+    })
+);
+
 app.disable('x-powered-by');
 
 module.exports = app;
