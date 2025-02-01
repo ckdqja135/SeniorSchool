@@ -5,7 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('./utils/logger'); // winston 기반 로거 추가
-const routes = require('./routes/delete');
+const routes = require('./routes');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 
