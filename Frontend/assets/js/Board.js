@@ -1,5 +1,8 @@
 (function (window) {
-    let backendURL = 'http://localhost:3000';  // 백엔드의 주소
+    const backendPort = window.location.hostname.startsWith('192.168.') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 3000 : 9000;
+    const backendURL = `${window.location.protocol}//${window.location.hostname}:${backendPort}`;
+
     $(document).ready(function(){
         get_board();
     });
@@ -626,6 +629,7 @@
             jQuery.noConflict();
             $('#nullModal').modal('show');
         } else {
+            console.log("backendURL ", backendURL)
             //ajax 호출 (여기에 댓글을 저장하는 로직을 개발)
             $.ajax({
                 url         :   backendURL + "/board/correct",
@@ -633,6 +637,7 @@
                 data        :   objParams,
                 success     :   function(result){
                 if(result.success === true) {
+                    console.log("result.success ", result)
                     jQuery.noConflict();
                     $('#confirmModal').modal('hide');
                     $('#correctModal').modal('show');
@@ -642,15 +647,23 @@
                     $('#correct_btn').hide();
                     $('.input-group').hide();
                     $('#settings').show();
-                    $(`#comment_content_${commentId}`).css('border', 'none');
+                    // $(`#comment_content_${commentId}`).css('border', 'none');
                 } else {
                     jQuery.noConflict();
                     $('#confirmModal').modal('hide');
                     $('#FailModal').modal('show');
                 }
             },
-                error       :   function(request, status, error){
-                    console.log("AJAX_ERROR");
+                error: function(request, status, error) {
+                    if (request.status === 404) { // 서버가 404를 반환한 경우
+                        const response = JSON.parse(request.responseText); // JSON 파싱
+                        console.log("Error Message: ", response.message);
+                        jQuery.noConflict();
+                        $('#confirmModal').modal('hide');
+                        $('#FailModal').modal('show');
+                    } else {
+                        console.log("Unexpected error: ", error);
+                    }
                 }
             });
         }
@@ -756,8 +769,16 @@
                     }
                 },
 
-                error       :   function(request, status, error){
-                    console.log("AJAX_ERROR");
+                error: function(request, status, error) {
+                    if (request.status === 404) { // 서버가 404를 반환한 경우
+                        const response = JSON.parse(request.responseText); // JSON 파싱
+                        console.log("Error Message: ", response.message);
+                        jQuery.noConflict();
+                        $('#delete_check_Modal').modal('hide');
+                        $('#FailModal').modal('show');
+                    } else {
+                        console.log("Unexpected error: ", error);
+                    }
                 }
             });
         }

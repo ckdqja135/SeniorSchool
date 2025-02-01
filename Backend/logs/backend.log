@@ -1,0 +1,12 @@
+2025-01-30 00:13:03 [INFO] Executing (default): SELECT 1+1 AS result
+2025-01-30 00:13:03 [INFO] ✅ 데이터베이스 연결 성공
+2025-01-30 00:13:18 [INFO] Executing (default): SELECT 1+1 AS result
+2025-01-30 00:13:18 [INFO] ✅ 데이터베이스 연결 성공
+2025-02-01 12:27:09 [INFO] Executing (default): SELECT 1+1 AS result
+2025-02-01 12:27:09 [INFO] ✅ 데이터베이스 연결 성공
+2025-02-01 12:27:34 [INFO] Executing (default): SELECT 1+1 AS result
+2025-02-01 12:27:34 [INFO] ✅ 데이터베이스 연결 성공
+2025-02-01 12:28:33 [INFO] Executing (default): SELECT 1+1 AS result
+2025-02-01 12:28:33 [INFO] ✅ 데이터베이스 연결 성공
+2025-02-01 12:33:25 [INFO] Executing (default): SELECT 1+1 AS result
+2025-02-01 12:33:25 [INFO] ✅ 데이터베이스 연결 성공

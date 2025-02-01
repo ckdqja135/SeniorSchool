@@ -1,10 +1,13 @@
-var express = require('express');
-const board = require('./board/index');
-const search = require('./search/index');
-const comment = require('./comment/index');
+const express = require('express');
 const router = express.Router();
+const boardRouter = require('./board.router');
+const searchRouter = require('./search.router');
+const commentRouter = require('./search.router');
+const adminRouter = require('./admin/index');
 
-router.use('/board', board);
-router.use('/search', search);
-router.use('/comment', comment);
+router.use('/board', boardRouter);
+router.use('/search', searchRouter);
+router.use('/comment', commentRouter);
+router.use('/admin', adminRouter);
+
 module.exports = router;
