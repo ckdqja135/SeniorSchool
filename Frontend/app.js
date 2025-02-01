@@ -31,7 +31,7 @@ app.use(cookieParser());
 
 // use routes
 app.use('/', require('./routes/index'));
-app.use('/search=?', require('./routes/schoolPage'));
+app.use('/search=?', require('./routes/schoolpage'));
 app.use('/ajax/:func', require('./routes/ajax_func'));
 app.use('/board', require('./routes/board'));
 
