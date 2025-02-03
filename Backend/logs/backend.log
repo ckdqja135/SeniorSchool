@@ -2,3 +2,41 @@
 2025-01-30 00:13:03 [INFO] ✅ 데이터베이스 연결 성공
 2025-01-30 00:13:18 [INFO] Executing (default): SELECT 1+1 AS result
 2025-01-30 00:13:18 [INFO] ✅ 데이터베이스 연결 성공
+2025-02-03 23:11:55 [INFO] ✅ 데이터베이스 연결 성공
+2025-02-03 23:12:10 [INFO] GET /search?name=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90
+2025-02-03 23:12:59 [INFO] GET /search?name=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90
+2025-02-03 23:13:33 [INFO] ✅ 데이터베이스 연결 성공
+2025-02-03 23:13:35 [INFO] GET /search?name=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90
+2025-02-03 23:13:37 [INFO] GET /search?name=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90
+2025-02-03 23:14:03 [INFO] GET /search/school?univName=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90
+2025-02-03 23:14:03 [INFO] 조회
+2025-02-03 23:14:03 [ERROR] [searchService.getSchoolInfo] Error: (conn=9, no: 1054, SQLState: 42S22) Unknown column 'UnivStatus' in 'field list'
+sql: SELECT `UnivNo`, `UnivName`, `UnivLocate`, `UnivType`, `UnivEstablish`, `UnivPresident`, `UnivCampos`, `UnivLateX`, `UnivLateY`, `UnivPageURL`, `UnivIMG`, `UnivLotAddr`, `UnivAddr`, `UnivMapIMG`, `UnivStatus`, `UnivViewCount` FROM `tb_universityinfo` AS `U... - parameters:[]
+2025-02-03 23:14:03 [ERROR] [getSchoolInfo] (conn=9, no: 1054, SQLState: 42S22) Unknown column 'UnivStatus' in 'field list'
+sql: SELECT `UnivNo`, `UnivName`, `UnivLocate`, `UnivType`, `UnivEstablish`, `UnivPresident`, `UnivCampos`, `UnivLateX`, `UnivLateY`, `UnivPageURL`, `UnivIMG`, `UnivLotAddr`, `UnivAddr`, `UnivMapIMG`, `UnivStatus`, `UnivViewCount` FROM `tb_universityinfo` AS `U... - parameters:[]
+2025-02-03 23:18:19 [INFO] ✅ 데이터베이스 연결 성공
+2025-02-03 23:18:24 [INFO] ✅ 데이터베이스 연결 성공
+2025-02-03 23:18:28 [INFO] GET /search/school?univName=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90
+2025-02-03 23:18:28 [INFO] 조회
+2025-02-03 23:18:28 [INFO] [getSchoolInfo] 대학교 검색 완료: 서울대학교
+2025-02-03 23:18:28 [INFO] GET /board/?UnivNo=1
+2025-02-03 23:18:36 [INFO] GET /search/school?univName=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90
+2025-02-03 23:18:36 [INFO] 조회
+2025-02-03 23:18:36 [INFO] [getSchoolInfo] 대학교 검색 완료: 서울대학교
+2025-02-03 23:18:36 [INFO] GET /board/?UnivNo=1
+2025-02-03 23:18:36 [INFO] GET /search/school?univName=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90
+2025-02-03 23:18:36 [INFO] 조회
+2025-02-03 23:18:36 [INFO] [getSchoolInfo] 대학교 검색 완료: 서울대학교
+2025-02-03 23:18:36 [INFO] GET /board/?UnivNo=1
+2025-02-03 23:18:37 [INFO] GET /search/school?univName=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90
+2025-02-03 23:18:37 [INFO] 조회
+2025-02-03 23:18:37 [INFO] [getSchoolInfo] 대학교 검색 완료: 서울대학교
+2025-02-03 23:18:37 [INFO] GET /board/?UnivNo=1
+2025-02-03 23:18:37 [INFO] GET /search/school?univName=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90
+2025-02-03 23:18:37 [INFO] 조회
+2025-02-03 23:18:37 [INFO] [getSchoolInfo] 대학교 검색 완료: 서울대학교
+2025-02-03 23:18:37 [INFO] GET /board/?UnivNo=1
+2025-02-03 23:18:37 [INFO] GET /search/school?univName=%EC%84%9C%EC%9A%B8%EB%8C%80%ED%95%99%EA%B5%90
+2025-02-03 23:18:37 [INFO] 조회
+2025-02-03 23:18:38 [INFO] [getSchoolInfo] 대학교 검색 완료: 서울대학교
+2025-02-03 23:18:38 [INFO] GET /board/?UnivNo=1
