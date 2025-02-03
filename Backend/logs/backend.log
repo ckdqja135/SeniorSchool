@@ -40,3 +40,11 @@ sql: SELECT `UnivNo`, `UnivName`, `UnivLocate`, `UnivType`, `UnivEstablish`, `Un
 2025-02-03 23:18:37 [INFO] 조회
 2025-02-03 23:18:38 [INFO] [getSchoolInfo] 대학교 검색 완료: 서울대학교
 2025-02-03 23:18:38 [INFO] GET /board/?UnivNo=1
+2025-02-01 12:27:09 [INFO] Executing (default): SELECT 1+1 AS result
+2025-02-01 12:27:09 [INFO] ✅ 데이터베이스 연결 성공
+2025-02-01 12:27:34 [INFO] Executing (default): SELECT 1+1 AS result
+2025-02-01 12:27:34 [INFO] ✅ 데이터베이스 연결 성공
+2025-02-01 12:28:33 [INFO] Executing (default): SELECT 1+1 AS result
+2025-02-01 12:28:33 [INFO] ✅ 데이터베이스 연결 성공
+2025-02-01 12:33:25 [INFO] Executing (default): SELECT 1+1 AS result
+2025-02-01 12:33:25 [INFO] ✅ 데이터베이스 연결 성공
