@@ -1,4 +1,0 @@
-2025-02-03 23:14:03 [ERROR] [searchService.getSchoolInfo] Error: (conn=9, no: 1054, SQLState: 42S22) Unknown column 'UnivStatus' in 'field list'
-sql: SELECT `UnivNo`, `UnivName`, `UnivLocate`, `UnivType`, `UnivEstablish`, `UnivPresident`, `UnivCampos`, `UnivLateX`, `UnivLateY`, `UnivPageURL`, `UnivIMG`, `UnivLotAddr`, `UnivAddr`, `UnivMapIMG`, `UnivStatus`, `UnivViewCount` FROM `tb_universityinfo` AS `U... - parameters:[]
-2025-02-03 23:14:03 [ERROR] [getSchoolInfo] (conn=9, no: 1054, SQLState: 42S22) Unknown column 'UnivStatus' in 'field list'
-sql: SELECT `UnivNo`, `UnivName`, `UnivLocate`, `UnivType`, `UnivEstablish`, `UnivPresident`, `UnivCampos`, `UnivLateX`, `UnivLateY`, `UnivPageURL`, `UnivIMG`, `UnivLotAddr`, `UnivAddr`, `UnivMapIMG`, `UnivStatus`, `UnivViewCount` FROM `tb_universityinfo` AS `U... - parameters:[]
