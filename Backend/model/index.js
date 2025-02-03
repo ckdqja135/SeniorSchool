@@ -16,6 +16,7 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
             requestTimeout: 3000
         }
     },
+    logging: false
     // logging: (msg) => logger.info(msg)  // Sequelize 쿼리 로그도 PM2에 기록
 });
 

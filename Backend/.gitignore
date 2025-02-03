@@ -2,7 +2,8 @@
 .env
 
 # 로그 파일
-access.log
+logs/
+logs/*
 
 # Node.js 모듈 디렉토리
 node_modules/
