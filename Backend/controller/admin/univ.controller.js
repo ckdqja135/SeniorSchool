@@ -1,4 +1,5 @@
 const univService = require('../../service/admin/univ.service');
+const logger = require('../../utils/logger');
 
 exports.createUniv = async (req, res, next) => {
     try {
@@ -9,13 +10,16 @@ exports.createUniv = async (req, res, next) => {
     }
 };
 
-exports.puteUnivStatus = async (req, res, next) => {
+exports.putUnivStatus = async (req, res, next) => {
     try {
-        const { univId } = req.params;
-        const { status } = req.body;
-        const result = await univService.puteUnivStatus(univId, status);
-        return res.status(200).json(result);
-    } catch (e) {
-        next(e);
+        const { univIdx, status } = req.body;
+        logger.info( `hihi : ${univIdx}, ${status}`);
+
+        const result = await univService.puteUnivStatus(univIdx, status);
+
+        // 상태 코드와 메시지 반환
+        return res.status(result.status).json({ message: result.message });
+    } catch (error) {
+        next(error);
     }
 };

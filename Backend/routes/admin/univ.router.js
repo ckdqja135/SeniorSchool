@@ -6,6 +6,6 @@ const univController = require('../../controller/admin/univ.controller');
 router.post('/createUniv', univController.createUniv);
 
 // 학교 상태 변경
-router.put('/puteUnivStatus', univController.puteUnivStatus);
+router.put('/putUnivStatus', univController.putUnivStatus);
 
 module.exports = router;

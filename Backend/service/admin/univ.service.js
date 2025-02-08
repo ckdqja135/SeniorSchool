@@ -1,4 +1,4 @@
-const { university } = require('../../model/index');
+const { University } = require('../../model/index');
 
 const logger = require('../../utils/logger');
 
@@ -13,7 +13,7 @@ exports.createUniv = async (univData) => {
         }
 
         // DB에 데이터 생성
-        const created = await university.create(univData);
+        const created = await University.create(univData);
         logger.info(`[createUniv] 대학교 등록 완료! : ${created._id}`);
 
         return created;
@@ -24,7 +24,35 @@ exports.createUniv = async (univData) => {
     }
 };
 
-exports.puteUnivStatus = async (univId, status) => {
-    // 상태 변경 로직
-    return await university.update(univId, { status }, { new: true });
+// univIdx: UnivNo(대학의 기본키), status: 0 또는 1
+exports.puteUnivStatus = async (univIdx, status) => {
+    logger.info(`university,  ${University}`)
+    try {
+        const [affectedCount] = await University.update(
+            { UnivStatus: status },
+            {
+                where: {
+                    UnivNo: univIdx,
+                },
+            }
+        );
+
+        if (affectedCount === 0) {
+            logger.warn(`[puteUnivStatus] UnivNo=${univIdx} 에 해당하는 로우가 없습니다.`);
+            return {
+                status: 404,
+                message: `UnivNo=${univIdx} 에 해당하는 데이터가 없습니다.`,
+            };
+        }
+
+        logger.info(`[puteUnivStatus] UnivNo=${univIdx} 상태를 ${status} 로 업데이트 성공`);
+
+        return {
+            status: 200,
+            message: `UnivNo=${univIdx}, 상태 변경 완료`,
+        };
+    } catch (error) {
+        logger.error(`[puteUnivStatus] Error: ${error.message}`);
+        throw error; // 컨트롤러로 에러 전달
+    }
 };
