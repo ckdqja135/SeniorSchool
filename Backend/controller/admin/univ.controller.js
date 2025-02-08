@@ -18,7 +18,11 @@ exports.putUnivStatus = async (req, res, next) => {
         const result = await univService.puteUnivStatus(univIdx, status);
 
         // 상태 코드와 메시지 반환
-        return res.status(result.status).json({ message: result.message });
+        return res.status(result.status).json({
+            success: result.status === 200, // 200이면 true, 나머지는 false
+            message: result.message
+        });
+
     } catch (error) {
         next(error);
     }

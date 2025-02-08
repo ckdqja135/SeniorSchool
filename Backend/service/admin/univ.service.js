@@ -37,18 +37,18 @@ exports.puteUnivStatus = async (univIdx, status) => {
         );
 
         if (affectedCount === 0) {
-            logger.warn(`[puteUnivStatus] UnivNo=${univIdx} 에 해당하는 로우가 없습니다.`);
+            logger.warn(`[puteUnivStatus] 업데이트 실패`);
             return {
                 status: 404,
-                message: `UnivNo=${univIdx} 에 해당하는 데이터가 없습니다.`,
+                message: `값을 다시 확인해주세요.`,
             };
         }
 
-        logger.info(`[puteUnivStatus] UnivNo=${univIdx} 상태를 ${status} 로 업데이트 성공`);
+        logger.info(`[puteUnivStatus] UnivNo : ${univIdx} 상태를 ${status} 로 업데이트 성공`);
 
         return {
             status: 200,
-            message: `UnivNo=${univIdx}, 상태 변경 완료`,
+            message: `UnivNo: ${univIdx}, 상태 변경 완료`,
         };
     } catch (error) {
         logger.error(`[puteUnivStatus] Error: ${error.message}`);
