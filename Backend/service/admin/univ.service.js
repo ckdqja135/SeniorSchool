@@ -26,7 +26,6 @@ exports.createUniv = async (univData) => {
 
 // univIdx: UnivNo(대학의 기본키), status: 0 또는 1
 exports.puteUnivStatus = async (univIdx, status) => {
-    logger.info(`university,  ${University}`)
     try {
         const [affectedCount] = await University.update(
             { UnivStatus: status },
