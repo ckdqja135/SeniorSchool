@@ -6,5 +6,6 @@ module.exports = {
     password: process.env.RDB_PASSWORD,
     host: process.env.RDB_HOST,
     port: process.env.RDB_PORT,
-    timezone: '+09:00'
+    timezone: '+09:00',
+    family: 4
 };
