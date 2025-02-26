@@ -3,38 +3,38 @@ const Sequelize = require('sequelize');
 module.exports = class UnivComment extends Sequelize.Model {
     static init(sequelize) {
         return super.init({
-            CommentId: {
+            commentIdx: {
                 type: Sequelize.BIGINT,
                 primaryKey: true,
                 autoIncrement: true,
                 allowNull: false,
             },
-            BoardNo: {
+            boardIdx: {
                 type: Sequelize.BIGINT,
                 allowNull: false,
             },
-            CommentLike: {
+            commentLike: {
                 type: Sequelize.BIGINT,
                 allowNull: false,
                 defaultValue: 0,
             },
-            CommentDepth: {
+            commentDepth: {
                 type: Sequelize.BIGINT,
                 allowNull: true,
             },
-            WriterId: {
+            writerId: {
                 type: Sequelize.STRING(45),
                 allowNull: false,
             },
-            WriterPw: {
+            writerPw: {
                 type: Sequelize.STRING(100),
                 allowNull: false,
             },
-            CommnetPerent: {
+            commnetPerent: {
                 type: Sequelize.BIGINT,
                 allowNull: true,
             },
-            CommentContent: {
+            commentContent: {
                 type: Sequelize.STRING(200),
                 allowNull: false,
             },

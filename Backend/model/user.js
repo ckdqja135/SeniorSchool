@@ -4,22 +4,22 @@ module.exports = class User extends Sequelize.Model {
     static init(sequelize) {
         return super.init(
             {
-                idx: {
+                userIdx: {
                     type: Sequelize.INTEGER,
                     primaryKey: true,
                     autoIncrement: true,
                     allowNull: false,
                 },
-                id: {
+                userId: {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                     unique: true,
                 },
-                pw: {
+                userPw: {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
-                role: {
+                userRole: {
                     type: Sequelize.STRING(50),
                     allowNull: false,
                 },
@@ -27,11 +27,11 @@ module.exports = class User extends Sequelize.Model {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
-                last_login: {
+                lastLogin: {
                     type: Sequelize.DATE,
                     allowNull: true,
                 },
-                status: {
+                userStatus: {
                     type: Sequelize.TINYINT,
                     allowNull: false,
                     defaultValue: 1,

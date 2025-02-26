@@ -1,21 +1,21 @@
 const { UnivBoard, UnivBoardDetail, sequelize, UnivComment } = require('../model/index');
 const logger = require('../utils/logger');
 
-exports.getBoards = async (univNo) => {
-    return await UnivBoard.findAll({ where: { UnivNo: univNo } });
+exports.getBoards = async (univIdx) => {
+    return await UnivBoard.findAll({ where: { UnivNo: univIdx } });
 };
 
-exports.getBoardDetail = async (boardNo) => {
-    const detailBoard = await UnivBoardDetail.findOne({ where: { BoardNo: boardNo } });
+exports.getBoardDetail = async (boardIdx) => {
+    const detailBoard = await UnivBoardDetail.findOne({ where: { BoardIdx: boardIdx } });
 
     // 조회수 증가
     await UnivBoard.update(
         { BoardHits: sequelize.literal('BoardHits + 1') },
-        { where: { BoardNo: boardNo } }
+        { where: { BoardIdx: boardIdx } }
     );
     await UnivBoardDetail.update(
         { BoardHits: sequelize.literal('BoardHits + 1') },
-        { where: { BoardNo: boardNo } }
+        { where: { BoardIdx: boardIdx } }
     );
 
     return detailBoard;
@@ -32,37 +32,37 @@ exports.insertBoard = async (boardData) => {
         // UnivBoard 테이블에 데이터 저장
         const board = await UnivBoard.create(
             {
-                UnivNo: boardData.univNo,
+                UnivIdx: boardData.univIdx,
                 BoardTitle: boardData.boardTitle,
                 BoardRegDate: boardData.boardReg,
                 BoardLike: boardData.boardLike,
-                BoardHits: boardData.board_hits,
-                BoardID: boardData.boardId,
+                BoardHits: boardData.boardHits,
+                BoardIdx: boardData.boardIdx,
                 BoardPW: boardData.boardPw,
             },
             { transaction }
         );
-        logger.debug(`[insertBoard] UnivBoard created. BoardNo: ${board.id}`);
+        logger.debug(`[insertBoard] UnivBoard created. BoardIdx: ${board.idx}`);
 
         // UnivBoardDetail 테이블에 데이터 저장
         const detail = await UnivBoardDetail.create(
             {
-                BoardNo: board.id,
-                UnivNo: boardData.univNo,
+                BoardIdx: board.Idx,
+                UnivNo: boardData.univIdx,
                 BoardContent: boardData.boardContent,
                 BoardRegDate: boardData.boardReg,
                 BoardTitle: boardData.boardTitle,
                 BoardLike: boardData.boardLike,
-                BoardHits: boardData.board_hits,
+                BoardHits: boardData.boardHits,
                 WriterId: boardData.boardId,
                 WriterPw: boardData.boardPw,
             },
             { transaction }
         );
-        logger.debug(`[insertBoard] UnivBoardDetail created. BoardNo: ${detail.BoardNo}`);
+        logger.debug(`[insertBoard] UnivBoardDetail created. BoardIdx: ${detail.BoardIdx}`);
 
         await transaction.commit();
-        logger.info(`[insertBoard] Transaction committed. Board inserted successfully. BoardNo: ${board.id}`);
+        logger.info(`[insertBoard] Transaction committed. Board inserted successfully. BoardIdx: ${board.idx}`);
         return 'Board inserted successfully';
     } catch (error) {
         logger.error(`[insertBoard] Error: ${error.message}. Transaction rollback.`);
@@ -86,7 +86,7 @@ exports.correctBoard = async (boardData) => {
                 { BoardContent: boardData.boardContent },
                 {
                     where: {
-                        BoardNo: boardData.boardNo,
+                        BoardIdx: boardData.boardIdx,
                         WriterPw: boardData.writerPw,
                     },
                     transaction,
@@ -101,7 +101,7 @@ exports.correctBoard = async (boardData) => {
             }
 
             await transaction.commit();
-            logger.info(`[correctBoard] Transaction committed. Board updated successfully. BoardNo: ${boardData.boardNo}`);
+            logger.info(`[correctBoard] Transaction committed. Board updated successfully. BoardIdx: ${boardData.boardIdx}`);
             return 'Board updated successfully';
         } catch (error) {
             logger.error(`[correctBoard] Error: ${error.message}. Transaction rollback.`);
@@ -121,7 +121,7 @@ exports.correctBoard = async (boardData) => {
             // 삭제할 대상이 존재하는지 조회
             const detailResult = await UnivBoardDetail.findOne({
                 where: {
-                    BoardNo: boardData.boardNo,
+                    BoardIdx: boardData.boardIdx,
                     WriterPw: boardData.writerPw,
                 },
                 transaction,
@@ -129,7 +129,7 @@ exports.correctBoard = async (boardData) => {
 
             // 대상이 없으면 롤백
             if (!detailResult) {
-                logger.warn('[deleteBoard] No matching record found for boardNo and writerPw. Rolling back.');
+                logger.warn('[deleteBoard] No matching record found for boardIdx and writerPw. Rolling back.');
                 await transaction.rollback();
                 throw new Error('No matching record found for boardId and writerPw');
             }
@@ -137,29 +137,29 @@ exports.correctBoard = async (boardData) => {
             // UnivBoardDetail 삭제
             await UnivBoardDetail.destroy({
                 where: {
-                    BoardNo: boardData.boardNo,
+                    BoardIdx: boardData.boardIdx,
                     WriterPw: boardData.writerPw,
                 },
                 transaction,
             });
-            logger.debug(`[deleteBoard] UnivBoardDetail deleted. BoardNo: ${boardData.boardNo}`);
+            logger.debug(`[deleteBoard] UnivBoardDetail deleted. BoardIdx: ${boardData.boardIdx}`);
 
             // UnivBoard 삭제
             await UnivBoard.destroy({
-                where: { BoardNo: boardData.boardNo },
+                where: { BoardIdx: boardData.boardIdx },
                 transaction,
             });
-            logger.debug(`[deleteBoard] UnivBoard deleted. BoardNo: ${boardData.boardNo}`);
+            logger.debug(`[deleteBoard] UnivBoard deleted. BoardIdx: ${boardData.boardIdx}`);
 
             // UnivComment 삭제
             await UnivComment.destroy({
-                where: { BoardNo: boardData.boardNo },
+                where: { BoardIdx: boardData.boardIdx },
                 transaction,
             });
-            logger.debug(`[deleteBoard] UnivComment deleted. BoardNo: ${boardData.boardNo}`);
+            logger.debug(`[deleteBoard] UnivComment deleted. BoardIdx: ${boardData.boardIdx}`);
 
             await transaction.commit();
-            logger.info(`[deleteBoard] Transaction committed. Board deleted successfully. BoardNo: ${boardData.boardNo}`);
+            logger.info(`[deleteBoard] Transaction committed. Board deleted successfully. BoardIdx: ${boardData.boardIdx}`);
             return 'Board deleted successfully';
         } catch (error) {
             logger.error(`[deleteBoard] Error: ${error.message}. Transaction rollback.`);

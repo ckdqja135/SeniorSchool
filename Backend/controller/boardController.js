@@ -14,8 +14,8 @@ exports.getBoards = async (req, res, next) => {
 
 exports.getBoardDetail = async (req, res, next) => {
     try {
-        const boardNo = req.query.boardNo;
-        const detailBoard = await boardService.getBoardDetail(boardNo);
+        const boardIdx = req.query.boardIdx;
+        const detailBoard = await boardService.getBoardDetail(boardIdx);
         res.status(200).json(detailBoard);
     } catch (error) {
         logger.error(error);

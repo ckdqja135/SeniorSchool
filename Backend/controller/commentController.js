@@ -3,13 +3,13 @@ const logger = require('../utils/logger'); // Winston 기반 로거 추가
 
 exports.getComments = async (req, res) => {
     try {
-        const { boardNo } = req.query;
+        const { boardIdx } = req.query;
 
-        if (!boardNo) {
-            return res.status(400).json({ error: 'boardNo is required' });
+        if (!boardIdx) {
+            return res.status(400).json({ error: 'boardIdx is required' });
         }
 
-        const comments = await commentService.getComments(boardNo);
+        const comments = await commentService.getComments(boardIdx);
         return res.status(200).json(comments);
     } catch (error) {
         logger.error(`[getComments] ${error.message}`);
@@ -23,7 +23,7 @@ exports.insertComment = async (req, res) => {
             commentWriter,
             commentPw,
             commentContent,
-            boardNo,
+            boardIdx,
             parentId,
             depth,
             commentLike
@@ -34,7 +34,7 @@ exports.insertComment = async (req, res) => {
             commentWriter,
             commentPw,
             commentContent,
-            boardNo: parseInt(boardNo),
+            boardIdx: parseInt(boardIdx),
             parentId: parseInt(parentId),
             depth: parseInt(depth),
             commentLike: parseInt(commentLike)

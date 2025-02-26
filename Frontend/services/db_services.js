@@ -67,7 +67,7 @@ class db_services {
     // 게시글 상세 페이지 데이터 가져오기
     async get_board_detail (out, no) {
         let sel_sql = "SELECT * FROM board_detail WHERE boardID = "+no+"";
-        let upd_sql = "UPDATE board SET BoardHits = BoardHits + 1 WHERE BoardNo = "+no+"";
+        let upd_sql = "UPDATE board SET BoardHits = BoardHits + 1 WHERE boardIdx = "+no+"";
         let upd_dtail_sql = "UPDATE board_detail SET boardHits = boardHits + 1 WHERE BoardId = "+no+"";
         console.log("sql", upd_sql)
         
@@ -286,8 +286,8 @@ class db_services {
     // 게시글 삭제하기.
     async delete_borad(out, params) {
         console.log("params", params);
-        let sql = "SELECT * FROM board_detail WHERE boardId = " + params.board_idx + "";
-        let board_delete_sql = "DELETE FROM board WHERE BoardNo = " + params.board_idx + " AND Church_No = ?";
+        let sql = "SELECT * FROM board_detail WHERE boardIdx = " + params.board_idx + "";
+        let board_delete_sql = "DELETE FROM board WHERE boardIdx = " + params.board_idx + " AND Church_No = ?";
         let borad_detail_delete_sql = "DELETE FROM board_detail " +
             "WHERE boardId = " + params.board_idx + " AND WriterPw = '" + params.writer_password + "';";
     

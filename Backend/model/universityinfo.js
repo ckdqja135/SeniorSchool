@@ -4,70 +4,70 @@ module.exports = class UniversityInfo extends Sequelize.Model {
     static init(sequelize) {
         return super.init(
             {
-                UnivNo: {
+                univNo: {
                     type: Sequelize.INTEGER,
                     primaryKey: true,
                     autoIncrement: true,
                     allowNull: false,
                 },
-                UnivName: {
+                univName: {
                     type: Sequelize.STRING(60),
                     allowNull: false,
                 },
-                UnivLocate: {
+                univLocate: {
                     type: Sequelize.STRING(45),
                     allowNull: false,
                 },
-                UnivType: {
+                univType: {
                     type: Sequelize.STRING(45),
                     allowNull: false,
                 },
-                UnivEstablish: {
+                univEstablish: {
                     type: Sequelize.STRING(45),
                     allowNull: false,
                 },
-                UnivPresident: {
+                univPresident: {
                     type: Sequelize.STRING(45),
                     allowNull: false,
                 },
-                UnivCampos: {
+                univCampos: {
                     type: Sequelize.STRING(45),
                     allowNull: false,
                 },
-                UnivLateX: {
+                univLateX: {
                     type: Sequelize.DOUBLE,
                     allowNull: false,
                 },
-                UnivLateY: {
+                univLateY: {
                     type: Sequelize.DOUBLE,
                     allowNull: false,
                 },
-                UnivPageURL: {
+                univURL: {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
-                UnivIMG: {
+                univIMG: {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
-                UnivLotAddr: {
+                univLotAddr: {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
-                UnivAddr: {
+                univAddr: {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
-                UnivMapIMG: {
+                univMapIMG: {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
-                UnivStatus: {
+                univStatus: {
                     type: Sequelize.TINYINT,
                     allowNull: false,
                     defaultValue: 1,
                 },
-                UnivViewCount: {
+                univViewCount: {
                     type: Sequelize.INTEGER,
                     allowNull: false,
                     defaultValue: 0,

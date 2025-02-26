@@ -3,13 +3,13 @@ const logger = require('../utils/logger');
 
 /**
  * 댓글 조회
- * @param boardNo
+ * @param boardIdx
  * @returns {Promise<Model[]>}
  */
-exports.getComments = async (boardNo) => {
+exports.getComments = async (boardIdx) => {
     return await UnivComment.findAll({
         where: {
-            BoardNo: boardNo
+            BoardIdx: boardIdx
         }
     });
 };
@@ -24,7 +24,7 @@ exports.insertComment = async (commentData) => {
     try {
         // 댓글 생성
         const comment = await UnivComment.create({
-            BoardNo: commentData.boardNo,
+            BoardIdx: commentData.boardIdx,
             CommentDepth: commentData.depth,
             WriterId: commentData.commentWriter,
             WriterPw: commentData.commentPw,

@@ -3,43 +3,43 @@ const Sequelize = require('sequelize');
 module.exports = class UnivBoardDetail extends Sequelize.Model {
     static init(sequelize) {
         return super.init({
-            BoardNo: {
+            boardIdx: {
                 type: Sequelize.BIGINT,
                 primaryKey: true,
                 autoIncrement: true,
                 allowNull: false,
             },
-            UnivNo: {
+            univIdx: {
                 type: Sequelize.BIGINT,
                 allowNull: true,
             },
-            BoardContent: {
+            boardContent: {
                 type: Sequelize.STRING(400),
                 allowNull: true,
             },
-            BoardTitle: {
+            boardTitle: {
                 type: Sequelize.STRING(60),
                 allowNull: false,
             },
-            BoardLike: {
+            boardLike: {
                 type: Sequelize.BIGINT,
                 allowNull: false,
                 defaultValue: 0,
             },
-            BoardHits: {
+            boardHits: {
                 type: Sequelize.BIGINT,
                 allowNull: false,
                 defaultValue: 0,
             },
-            WriterId: {
+            writerId: {
                 type: Sequelize.STRING(45),
                 allowNull: false,
             },
-            WriterPw: {
+            writerPw: {
                 type: Sequelize.STRING(100),
                 allowNull: false,
             },
-            BoardRegDate: {
+            boardRegDate: {
                 type: Sequelize.STRING(60),
                 allowNull: true,
             },

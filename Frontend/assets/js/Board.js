@@ -154,7 +154,7 @@
 
             //값 셋팅
             var objParams = {
-                boardNo           : window.location.href.split('/')[4],
+                boardIdx           : window.location.href.split('/')[4],
                 parentId         : $(this).attr("reply_id"),
                 depth             : 1,
                 commentWriter     : reply_reply_writer.val(),
@@ -330,10 +330,10 @@
         
     // 게시판 상세조회.
     function get_board() {
-        var boardNo = window.location.href.split('/')[4];
+        var boardIdx = window.location.href.split('/')[4];
 
         // Fetch 통신 시작
-        fetch(backendURL + '/board/detail?boardNo=' + boardNo, {
+        fetch(backendURL + '/board/detail?boardNo=' + boardIdx, {
             method: 'GET',
         })
             .then(response => response.json()) // 응답 데이터를 JSON으로 파싱
@@ -361,7 +361,7 @@
                     `
                 }
                 boardBody.append(str);
-                get_board_comment(boardNo);
+                get_board_comment(boardIdx);
             })
             .catch(error => {
                 console.error('Fetch Error:', error);
@@ -371,8 +371,8 @@
     /**
      * fuction : 게시글의 댓글들을 조회하는 함수.
      * */
-    function get_board_comment(boardNo) {
-        fetch(backendURL + '/comment/?boardNo=' + boardNo, {
+    function get_board_comment(boardIdx) {
+        fetch(backendURL + '/comment/?boardIdx=' + boardIdx, {
             method: 'GET', // Use the GET method
             headers: {
                 'Content-Type': 'application/json',
@@ -545,7 +545,7 @@
             
             //값 셋팅
             let objParams = {
-                boardNo          : window.location.href.split('/')[4],
+                boardIdx          : window.location.href.split('/')[4],
                 parentId         : 0,
                 depth            : 0,
                 commentWriter    : $("#reply_writer").val().trim(),
@@ -621,7 +621,7 @@
     function correct_borad_event() {
          //값 셋팅
         let objParams = {
-            boardNo        : window.location.href.split('/')[4],
+            boardIdx        : window.location.href.split('/')[4],
             writerPw       : sha256($("#writer_pw").val().trim()),
             boardContent   : $('#board-content').val().trim()
         };
@@ -743,7 +743,7 @@
     function delete_board_event() {
             //값 셋팅
         var objParams = {
-            boardNo        : window.location.href.split('/')[4],
+            boardIdx        : window.location.href.split('/')[4],
             writerPw       : sha256($("#writer_pw").val().trim())
         };
 

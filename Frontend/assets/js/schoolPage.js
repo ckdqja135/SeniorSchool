@@ -52,7 +52,7 @@
                 for (let i = 0; i < result.length; i++) {
                     let tr = document.createElement('tr');
                     tr.innerHTML = `<td id="title" style="cursor: pointer;">
-                <a onclick="move_link('/board/', ${result[i].BoardNo})">
+                <a onclick="move_link('/board/', ${result[i].BoardIdx})">
                     <h6>${result[i].BoardTitle}</h6>
                 </a>
             </td>
