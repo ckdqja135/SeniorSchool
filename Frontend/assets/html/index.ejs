@@ -50,7 +50,6 @@
 
                                         const backendURL = `${window.location.protocol}//${window.location.hostname}:${backendPort}`;
 
-
                                         $.ajax({
                                             url : backendURL + '/search/auto',
                                             type : "GET",
@@ -60,11 +59,10 @@
                                             },
                                             success: function(data) {
                                                 response($.map(data, function(item) {
-                                                    console.log("item", item)
                                                     return {
-                                                        label: item.UnivName,
-                                                        value: item.UnivName,
-                                                        gubun: item.UnivLocate
+                                                        label: item.univName,
+                                                        value: item.univName,
+                                                        gubun: item.univLocate
                                                     }
                                                 }));
                                             }
