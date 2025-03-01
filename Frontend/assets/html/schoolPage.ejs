@@ -48,8 +48,8 @@
             let univResult = search_univ();
             window.univData = univResult;
             // 검색된 교회 정보값 가져오기.
-            var lateX = univResult.UnivLateX;
-            var lateY = univResult.UnivLateY;
+            var lateX = univResult.univLateX;
+            var lateY = univResult.univLateY;
 
             var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
             mapOption = { 
@@ -82,17 +82,17 @@
             var content = '<div class="wrap">' + 
                 '    <div class="info">' + 
                 '        <div class="title">' + 
-                            `${univResult.UnivName}` +
+                            `${univResult.univName}` +
                 '            <div class="close" onclick="closeOverlay()" title="닫기"></div>' + 
                 '        </div>' + 
                 '        <div class="body">' + 
                 '            <div class="img">' +
-                `                <img src="${univResult.UnivMapIMG}" width="73" height="70">` +
+                `                <img src="${univResult.univMapIMG}" width="73" height="70">` +
                 '           </div>' + 
                 '            <div class="desc">' + 
-                `                <div class="ellipsis">${univResult.UnivAddr}</div>` +
-                `                <div class="jibun ellipsis">${univResult.UnivLotAddr}</div>` +
-                `                <div><a href="${univResult.UnivURL}" target="_blank" class="link">홈페이지</a></div>` +
+                `                <div class="ellipsis">${univResult.univAddr}</div>` +
+                `                <div class="jibun ellipsis">${univResult.univLotAddr}</div>` +
+                `                <div><a href="${univResult.univURL}" target="_blank" class="link">홈페이지</a></div>` +
                 '            </div>' + 
                 '        </div>' + 
                 '    </div>' +    
@@ -138,22 +138,22 @@
                         if (result.UnivEstablish == "")
                             establishment = "정보 없음.";
                         else
-                            establishment = result.UnivEstablish + "년";
+                            establishment = result.univEstablish + "년";
 
                         univData = result;
                         inquiry_board(univData);
                         let univInfo = $(".univInfo");
                         let str = "";
-                        str = ` <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">위치 : ${result.UnivLocate}</button>
-                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">구분 : ${result.UnivType}</button>
+                        str = ` <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">위치 : ${result.univLocate}</button>
+                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">구분 : ${result.univType}</button>
                                 <div class="col mb-2">
                                 </div>
                                 <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">설립 : ${establishment}</button>
-                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">총장 : ${result.UnivPresident}</button>
+                                <button type="button" class="btn btn-outline-info center" onfocus="this.blur();">총장 : ${result.univPresident}</button>
                                 <br />
                                 <br />
                                 <br />
-                                <button type="button" class="btn btn-outline-dark center" onfocus="this.blur();" onclick="window.open('${result.UnivURL}')">학교 홈페이지</button>`
+                                <button type="button" class="btn btn-outline-dark center" onfocus="this.blur();" onclick="window.open('${result.univURL}')">학교 홈페이지</button>`
                         univInfo.append(str);
                     }
                 },

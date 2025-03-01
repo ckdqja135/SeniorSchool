@@ -32,16 +32,16 @@
 
     // 게시판 조회하기.
     function inquiry_board(univData) {
-        let univNo;
+        let univIdx;
         if (univData == null) {
-            univNo = window.univData.UnivNo;
+            univIdx = window.univData.univIdx;
         } else {
-            univNo = univData.UnivNo;
+            univIdx = univData.univIdx;
         }
 
         let xhr = new XMLHttpRequest();
 
-        xhr.open('GET', `${backendURL}/board/?UnivNo=${univNo}`, true);
+        xhr.open('GET', `${backendURL}/board/?univIdx=${univIdx}`, true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.setRequestHeader('Cache-Control', 'no-cache'); // Cache-Control 헤더 추가
 
@@ -52,17 +52,17 @@
                 for (let i = 0; i < result.length; i++) {
                     let tr = document.createElement('tr');
                     tr.innerHTML = `<td id="title" style="cursor: pointer;">
-                <a onclick="move_link('/board/', ${result[i].BoardIdx})">
-                    <h6>${result[i].BoardTitle}</h6>
+                <a onclick="move_link('/board/', ${result[i].boardIdx})">
+                    <h6>${result[i].boardTitle}</h6>
                 </a>
             </td>
-            <td id="id"><h6>${result[i].BoardID}</h6></td>
-            <td id="Regdate"><h6>${result[i].BoardRegDate}</h6></td>
-            <td id="hits"><h6>${result[i].BoardHits}</h6></td>
+            <td id="id"><h6>${result[i].boardID}</h6></td>
+            <td id="Regdate"><h6>${result[i].boardRegDate}</h6></td>
+            <td id="hits"><h6>${result[i].boardHits}</h6></td>
             `;
                     univBoard.appendChild(tr);
                 }
-
+                console.log("result ", result)
                 // Clear the existing pagination elements
                 $('.pagination').empty();
 
@@ -97,7 +97,7 @@
         var dateFormat =  year + "-" + month + "-" + day;
 
         var boardData = {
-            univNo : window.univData.UnivNo,
+            univIdx : window.univData.univIdx,
             boardTitle : $('#recipient-title').val().trim(),
             boardContent : $('#message-text').val(),
             boardReg : dateFormat,
