@@ -4,7 +4,7 @@ module.exports = class UniversityInfo extends Sequelize.Model {
     static init(sequelize) {
         return super.init(
             {
-                univNo: {
+                univIdx: {
                     type: Sequelize.INTEGER,
                     primaryKey: true,
                     autoIncrement: true,
