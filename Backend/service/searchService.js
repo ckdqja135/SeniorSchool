@@ -4,9 +4,9 @@ const logger = require('../utils/logger');
 
 exports.autoComplete = async (keyword) => {
     return await University.findAll({
-        attributes: ['UnivName', 'UnivLocate'],
+        attributes: ['univName', 'univLocate'],
         where: {
-            UnivName: {
+            univName: {
                 [Op.not]: '',
                 [Op.like]: `%${keyword}%`,
             },
@@ -20,7 +20,7 @@ exports.getSchoolInfo = async (univName) => {
     try {
         const university = await University.findOne({
             where: {
-                UnivName: {
+                univName: {
                     [Op.eq]: univName,
                 },
             },
@@ -34,8 +34,8 @@ exports.getSchoolInfo = async (univName) => {
 
         // UnivViewCount 증가
         await University.update(
-            { UnivViewCount: Sequelize.literal("UnivViewCount + 1") },
-            { where: { UnivNo: university.UnivNo }, transaction } // Primary Key 기준 업데이트
+            { UnivViewCount: Sequelize.literal("univViewCount + 1") },
+            { where: { univIdx: university.univIdx }, transaction } // Primary Key 기준 업데이트
         );
 
         await transaction.commit(); // ✅ 트랜잭션 커밋

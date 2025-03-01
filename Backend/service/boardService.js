@@ -2,20 +2,20 @@ const { UnivBoard, UnivBoardDetail, sequelize, UnivComment } = require('../model
 const logger = require('../utils/logger');
 
 exports.getBoards = async (univIdx) => {
-    return await UnivBoard.findAll({ where: { UnivNo: univIdx } });
+    return await UnivBoard.findAll({ where: { univIdx: univIdx } });
 };
 
 exports.getBoardDetail = async (boardIdx) => {
-    const detailBoard = await UnivBoardDetail.findOne({ where: { BoardIdx: boardIdx } });
+    const detailBoard = await UnivBoardDetail.findOne({ where: { boardIdx: boardIdx } });
 
     // 조회수 증가
     await UnivBoard.update(
-        { BoardHits: sequelize.literal('BoardHits + 1') },
-        { where: { BoardIdx: boardIdx } }
+        { boardHits: sequelize.literal('boardHits + 1') },
+        { where: { boardIdx: boardIdx } }
     );
     await UnivBoardDetail.update(
-        { BoardHits: sequelize.literal('BoardHits + 1') },
-        { where: { BoardIdx: boardIdx } }
+        { boardHits: sequelize.literal('boardHits + 1') },
+        { where: { boardIdx: boardIdx } }
     );
 
     return detailBoard;
@@ -28,17 +28,19 @@ exports.insertBoard = async (boardData) => {
     // logger.info(`[insertBoard] Start - boardData: ${JSON.stringify(boardData)}`);
 
     const transaction = await sequelize.transaction({ autocommit: false });
+
     try {
         // UnivBoard 테이블에 데이터 저장
         const board = await UnivBoard.create(
             {
-                UnivIdx: boardData.univIdx,
-                BoardTitle: boardData.boardTitle,
-                BoardRegDate: boardData.boardReg,
-                BoardLike: boardData.boardLike,
-                BoardHits: boardData.boardHits,
-                BoardIdx: boardData.boardIdx,
-                BoardPW: boardData.boardPw,
+                univIdx: boardData.univIdx,
+                boardTitle: boardData.boardTitle,
+                boardRegDate: boardData.boardReg,
+                boardLike: boardData.boardLike,
+                boardHits: boardData.boardHits,
+                boardIdx: boardData.boardIdx,
+                boardID: boardData.boardId,
+                boardPW: boardData.boardPw,
             },
             { transaction }
         );
@@ -47,15 +49,15 @@ exports.insertBoard = async (boardData) => {
         // UnivBoardDetail 테이블에 데이터 저장
         const detail = await UnivBoardDetail.create(
             {
-                BoardIdx: board.Idx,
-                UnivNo: boardData.univIdx,
-                BoardContent: boardData.boardContent,
-                BoardRegDate: boardData.boardReg,
-                BoardTitle: boardData.boardTitle,
-                BoardLike: boardData.boardLike,
-                BoardHits: boardData.boardHits,
-                WriterId: boardData.boardId,
-                WriterPw: boardData.boardPw,
+                boardIdx: board.Idx,
+                univIdx: boardData.univIdx,
+                boardContent: boardData.boardContent,
+                boardRegDate: boardData.boardReg,
+                boardTitle: boardData.boardTitle,
+                boardLike: boardData.boardLike,
+                boardHits: boardData.boardHits,
+                writerId: boardData.boardId,
+                writerPw: boardData.boardPw,
             },
             { transaction }
         );
@@ -83,11 +85,11 @@ exports.correctBoard = async (boardData) => {
         try {
             // UnivBoardDetail 업데이트
             const [affectedCount] = await UnivBoardDetail.update(
-                { BoardContent: boardData.boardContent },
+                { boardContent: boardData.boardContent },
                 {
                     where: {
-                        BoardIdx: boardData.boardIdx,
-                        WriterPw: boardData.writerPw,
+                        boardIdx: boardData.boardIdx,
+                        writerPw: boardData.writerPw,
                     },
                     transaction,
                 }
@@ -121,8 +123,8 @@ exports.correctBoard = async (boardData) => {
             // 삭제할 대상이 존재하는지 조회
             const detailResult = await UnivBoardDetail.findOne({
                 where: {
-                    BoardIdx: boardData.boardIdx,
-                    WriterPw: boardData.writerPw,
+                    boardIdx: boardData.boardIdx,
+                    writerPw: boardData.writerPw,
                 },
                 transaction,
             });
@@ -137,8 +139,8 @@ exports.correctBoard = async (boardData) => {
             // UnivBoardDetail 삭제
             await UnivBoardDetail.destroy({
                 where: {
-                    BoardIdx: boardData.boardIdx,
-                    WriterPw: boardData.writerPw,
+                    boardIdx: boardData.boardIdx,
+                    writerPw: boardData.writerPw,
                 },
                 transaction,
             });
@@ -146,14 +148,14 @@ exports.correctBoard = async (boardData) => {
 
             // UnivBoard 삭제
             await UnivBoard.destroy({
-                where: { BoardIdx: boardData.boardIdx },
+                where: { boardIdx: boardData.boardIdx },
                 transaction,
             });
             logger.debug(`[deleteBoard] UnivBoard deleted. BoardIdx: ${boardData.boardIdx}`);
 
             // UnivComment 삭제
             await UnivComment.destroy({
-                where: { BoardIdx: boardData.boardIdx },
+                where: { boardIdx: boardData.boardIdx },
                 transaction,
             });
             logger.debug(`[deleteBoard] UnivComment deleted. BoardIdx: ${boardData.boardIdx}`);

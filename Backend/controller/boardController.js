@@ -3,8 +3,8 @@ const logger = require('../utils/logger'); // 로거 파일이 필요할 경우 
 
 exports.getBoards = async (req, res, next) => {
     try {
-        const univNo = req.query.UnivNo;
-        const boards = await boardService.getBoards(univNo);
+        const univIdx = req.query.univIdx;
+        const boards = await boardService.getBoards(univIdx);
         res.status(200).json(boards);
     } catch (error) {
         logger.error(error);

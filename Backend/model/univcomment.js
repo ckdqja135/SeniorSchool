@@ -30,7 +30,7 @@ module.exports = class UnivComment extends Sequelize.Model {
                 type: Sequelize.STRING(100),
                 allowNull: false,
             },
-            commnetPerent: {
+            commentPerent: {
                 type: Sequelize.BIGINT,
                 allowNull: true,
             },

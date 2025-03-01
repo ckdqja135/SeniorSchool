@@ -8,9 +8,16 @@ const logger = require('../utils/logger');
  */
 exports.getComments = async (boardIdx) => {
     return await UnivComment.findAll({
-        where: {
-            BoardIdx: boardIdx
-        }
+        where: { boardIdx: boardIdx },
+        attributes: [
+            'commentIdx',
+            'boardIdx',
+            'commentLike',
+            'commentDepth',
+            'writerId',
+            'commentPerent',
+            'commentContent'
+        ]
     });
 };
 
@@ -24,19 +31,19 @@ exports.insertComment = async (commentData) => {
     try {
         // 댓글 생성
         const comment = await UnivComment.create({
-            BoardIdx: commentData.boardIdx,
-            CommentDepth: commentData.depth,
-            WriterId: commentData.commentWriter,
-            WriterPw: commentData.commentPw,
-            CommnetPerent: commentData.parentId,
-            CommentContent: commentData.commentContent,
-            CommentLike: commentData.commentLike,
+            boardIdx: commentData.boardIdx,
+            commentDepth: commentData.depth,
+            writerId: commentData.commentWriter,
+            writerPw: commentData.commentPw,
+            commentPerent: commentData.parentIdx,
+            commentContent: commentData.commentContent,
+            commentLike: commentData.commentLike,
         }, { transaction });
 
-        logger.debug(`[insertComment] UnivComment created. CommentId: ${comment.CommentId}`);
+        logger.debug(`[insertComment] UnivComment created. CommentId: ${comment.commentIdx}`);
 
         await transaction.commit();
-        logger.info(`[insertComment] Transaction committed. Comment inserted successfully. CommentId: ${comment.CommentId}`);
+        logger.info(`[insertComment] Transaction committed. Comment inserted successfully. CommentId: ${comment.commentIdx}`);
         return 'Comment inserted successfully';
     } catch (error) {
         logger.error(`[insertComment] Error: ${error.message}. Transaction rollback.`);
@@ -48,26 +55,26 @@ exports.insertComment = async (commentData) => {
 /**
  * 댓글 수정
  */
-exports.modifyComment = async ({ replyPw, commentNo, commentContent }) => {
+exports.modifyComment = async ({ replyPw, commentIdx, commentContent }) => {
     // logger.info(`[modifyComment] Start - commentNo: ${commentNo}, replyPw: ${replyPw}, commentContent: ${commentContent}`);
 
     try {
         // 댓글 내용 업데이트 (단일 쿼리이므로 트랜잭션 optional)
         const [updateCount] = await UnivComment.update(
-            { CommentContent: commentContent },
+            { commentContent: commentContent },
             {
                 where: {
-                    CommentId: commentNo,
-                    WriterPw: replyPw,
+                    commentIdx: commentIdx,
+                    writerPw: replyPw,
                 },
             }
         );
 
         if (updateCount > 0) {
-            logger.info(`[modifyComment] Comment updated successfully. CommentId: ${commentNo}`);
+            logger.info(`[modifyComment] Comment updated successfully. CommentIdx: ${commentIdx}`);
             return true;
         } else {
-            logger.warn(`[modifyComment] No matching comment found. CommentId: ${commentNo}`);
+            logger.warn(`[modifyComment] No matching comment found. CommentIdx: ${commentIdx}`);
             return false;
         }
     } catch (error) {
@@ -79,26 +86,26 @@ exports.modifyComment = async ({ replyPw, commentNo, commentContent }) => {
 /**
  * 댓글 삭제(내용만 변경)
  */
-exports.deleteComment = async ({ commentPw, commentNo }) => {
-    // logger.info(`[deleteComment] Start - commentNo: ${commentNo}, commentPw: ${commentPw}`);
+exports.deleteComment = async ({ commentPw, commentIdx }) => {
+    logger.info(`[deleteComment] Start - commentNo: ${commentIdx}, commentPw: ${commentPw}`);
 
     try {
         // 댓글 내용 "작성자가 삭제한 글입니다."로 수정
         const [updateCount] = await UnivComment.update(
-            { CommentContent: '작성자가 삭제한 글입니다.' },
+            { commentContent: '작성자가 삭제한 글입니다.' },
             {
                 where: {
-                    CommentId: commentNo,
-                    WriterPw: commentPw,
+                    commentIdx: commentIdx,
+                    writerPw: commentPw,
                 },
             }
         );
 
         if (updateCount > 0) {
-            logger.info(`[deleteComment] Comment 'deleted' successfully. CommentId: ${commentNo}`);
+            logger.info(`[deleteComment] Comment 'deleted' successfully. CommentId: ${commentIdx}`);
             return true;
         } else {
-            logger.warn(`[deleteComment] No matching comment found. CommentId: ${commentNo}`);
+            logger.warn(`[deleteComment] No matching comment found. CommentId: ${commentIdx}`);
             return false;
         }
     } catch (error) {

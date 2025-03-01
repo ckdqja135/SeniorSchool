@@ -24,7 +24,7 @@ exports.insertComment = async (req, res) => {
             commentPw,
             commentContent,
             boardIdx,
-            parentId,
+            parentIdx,
             depth,
             commentLike
         } = req.body;
@@ -35,7 +35,7 @@ exports.insertComment = async (req, res) => {
             commentPw,
             commentContent,
             boardIdx: parseInt(boardIdx),
-            parentId: parseInt(parentId),
+            parentIdx: parseInt(parentIdx),
             depth: parseInt(depth),
             commentLike: parseInt(commentLike)
         };
@@ -50,9 +50,9 @@ exports.insertComment = async (req, res) => {
 
 exports.modifyComment = async (req, res) => {
     try {
-        const { replyPw, commentNo, commentContent } = req.body;
+        const { replyPw, commentIdx, commentContent } = req.body;
 
-        const isUpdated = await commentService.modifyComment({ replyPw, commentNo, commentContent });
+        const isUpdated = await commentService.modifyComment({ replyPw, commentIdx, commentContent });
 
         if (isUpdated) {
             return res.status(200).json({ success: true, message: 'Comment updated successfully' });
