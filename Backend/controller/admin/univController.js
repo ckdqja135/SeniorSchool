@@ -1,4 +1,4 @@
-const univService = require('../../service/admin/univ.service');
+const univService = require('../../service/admin/univService');
 const logger = require('../../utils/logger');
 
 exports.createUniv = async (req, res, next) => {

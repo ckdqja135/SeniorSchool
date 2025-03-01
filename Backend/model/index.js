@@ -25,7 +25,7 @@ db.UnivBoard = UnivBoard;
 db.University = University;
 db.UnivBoardDetail = UnivBoardDetail;
 db.UnivComment = UnivComment;
-db.user = user;
+db.User = user;
 
 //init이 실행되어야 테이블이 모델로 연결됨
 UnivBoard.init(sequelize);

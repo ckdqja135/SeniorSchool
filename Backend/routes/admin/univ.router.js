@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const univController = require('../../controller/admin/univ.controller');
+const univController = require('../../controller/admin/univController');
 
 // 학교 생성
 router.post('/createUniv', univController.createUniv);
