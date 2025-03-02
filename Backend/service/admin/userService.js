@@ -20,7 +20,7 @@ exports.signIn = async (userData) => {
         // 사용자 id 조회 (await 사용 및 올바른 컬럼명 userId 사용)
         const user = await User.findOne({
             where: { userId: username },
-            attributes: ['userIdx', 'userId', 'userRole', 'userStatus', 'userPw']
+            attributes: ['userIdx', 'userId', 'userRole', 'userStatus']
         });
 
         if (!user) {
