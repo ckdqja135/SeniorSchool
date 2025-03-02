@@ -41,11 +41,14 @@ exports.signIn = async (userData) => {
             { expiresIn: '1h' }
         );
 
-        // Sequelize 인스턴스를 plain 객체로 변환 후, userPw 필드를 삭제
-        const userData = user.get({ plain: true });
-        delete userData.userPw;
+        const responseUser = {
+            userId: user.userIdx,
+            username: user.userId,
+            userRole: user.userRole
+        };
 
-        return { userData, token };
+        return { user: responseUser, token };
+
 
     } catch (error) {
         // 에러 로그 출력 후, 상위 컨트롤러/서비스로 재전달
