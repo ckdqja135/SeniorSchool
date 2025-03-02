@@ -17,33 +17,32 @@ exports.signIn = async (userData) => {
             throw new Error('아이디나 비밀번호가 입력되지 않았습니다.');
         }
 
-        // 사용자 id 조회
-        const user = User.findOne({
-            where: { username },
-            attributes: ['userIdx', 'userId', 'userRole', 'userStatus']
+        // 사용자 id 조회 (await 사용 및 올바른 컬럼명 userId 사용)
+        const user = await User.findOne({
+            where: { userId: username },
+            attributes: ['userIdx', 'userId', 'userRole', 'userStatus', 'userPw']
         });
 
         if (!user) {
             logger.warn(`[signIn] User not found ${username}`);
-            throw new Error("해당 사용자를 찾을 수 없습니다.")
+            throw new Error("해당 사용자를 찾을 수 없습니다.");
         }
 
         // 입력받은 비밀번호 sha256 처리 후 비교
         const inputPasswordHash = hashPassword(password);
-        if (!inputPasswordHash !== user.password) {
-            logger.warn(`[signIn] Incorrect pasword for user : ${username}`);
+        if (inputPasswordHash !== user.userPw) {
+            logger.warn(`[signIn] Incorrect password for user: ${username}`);
             throw new Error('비밀번호가 일치하지 않습니다.');
         }
 
-        // JWT 토큰 생성 (1시간)
+        // JWT 토큰 생성 (1시간 유효)
         const token = jwt.sign(
-            {
-                idx : user.idx, username: user.username },
+            { idx: user.userIdx, userId: user.userId, userRole: user.userRole },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
-        )
+        );
 
-        return {user, token};
+        return { user, token };
 
     } catch (error) {
         // 에러 로그 출력 후, 상위 컨트롤러/서비스로 재전달
