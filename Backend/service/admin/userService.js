@@ -54,28 +54,28 @@ exports.signIn = async (userData) => {
 
 exports.signUp = async (userData) => {
     try {
-        const { userId, userPw } = userData;
+        const  { username, password } = userData;
 
         // 필수값 체크
-        if (!userId || !userPw) {
+        if (!username || !password) {
             logger.warn(`[signUp] Missing required fields: ${JSON.stringify(userData)}`);
             throw new Error('필수 입력값이 누락되었습니다.');
         }
 
         // 중복된 userId 체크
-        const existingUser = await User.findOne({ where: { userId } });
+        const existingUser = await User.findOne({ where: { username } });
         if (existingUser) {
-            logger.warn(`[signUp] User already exists: ${userId}`);
+            logger.warn(`[signUp] User already exists: ${username}`);
             throw new Error('이미 존재하는 사용자입니다.');
         }
 
         // salt 생성 및 비밀번호 해시 처리
         const salt = crypto.randomBytes(16).toString('hex');
-        const hashedPassword = hashPassword(userPw, salt);
+        const hashedPassword = hashPassword(password, salt);
 
         // 새 사용자 생성
         const newUser = await User.create({
-            userId,
+            username,
             userPw: hashedPassword,
             userRole: 'admin',
             salt,
