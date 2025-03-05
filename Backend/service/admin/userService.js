@@ -47,7 +47,7 @@ exports.signIn = async (userData) => {
             userRole: user.userRole
         };
 
-        return { user: responseUser, token };
+        return { user: responseUser, accessToken: token };
 
 
     } catch (error) {
