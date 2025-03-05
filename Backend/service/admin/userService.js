@@ -68,7 +68,7 @@ exports.signUp = async (userData) => {
         }
 
         // 중복된 userId 체크
-        const existingUser = await User.findOne({ where: { username } });
+        const existingUser = await User.findOne({ where: { userId: username } });
         if (existingUser) {
             logger.warn(`[signUp] User already exists: ${username}`);
             throw new Error('이미 존재하는 사용자입니다.');
