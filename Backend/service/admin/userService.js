@@ -80,7 +80,7 @@ exports.signUp = async (userData) => {
 
         // 새 사용자 생성
         const newUser = await User.create({
-            username,
+            userId: username,
             userPw: hashedPassword,
             userRole: 'admin',
             salt,
