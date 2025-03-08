@@ -8,4 +8,8 @@ router.post('/signIn', userController.signIn);
 // 회원가입
 router.post('/signUp', userController.signUp);
 
+// 토큰 검증
+router.get('/verify', userController.verifyToken);
+
+
 module.exports = router;

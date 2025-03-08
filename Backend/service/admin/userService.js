@@ -93,3 +93,22 @@ exports.signUp = async (userData) => {
         throw error;
     }
 };
+
+/**
+ * 토큰 유효성 검사 함수
+ * @param {string} token - 검증할 토큰
+ * @returns {Object} 디코딩된 토큰 정보
+ * @throws {Error} 토큰이 없거나 유효하지 않은 경우
+ */
+exports.verifyToken = async (token) => {
+    if (!token) {
+        throw new Error('Token is required.');
+    }
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        return decoded;
+    } catch (error) {
+        logger.error(`[verifyToken] Error: ${error.message}`);
+        throw new Error('Invalid or expired token.');
+    }
+};
