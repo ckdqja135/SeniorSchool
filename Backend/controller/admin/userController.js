@@ -42,7 +42,7 @@ exports.verifyToken = async (req, res, next) => {
         // 토큰이 유효한 경우, 쿠키에 토큰 설정 (httpOnly 옵션 사용 권장)
         res.cookie('accessToken', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: process.env.NODE_ENV === 'prod',
             sameSite: 'strict'
         });
 
