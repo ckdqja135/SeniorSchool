@@ -4,6 +4,12 @@ const logger = require('../../utils/logger');
 exports.signIn = async (req, res, next) => {
     try {
         const result = await userService.signIn(req.body);
+        // JWT 토큰을 쿠키에 설정 (HttpOnly, secure, sameSite 옵션 적용)
+        res.cookie('accessToken', result.accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'prod',  // prod 환경에서만 true
+            sameSite: 'strict'
+        });
         return res.status(201).json(result);
     } catch (e) {
         next(e);
@@ -37,16 +43,9 @@ exports.verifyToken = async (req, res, next) => {
             return res.status(400).json({ error: 'Token is required.' });
         }
 
-        const decoded = await userService.verifyToken(token);
+        await userService.verifyToken(token);
 
-        // 토큰이 유효한 경우, 쿠키에 토큰 설정 (httpOnly 옵션 사용 권장)
-        res.cookie('accessToken', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'prod',
-            sameSite: 'strict'
-        });
-
-        return res.status(200).json({ valid: true});
+        return res.status(200).json({ valid: true });
     } catch (error) {
         next(error);
     }
