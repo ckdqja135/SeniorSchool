@@ -46,7 +46,7 @@ exports.verifyToken = async (req, res, next) => {
             sameSite: 'strict'
         });
 
-        return res.status(200).json({ valid: true, decoded });
+        return res.status(200).json({ valid: true});
     } catch (error) {
         next(error);
     }
