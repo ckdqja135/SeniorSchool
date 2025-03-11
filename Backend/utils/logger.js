@@ -1,4 +1,20 @@
 const winston = require('winston');
+require('winston-daily-rotate-file');
+
+const transport = new winston.transports.DailyRotateFile({
+    filename: 'logs/backend-%DATE%.log',
+    datePattern: 'YYYY-MM-DD',
+    zippedArchive: false, // 압축 여부, true면 gzip으로 압축
+    maxFiles: '90d', // 3개월(약 90일)간 로그 유지
+});
+
+const errorTransport = new winston.transports.DailyRotateFile({
+    filename: 'logs/error-%DATE%.log',
+    datePattern: 'YYYY-MM-DD',
+    level: 'error',
+    zippedArchive: false,
+    maxFiles: '90d',
+});
 
 const logger = winston.createLogger({
     level: 'info',
@@ -9,9 +25,9 @@ const logger = winston.createLogger({
         })
     ),
     transports: [
-        new winston.transports.Console(),  // PM2 logs에서도 출력됨
-        new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),  // 에러 로그 저장
-        new winston.transports.File({ filename: 'logs/backend.log' })  // 일반 로그 저장
+        new winston.transports.Console(),
+        transport,
+        errorTransport
     ],
 });
 
