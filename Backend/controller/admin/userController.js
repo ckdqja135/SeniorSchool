@@ -8,7 +8,7 @@ exports.signIn = async (req, res, next) => {
         res.cookie('accessToken', result.accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'prod',  // prod 환경에서만 true
-            sameSite: 'strict'
+            sameSite: 'none'
         });
         return res.status(201).json(result);
     } catch (e) {
