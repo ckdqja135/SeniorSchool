@@ -14,16 +14,10 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const allowedOrigins = ['http://localhost:3000', 'http://192.168.45.242/:3000', 'http://1.233.163.148:9000'];
+const allowedOrigins =
 
 app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: ['http://localhost:3000', 'http://192.168.45.242:3001', 'http://1.233.163.148:9001'],
     credentials: true
 }));
 // 요청 로깅 (모든 요청 기록)
