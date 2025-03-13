@@ -14,9 +14,18 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// CORS 설정
-app.use(cors({ origin: '*' }));
+const allowedOrigins = ['http://localhost:3000', 'http://192.168.45.242/:3000', 'http://1.233.163.148:9000'];
 
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+}));
 // 요청 로깅 (모든 요청 기록)
 app.use((req, res, next) => {
     logger.info(`${req.method} ${req.url}`);
