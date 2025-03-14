@@ -51,7 +51,7 @@ module.exports = class UniversityInfo extends Sequelize.Model {
                     allowNull: false,
                 },
                 univLotAddr: {
-                    type: Sequelize.STRING(200),
+                    type: Sequelize.INTEGER,
                     allowNull: false,
                 },
                 univAddr: {
