@@ -10,14 +10,15 @@ const univController = require('../../controller/admin/univController');
 router.post('/createUniv', univController.createUniv);
 
 // 학교 상태 변경
-router.put('/putUnivStatus', univController.putUnivStatus);
+router.patch('/patchUnivStatus', univController.patchUnivStatus);
 
-// 학교 데이터 조회
-router.get('/getUniv', );
+// 학교 검색
+router.get('/searchUniv', univController.searchUniv);
 
 // 학교 데이터 삭제
-router.delete('/deleteUniv', );
+router.delete('/deleteUniv',univController.deleteUniv);
 
-router.put('/putUnivData', );
+// 학교 데이터 수정
+router.patch('/patchUnivData', univController.patchUnivData);
 
 module.exports = router;

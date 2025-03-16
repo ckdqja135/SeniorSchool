@@ -10,12 +10,11 @@ exports.createUniv = async (req, res, next) => {
     }
 };
 
-exports.putUnivStatus = async (req, res, next) => {
+exports.patchUnivStatus = async (req, res, next) => {
     try {
         const { univIdx, status } = req.body;
-        logger.info( `hihi : ${univIdx}, ${status}`);
 
-        const result = await univService.puteUnivStatus(univIdx, status);
+        const result = await univService.patchUnivStatus(univIdx, status);
 
         // 상태 코드와 메시지 반환
         return res.status(result.status).json({
@@ -23,6 +22,47 @@ exports.putUnivStatus = async (req, res, next) => {
             message: result.message
         });
 
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.searchUniv = async (req, res, next) => {
+    try {
+        const result = await univService.searchUniv(req.body);
+        return res.status(201).json(result);
+    } catch (e) {
+        next(e);
+    }
+};
+
+/**
+ * 학교 데이터 삭제 컨트롤러
+ * req.body를 그대로 univService.deleteUniv에 전달함.
+ * 전달받은 데이터를 기반으로 학교 데이터를 삭제하도록 개발함.
+ */
+exports.deleteUniv = async (req, res, next) => {
+    try {
+        // req.body를 그대로 서비스단에 전달함
+        const result = await univService.deleteUniv(req.body);
+        // 삭제 결과를 JSON 형태로 응답함
+        return res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * 학교 데이터 수정 컨트롤러
+ * req.body에 담긴 데이터를 그대로 univService.putUnivData에 전달함.
+ * 전달받은 데이터를 기반으로 학교 데이터 수정 작업을 수행하도록 개발하였음.
+ */
+exports.patchUnivData = async (req, res, next) => {
+    try {
+        // req.body를 그대로 서비스단에 전달함
+        const result = await univService.patchUnivData(req.body);
+        // 수정 결과를 JSON 형태로 응답함
+        return res.status(200).json(result);
     } catch (error) {
         next(error);
     }
