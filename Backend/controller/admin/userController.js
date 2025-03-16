@@ -51,3 +51,58 @@ exports.verifyToken = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * 어드민 삭제 컨트롤러
+ * req.body를 그대로 서비스단에 전달함.
+ * 전달받은 데이터(어드민의 userIdx 배열)를 기반으로 어드민 데이터를 삭제하도록 개발하였음.
+ */
+exports.deleteAdmin = async (req, res, next) => {
+    try {
+        const result = await userService.deleteAdmin(req.body);
+        return res.status(200).json(result);
+    } catch (e) {
+        next(e);
+    }
+};
+
+/**
+ * 어드민 추가 컨트롤러
+ * req.body를 그대로 서비스단에 전달함.
+ * 전달받은 데이터를 기반으로 어드민 데이터를 생성하도록 개발하였음.
+ */
+exports.createAdmin = async (req, res, next) => {
+    try {
+        const result = await userService.createAdmin(req.body);
+        return res.status(201).json(result);
+    } catch (e) {
+        next(e);
+    }
+};
+
+/**
+ * 어드민 리스트 가져오기 컨트롤러
+ * 별도의 인자 없이 서비스단에서 어드민 리스트를 조회하도록 개발하였음.
+ */
+exports.getAdminlist = async (req, res, next) => {
+    try {
+        const result = await userService.getAdminlist();
+        return res.status(200).json(result);
+    } catch (e) {
+        next(e);
+    }
+};
+
+/**
+ * 어드민 수정 컨트롤러
+ * req.body를 그대로 서비스단에 전달함.
+ * 요청한 사용자의 userRole이 'master'인지 확인 후, 해당 조건을 충족하면 수정하도록 개발하였음.
+ */
+exports.patchAdmin = async (req, res, next) => {
+    try {
+        const result = await userService.patchAdmin(req.body);
+        return res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+};
