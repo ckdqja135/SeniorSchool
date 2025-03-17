@@ -46,10 +46,6 @@ module.exports = class UniversityInfo extends Sequelize.Model {
                     type: Sequelize.STRING(200),
                     allowNull: false,
                 },
-                univIMG: {
-                    type: Sequelize.STRING(200),
-                    allowNull: false,
-                },
                 univLotAddr: {
                     type: Sequelize.INTEGER,
                     allowNull: false,
