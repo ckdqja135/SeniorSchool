@@ -79,7 +79,6 @@ exports.searchUniv = async (searchParams) => {
             ];
         }
     }
-    logger.info("whereClause ", whereClause);
 
     return await University.findAll({ where: whereClause });
 };

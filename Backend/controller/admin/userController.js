@@ -106,3 +106,23 @@ exports.patchAdmin = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * 로그아웃 API 컨트롤러
+ * req.user에 저장된 로그인 사용자 정보를 기반으로, 로그아웃 서비스를 호출하고,
+ * 클라이언트 쿠키에서 accessToken 쿠키를 삭제하도록 개발하였음.
+ */
+exports.signOut = async (req, res, next) => {
+    try {
+        // 로그인된 사용자 정보는 authenticateToken 미들웨어를 통해 req.user에 세팅됨.
+        logger.info(req.user)
+        const result = await userService.signOut(req.user);
+
+        // 클라이언트 쿠키에서 accessToken 쿠키를 삭제함.
+        res.clearCookie('accessToken', { path: '/' });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+};

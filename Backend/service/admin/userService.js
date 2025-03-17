@@ -12,13 +12,13 @@ exports.signIn = async (userData) => {
     try {
         const { username, password } = userData;
 
-        // 필수값 체크
+        // 필수값 체크함.
         if (!username || !password) {
             logger.warn(`[signIn] Missing required fields: ${JSON.stringify(userData)}`);
             throw new Error('아이디나 비밀번호가 입력되지 않았습니다.');
         }
 
-        // 사용자 id 조회 (await 사용 및 올바른 컬럼명 userId 사용)
+        // 사용자 id 조회 (await 사용 및 올바른 컬럼명 userId 사용하였음)
         const user = await User.findOne({
             where: { userId: username }
         });
@@ -28,19 +28,22 @@ exports.signIn = async (userData) => {
             throw new Error("해당 사용자를 찾을 수 없습니다.");
         }
 
-        // 입력받은 비밀번호 sha256 처리 후 비교
+        // 입력받은 비밀번호를 SHA256 해시 처리 후 비교하였음.
         const inputPasswordHash = hashPassword(password);
         if (inputPasswordHash !== user.userPw) {
             logger.warn(`[signIn] Incorrect password for user: ${username}`);
             throw new Error('비밀번호가 일치하지 않습니다.');
         }
 
-        // JWT 토큰 생성 (1시간 유효)
+        // JWT 토큰 생성 (1시간 유효)하였음.
         const token = jwt.sign(
             { idx: user.userIdx, userId: user.userId, userRole: user.userRole },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
+
+        // 로그인 성공 후, User 테이블의 accessToken 칼럼에 JWT 토큰을 업데이트하였음.
+        await User.update({ accessToken: token }, { where: { userIdx: user.userIdx } });
 
         const responseUser = {
             userId: user.userIdx,
@@ -50,9 +53,8 @@ exports.signIn = async (userData) => {
 
         return { user: responseUser, accessToken: token };
 
-
     } catch (error) {
-        // 에러 로그 출력 후, 상위 컨트롤러/서비스로 재전달
+        // 에러 로그 출력 후, 상위 컨트롤러/서비스로 재전달하였음.
         logger.error(`[signIn] Error: ${error.message}`);
         throw error;
     }
@@ -250,5 +252,26 @@ exports.patchAdmin = async (patchParams) => {
         success: true,
         message: "어드민 데이터 수정 완료.",
         affectedCount
+    };
+};
+
+/**
+ * 로그아웃 서비스
+ * 로그인된 사용자 정보를 받아, 해당 사용자의 accessToken을 null로 업데이트함.
+ *
+ * @param {Object} user - 로그인된 사용자 정보 (req.user)
+ * @returns {Promise<Object>} - 업데이트 결과 (예: { success: true, message: "로그아웃 성공" })
+ */
+exports.signOut = async (user) => {
+    if (!user) {
+        throw new Error("로그인 상태가 아닙니다.");
+    }
+
+    // accessToken 칼럼이 null을 허용하지 않으므로, 빈 문자열로 업데이트함.
+    await User.update({ accessToken: "" }, { where: { userIdx: user.userIdx } });
+
+    return {
+        success: true,
+        message: "로그아웃 성공"
     };
 };

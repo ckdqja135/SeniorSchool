@@ -22,6 +22,6 @@ router.patch('/patchAdmin', authenticateToken, isMaster, userController.patchAdm
 router.get('/getAdminlist', authenticateToken, isMaster, userController.getAdminlist);
 
 // 로그아웃
-// router.patch('/signOut', userController.signOut);
+router.patch('/signOut', authenticateToken, userController.signOut);
 
 module.exports = router;
