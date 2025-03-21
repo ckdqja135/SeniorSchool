@@ -14,7 +14,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const allowedOrigins =
+app.get('/', (req, res) => {
+    res.send('Welcome to ReviewHub!');
+});
 
 app.use(cors({
     origin: ['http://localhost:3000', 'http://192.168.45.242:3001', 'http://1.233.163.148:9001'],
