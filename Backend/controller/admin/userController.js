@@ -7,11 +7,18 @@ exports.signIn = async (req, res, next) => {
         // JWT 토큰을 쿠키에 설정 (HttpOnly, secure, sameSite 옵션 적용)
         const cookieOptions = {
             httpOnly: true,
-            secure: process.env.APP_ENV === 'prod', // 로컬에서는 false
-            sameSite: 'lax',               // HTTP 환경에서는 'lax' 또는 'strict' 사용
+            secure: true, // HTTPS 환경이므로 항상 true로 설정
+            sameSite: 'strict', // HTTPS 환경에서는 strict 사용 가능
         };
         res.cookie('accessToken', result.accessToken, cookieOptions);
-        return res.status(200).json(result);
+        
+        // 클라이언트의 로컬 스토리지에 저장할 수 있도록 응답에 토큰 포함
+        const responseData = {
+            ...result,
+            accessToken: result.accessToken // 토큰을 응답 본문에 포함
+        };
+        
+        return res.status(200).json(responseData);
     } catch (e) {
         next(e);
     }
