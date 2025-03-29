@@ -16,6 +16,9 @@ router.patch('/patchUnivStatus', authenticateToken, isAdmin, univController.patc
 // 학교 검색
 router.get('/searchUniv', authenticateToken, isAdmin, univController.searchUniv);
 
+// 학교 상세보기 API
+router.get('/univ/:univIdx', authenticateToken, isAdmin, univController.getUnivDetail);
+
 // 학교 데이터 삭제
 router.delete('/deleteUniv', authenticateToken, isAdmin, univController.deleteUniv);
 

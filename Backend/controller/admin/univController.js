@@ -12,7 +12,7 @@ exports.createUniv = async (req, res, next) => {
 
 exports.patchUnivStatus = async (req, res, next) => {
     try {
-        const { univIdx, status } = req.body;
+        const { univIdx, status } = req.query;
 
         const result = await univService.patchUnivStatus(univIdx, status);
 
@@ -29,12 +29,40 @@ exports.patchUnivStatus = async (req, res, next) => {
 
 exports.searchUniv = async (req, res, next) => {
     try {
-        const result = await univService.searchUniv(req.body);
+        const result = await univService.searchUniv(req.query);
         return res.status(201).json(result);
     } catch (e) {
         next(e);
     }
 };
+
+// 학교 리스트 검색
+exports.searchUniv = async (req, res) => {
+    const rowsPerPage = parseInt(req.query.rowsPerPage, 10) || 10;
+    const page = parseInt(req.query.page, 10) || 1;
+
+    try {
+        const result = await univService.searchUniv(rowsPerPage, page);
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[searchUniv] Error: ${error.message}`);
+        res.status(500).json({ status: 500, message: '서버 오류가 발생했습니다.' });
+    }
+};
+
+// 학교 상세보기
+exports.getUnivDetail = async (req, res) => {
+    const { univIdx } = req.params;
+
+    try {
+        const result = await univService.getUnivDetail(univIdx);
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[getUnivDetail] Error: ${error.message}`);
+        res.status(500).json({ status: 500, message: '서버 오류가 발생했습니다.' });
+    }
+};
+
 
 /**
  * 학교 데이터 삭제 컨트롤러

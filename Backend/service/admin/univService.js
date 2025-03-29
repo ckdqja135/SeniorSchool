@@ -24,63 +24,63 @@ exports.createUniv = async (univData) => {
     }
 };
 
-// univIdx: UnivNo(대학의 기본키), status: 0 또는 1
-exports.patchUnivStatus = async (univIdx, status) => {
-    try {
-        const [affectedCount] = await University.update(
-            { UnivStatus: status },
-            {
-                where: {
-                    UnivNo: univIdx,
-                },
-            }
-        );
-
-        if (affectedCount === 0) {
-            logger.warn(`[puteUnivStatus] 업데이트 실패`);
-            return {
-                status: 404,
-                message: `값을 다시 확인해주세요.`,
-            };
-        }
-
-        logger.info(`[puteUnivStatus] UnivNo : ${univIdx} 상태를 ${status} 로 업데이트 성공`);
-
-        return {
-            status: 200,
-            message: `UnivNo: ${univIdx}, 상태 변경 완료`,
-        };
-    } catch (error) {
-        logger.error(`[puteUnivStatus] Error: ${error.message}`);
-        throw error; // 컨트롤러로 에러 전달
-    }
-};
-
 /**
  * 대학교 검색 서비스
- * req.body를 그대로 받아서 univIdx와 univName에 대해 LIKE 검색을 수행
- * @param {Object} searchParams - 프론트엔드에서 전달된 검색 파라미터 (예: { keyword: "서울" })
- * @returns {Promise<Model[]>} - 검색 결과 반환
+ * @param {Object} searchParams - 검색 조건 (예: { keyword: "서울", rowsPerPage: 10, page: 1 })
+ * @returns {Promise<Object>} - 검색 결과, 페이징 정보 포함
  */
 exports.searchUniv = async (searchParams) => {
-    const whereClause = {};
+    const whereClause = {
+        univStatus: 1, // 활성화된 학교만
+    };
+
+    const rowsPerPage = parseInt(searchParams.rowsPerPage, 10) || 10;
+    const page = parseInt(searchParams.page, 10) || 1;
+    const offset = (page - 1) * rowsPerPage;
 
     if (searchParams.keyword) {
         const keyword = searchParams.keyword;
 
-        // 숫자인 경우 univIdx 검색
         if (!isNaN(keyword)) {
-            whereClause.univIdx = parseInt(keyword);  // 정확한 일치 검색
-        }
-        // 문자열인 경우 univName에 LIKE 검색
-        else {
+            whereClause.univIdx = parseInt(keyword);
+        } else {
             whereClause[Op.or] = [
                 { univName: { [Op.like]: `%${keyword}%` } }
             ];
         }
     }
 
-    return await University.findAll({ where: whereClause });
+    const { count, rows } = await University.findAndCountAll({
+        where: whereClause,
+        limit: rowsPerPage,
+        offset,
+        order: [['univIdx', 'ASC']],
+    });
+
+    return {
+        status: 200,
+        data: rows,
+        totalCount: count,
+        currentPage: page,
+        rowsPerPage,
+    };
+};
+
+// 학교 상세보기 서비스
+exports.getUnivDetail = async (univIdx) => {
+    try {
+        const university = await University.findOne({
+            where: { UnivIdx: univIdx },
+        });
+
+        if (!university) {
+            return { status: 404, message: '학교를 찾을 수 없습니다.' };
+        }
+
+        return { status: 200, data: university };
+    } catch (error) {
+        throw error;
+    }
 };
 
 /**
