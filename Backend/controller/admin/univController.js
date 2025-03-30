@@ -10,45 +10,19 @@ exports.createUniv = async (req, res, next) => {
     }
 };
 
-exports.patchUnivStatus = async (req, res, next) => {
-    try {
-        const { univIdx, status } = req.query;
-
-        const result = await univService.patchUnivStatus(univIdx, status);
-
-        // 상태 코드와 메시지 반환
-        return res.status(result.status).json({
-            success: result.status === 200, // 200이면 true, 나머지는 false
-            message: result.message
-        });
-
-    } catch (error) {
-        next(error);
-    }
-};
-
-exports.searchUniv = async (req, res, next) => {
-    try {
-        const result = await univService.searchUniv(req.query);
-        return res.status(201).json(result);
-    } catch (e) {
-        next(e);
-    }
-};
-
-// 학교 리스트 검색
+// 학교 검색
 exports.searchUniv = async (req, res) => {
-    const rowsPerPage = parseInt(req.query.rowsPerPage, 10) || 10;
-    const page = parseInt(req.query.page, 10) || 1;
-
     try {
-        const result = await univService.searchUniv(rowsPerPage, page);
+        const data = req.query;
+        const result = await univService.searchUniv(data);
+
         res.status(result.status).json(result);
     } catch (error) {
         logger.error(`[searchUniv] Error: ${error.message}`);
         res.status(500).json({ status: 500, message: '서버 오류가 발생했습니다.' });
     }
 };
+
 
 // 학교 상세보기
 exports.getUnivDetail = async (req, res) => {
