@@ -26,30 +26,33 @@ exports.createUniv = async (univData) => {
 
 /**
  * 대학교 검색 서비스
- * @param {Object} searchParams - 검색 조건 (예: { keyword: "서울", rowsPerPage: 10, page: 1 })
+ * @param {Object} searchParams - 검색 조건 (예: { rowsPerPage: 10, page: 1, keyword: '서울' })
  * @returns {Promise<Object>} - 검색 결과, 페이징 정보 포함
  */
-exports.searchUniv = async (searchParams) => {
-    const whereClause = {
-        univStatus: 1, // 활성화된 학교만
-    };
-
-    const rowsPerPage = parseInt(searchParams.rowsPerPage, 10) || 10;
-    const page = parseInt(searchParams.page, 10) || 1;
+exports.searchUniv = async (data) => {
+    const rowsPerPage = data.rowsPerPage || 10;
+    const page = data.page || 1;
+    const keyword = data.keyword || '';
     const offset = (page - 1) * rowsPerPage;
 
-    if (searchParams.keyword) {
-        const keyword = searchParams.keyword;
+    // univStatus가 1인 항목만 필터
+    const whereClause = {
+        univStatus: 1,
+    };
 
+    // keyword가 숫자인지 문자열인지에 따라 조건 분기
+    if (keyword) {
         if (!isNaN(keyword)) {
-            whereClause.univIdx = parseInt(keyword);
+            whereClause.univIdx = parseInt(keyword, 10);
         } else {
+            // 여러 컬럼에서 검색하고 싶다면 아래처럼 추가
             whereClause[Op.or] = [
                 { univName: { [Op.like]: `%${keyword}%` } }
             ];
         }
     }
 
+    // 실제 DB 검색
     const { count, rows } = await University.findAndCountAll({
         where: whereClause,
         limit: rowsPerPage,
@@ -57,6 +60,7 @@ exports.searchUniv = async (searchParams) => {
         order: [['univIdx', 'ASC']],
     });
 
+    // 결과를 객체 형태로 리턴
     return {
         status: 200,
         data: rows,
