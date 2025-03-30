@@ -10,9 +10,6 @@ const { isAdmin, authenticateToken } = require('../../middlewares/authMiddleware
 // 학교 생성
 router.post('/createUniv', authenticateToken, isAdmin, univController.createUniv);
 
-// 학교 상태 변경
-router.patch('/patchUnivStatus', authenticateToken, isAdmin, univController.patchUnivStatus);
-
 // 학교 검색
 router.get('/searchUniv', authenticateToken, isAdmin, univController.searchUniv);
 
