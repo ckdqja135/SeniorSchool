@@ -39,7 +39,7 @@ exports.signUp = async (req, res, next) => {
  * 유효한 토큰일 경우 쿠키에 토큰을 설정하여 클라이언트에 반환합니다.
  */
 exports.verifyToken = async (req, res, next) => {
-    try {
+    try { 
         // Authorization 헤더, 쿼리 파라미터, 쿠키에서 토큰 획득
         const authHeader = req.headers.authorization;
         const tokenFromHeader = authHeader && authHeader.split(' ')[1];

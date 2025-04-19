@@ -1,9 +1,10 @@
 const Sequelize = require('sequelize');
-const UnivBoard = require('./univBoard');
-const University = require('./universityinfo');
-const UnivBoardDetail = require('./univBoardDetail');
+const univBoard = require('./univBoard');
+const university = require('./universityinfo');
+const univBoardDetail = require('./univBoardDetail');
+const reportBoard = require('./tb_report_board');
 const user = require('./user');
-const UnivComment = require('./univcomment');
+const univComment = require('./univcomment');
 const config = require('../conf/sequelize');
 const logger = require('../utils/logger');
 
@@ -21,26 +22,29 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
 });
 
 db.sequelize = sequelize;
-db.UnivBoard = UnivBoard;
-db.University = University;
-db.UnivBoardDetail = UnivBoardDetail;
-db.UnivComment = UnivComment;
+db.UnivBoard = univBoard;   
+db.University = university;
+db.UnivBoardDetail = univBoardDetail;
+db.UnivComment = univComment;
 db.User = user;
+db.ReportBoard = reportBoard;
 
 //init이 실행되어야 테이블이 모델로 연결됨
-UnivBoard.init(sequelize);
-University.init(sequelize);
-UnivBoardDetail.init(sequelize);
-UnivComment.init(sequelize);
+univBoard.init(sequelize);
+university.init(sequelize);
+univBoardDetail.init(sequelize);
+univComment.init(sequelize);
 user.init(sequelize);
+reportBoard.init(sequelize);
+
 
 // 다른 테이블과의 관계를 연결함
-UnivBoard.associate(db);
-University.associate(db);
-UnivBoardDetail.associate(db);
-UnivComment.associate(db);
+univBoard.associate(db);
+university.associate(db);
+univBoardDetail.associate(db);
+univComment.associate(db);
 user.associate(db);
-
+reportBoard.associate(db);
 sequelize.authenticate()
     .then(() => logger.info('✅ 데이터베이스 연결 성공'))
     .catch((error) => logger.error(`❌ 데이터베이스 연결 실패: ${error.message}`));
