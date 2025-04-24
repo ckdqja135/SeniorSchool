@@ -1,73 +1,55 @@
-const createError = require('http-errors');
-const helmet = require('helmet');
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const cookieParser = require('cookie-parser');
-const logger = require('./utils/logger'); // winston 기반 로거 추가
+const logger = require('./utils/logger');
 const routes = require('./routes');
+const securityMiddleware = require('./middlewares/securityMiddleware');
+const xssMiddleware = require('./middlewares/xssMiddleware');
+const rateLimitMiddleware = require('./middlewares/rateLimitMiddleware');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 
 const app = express();
 
+// 1. 가장 먼저 기본 body 파서
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get('/', (req, res) => {
-    res.send('Welcome to ReviewHub!');
-});
+// 2. 보안 미들웨어 (helmet 등)
+securityMiddleware(app);
 
+// 3. Rate Limiting
+rateLimitMiddleware(app);
+
+// 4. CORS 설정
 app.use(cors({
     origin: ['http://localhost:3000', 'http://192.168.45.242:3001', 'http://1.233.163.148:9001'],
     credentials: true
 }));
-// 요청 로깅 (모든 요청 기록)
+
+// 5. XSS 미들웨어
+app.use(xssMiddleware);
+
+// 6. 로깅
 app.use((req, res, next) => {
     logger.info(`${req.method} ${req.url}`);
     next();
 });
 
-// API 경로 연결
+// 7. API 라우터 연결
 app.use('/', routes);
 
-// Winston 기반 요청 로그 기록
+// 8. 에러 로깅 핸들러
 app.use((err, req, res, next) => {
     logger.error(`[${req.method}] ${req.url} - ${err.message}`);
     res.status(err.status || 500);
-    res.json({ message: err.message, error: err });
+    res.json({ message: err.message });
 });
 
-// JSON & URL 파싱
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// 9. 쿠키 파서
 app.use(cookieParser());
 
-// Helmet 보안 설정
-app.use(helmet());
-app.use(helmet.contentSecurityPolicy());
-app.use(helmet.crossOriginEmbedderPolicy());
-app.use(helmet.crossOriginOpenerPolicy());
-app.use(helmet.crossOriginResourcePolicy());
-app.use(helmet.dnsPrefetchControl());
-app.use(helmet.expectCt());
-app.use(helmet.frameguard());
-app.use(helmet.hidePoweredBy());
-app.use(helmet.hsts());
-app.use(helmet.ieNoOpen());
-app.use(helmet.noSniff());
-app.use(helmet.originAgentCluster());
-app.use(helmet.permittedCrossDomainPolicies());
-app.use(helmet.referrerPolicy());
-app.use(helmet.xssFilter());
-
-app.use(
-    helmet({
-        contentSecurityPolicy: false,
-        crossOriginResourcePolicy: false,
-    })
-);
-
+// 10. 서버 정보 숨기기
 app.disable('x-powered-by');
 
 module.exports = app;

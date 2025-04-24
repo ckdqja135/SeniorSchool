@@ -4,6 +4,11 @@ const logger = require('../utils/logger'); // 로거 파일이 필요할 경우 
 exports.getBoards = async (req, res, next) => {
     try {
         const univIdx = req.query.univIdx;
+
+        if (!univIdx) {
+            return res.status(400).json({ error: 'univIdx is required' });
+        }
+
         const boards = await boardService.getBoards(univIdx);
         res.status(200).json(boards);
     } catch (error) {
@@ -15,6 +20,11 @@ exports.getBoards = async (req, res, next) => {
 exports.getBoardDetail = async (req, res, next) => {
     try {
         const boardIdx = req.query.boardIdx;
+        
+        if (!boardIdx) {
+            return res.status(400).json({ error: 'boardIdx is required' });
+        }
+
         const detailBoard = await boardService.getBoardDetail(boardIdx);
         res.status(200).json(detailBoard);
     } catch (error) {
