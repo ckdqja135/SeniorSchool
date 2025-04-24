@@ -39,17 +39,25 @@ app.use((req, res, next) => {
 // 7. API 라우터 연결
 app.use('/', routes);
 
-// 8. 에러 로깅 핸들러
+// 8. 등록되지 않은 라우트 처리
+app.use((req, res, next) => {
+    res.status(404).json({
+        status: 404,
+        message: '요청한 API가 존재하지 않습니다.'
+    });
+});
+
+// 9. 에러 로깅 핸들러
 app.use((err, req, res, next) => {
     logger.error(`[${req.method}] ${req.url} - ${err.message}`);
     res.status(err.status || 500);
     res.json({ message: err.message });
 });
 
-// 9. 쿠키 파서
+// 10. 쿠키 파서
 app.use(cookieParser());
 
-// 10. 서버 정보 숨기기
+// 11. 서버 정보 숨기기
 app.disable('x-powered-by');
 
 module.exports = app;

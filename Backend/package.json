@@ -28,7 +28,9 @@
     "dotenv": "^16.3.1",
     "ejs": "^3.1.7",
     "express": "^4.17.3",
+    "express-rate-limit": "^7.5.0",
     "express-session": "^1.17.2",
+    "express-xss-sanitizer": "^2.0.0",
     "helmet": "^5.1.0",
     "html": "^1.0.0",
     "jsonwebtoken": "^9.0.2",
@@ -39,7 +41,8 @@
     "sequelize": "^6.35.0",
     "server.js": "^1.0.0",
     "winston": "^3.17.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston-daily-rotate-file": "^5.0.0",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
     "@babel/core": "^7.18.6",
