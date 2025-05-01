@@ -1,8 +1,17 @@
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const xss = require('xss-clean');
+const cors = require('cors');
 
 const securityMiddleware = (app) => {
+    // CORS 설정
+    app.use(cors({
+        origin: ['https://www.reviewhub.life', 'https://reviewhub.life'],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization']
+    }));
+
     // 기본 Helmet 설정
     app.use(helmet());
 
@@ -75,7 +84,11 @@ const securityMiddleware = (app) => {
     });
 
     // 모든 API 요청에 Rate Limiting 적용
-    app.use('/api/', limiter);
+    app.use('/admin/', limiter);
+    app.use('/board/', limiter);
+    app.use('/search/', limiter);
+    app.use('/comment/', limiter);
+    app.use('/admin/', limiter);
 
     // SameSite 쿠키 설정을 위한 미들웨어
     app.use((req, res, next) => {
