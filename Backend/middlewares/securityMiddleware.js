@@ -4,6 +4,9 @@ const xss = require('xss-clean');
 const cors = require('cors');
 
 const securityMiddleware = (app) => {
+    // 프록시 설정
+    app.set('trust proxy', 1);
+
     // CORS 설정
     app.use(cors({
         origin: ['https://www.reviewhub.life', 'https://reviewhub.life'],
