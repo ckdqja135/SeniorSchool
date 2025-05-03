@@ -12,6 +12,20 @@ const bodyParser = require('body-parser');
 
 const app = express();
 
+// CORS 설정 (가장 먼저 설정)
+const corsOptions = {
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://192.168.45.242:3000', 'http://192.168.45.242:3001', 'http://1.233.163.148:9001', 'https://www.reviewhub.life', 'https://reviewhub.life'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept', 'Cache-Control', 'Pragma', 'If-Modified-Since'],
+    exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar']
+};
+
+app.use(cors(corsOptions));
+
+// OPTIONS 요청 처리
+app.options('*', cors(corsOptions));
+
 // body 파서
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -21,12 +35,6 @@ securityMiddleware(app);
 
 // Rate Limiting
 rateLimitMiddleware(app);
-
-// CORS 설정
-app.use(cors({
-    origin: ['http://localhost:3000', 'http://192.168.45.242:3001', 'http://1.233.163.148:9001'],
-    credentials: true
-}));
 
 // XSS 미들웨어
 app.use(xssMiddleware);

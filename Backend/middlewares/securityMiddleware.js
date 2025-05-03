@@ -1,19 +1,12 @@
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const xss = require('xss-clean');
-const cors = require('cors');
 
 const securityMiddleware = (app) => {
     // 프록시 설정
     app.set('trust proxy', 1);
 
-    // CORS 설정
-    app.use(cors({
-        origin: ['https://www.reviewhub.life', 'https://reviewhub.life'],
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization']
-    }));
+    // CORS 설정 제거
 
     // 기본 Helmet 설정
     app.use(helmet());
@@ -25,7 +18,7 @@ const securityMiddleware = (app) => {
             scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'"],
+            connectSrc: ["'self'", "http://localhost:3000", "http://localhost:3001", "http://192.168.45.242:3000", "http://192.168.45.242:3001"],
             fontSrc: ["'self'"],
             objectSrc: ["'none'"],
             mediaSrc: ["'self'"],
@@ -34,9 +27,9 @@ const securityMiddleware = (app) => {
     }));
 
     // Cross-Origin 설정
-    app.use(helmet.crossOriginEmbedderPolicy());
-    app.use(helmet.crossOriginOpenerPolicy());
-    app.use(helmet.crossOriginResourcePolicy());
+    app.use(helmet.crossOriginEmbedderPolicy({ policy: 'credentialless' }));
+    app.use(helmet.crossOriginOpenerPolicy({ policy: 'same-origin-allow-popups' }));
+    app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 
     // DNS Prefetching 제어
     app.use(helmet.dnsPrefetchControl());
@@ -66,7 +59,7 @@ const securityMiddleware = (app) => {
     app.use(helmet.permittedCrossDomainPolicies());
 
     // Referrer 정책
-    app.use(helmet.referrerPolicy({ policy: 'same-origin' }));
+    app.use(helmet.referrerPolicy({ policy: 'no-referrer-when-downgrade' }));
 
     // XSS 보호
     app.use(helmet.xssFilter());
