@@ -134,7 +134,7 @@ exports.deleteUniv = async (deleteParams) => {
  * @param {Object} updateParams - 수정할 학교 데이터 (예: { univIdx: 1, univName: "변경된 학교명", ... })
  * @returns {Promise<Object>} - 수정 결과 반환
  */
-exports.patchUnivData = async (updateParams) => {
+exports.putUnivData = async (updateParams) => {
     // updateParams 객체에서 univIdx 확인
     const { univIdx } = updateParams;
 
