@@ -20,6 +20,6 @@ router.get('/univ/:univIdx', authenticateToken, isAdmin, univController.getUnivD
 router.delete('/deleteUniv', authenticateToken, isAdmin, univController.deleteUniv);
 
 // 학교 데이터 수정
-router.patch('/patchUnivData', authenticateToken, isAdmin, univController.patchUnivData);
+router.put('/patchUnivData', authenticateToken, isAdmin, univController.patchUnivData);
 
 module.exports = router;
