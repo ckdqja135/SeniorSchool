@@ -59,10 +59,10 @@ exports.deleteUniv = async (req, res, next) => {
  * req.body에 담긴 데이터를 그대로 univService.putUnivData에 전달함.
  * 전달받은 데이터를 기반으로 학교 데이터 수정 작업을 수행하도록 개발하였음.
  */
-exports.patchUnivData = async (req, res, next) => {
+exports.putUnivData = async (req, res, next) => {
     try {
         // req.body를 그대로 서비스단에 전달함
-        const result = await univService.patchUnivData(req.body);
+        const result = await univService.putUnivData(req.body);
         // 수정 결과를 JSON 형태로 응답함
         return res.status(200).json(result);
     } catch (error) {
