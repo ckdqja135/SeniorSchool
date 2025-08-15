@@ -52,7 +52,7 @@ exports.authenticateToken = async (req, res, next) => {
 exports.isAdmin = async (req, res, next) => {
     const { userRole } = req.user;
 
-    if (userRole !== 'admin') {
+    if (userRole !== 'admin' || userRole !== 'master') {
         return res.status(403).json({
             success: false,
             message: "권한이 없습니다. (admin 계정 필요)"
