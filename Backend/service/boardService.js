@@ -199,3 +199,49 @@ exports.getBoardLike = async (boardId) => {
         throw error;
     }
 };
+
+/**
+ * 최근순으로 게시된 게시글 목록 조회 (대학교 정보 포함)
+ * @returns {Promise<Object>} - 게시글 목록과 페이징 정보
+ */
+exports.getRecentBoardsWithUnivInfo = async () => {
+    try {
+        const limit = 5; // 고정된 제한 수
+
+        // UnivBoard와 UniversityInfo 테이블 조인하여 최근순으로 조회
+        const { count, rows } = await UnivBoard.findAndCountAll({
+            include: [
+                {
+                    model: require('../model/index').University,
+                    as: 'university',
+                    attributes: ['univName', 'univLocate', 'univType', 'univCampos'],
+                    where: { univStatus: 1 } // 활성화된 대학교만
+                }
+            ],
+            attributes: [
+                'boardIdx', 
+                'boardTitle', 
+                'boardContent', 
+                'univIdx', 
+                'boardRegDate', 
+                'boardLike', 
+                'boardHits', 
+                'boardID'
+            ],
+            order: [['boardRegDate', 'DESC']], // 최근순 정렬
+            limit: limit
+        });
+
+        logger.info(`[getRecentBoardsWithUnivInfo] Retrieved ${rows.length} boards`);
+        
+        return {
+            status: 200,
+            data: rows,
+            totalCount: count,
+            currentCount: rows.length
+        };
+    } catch (error) {
+        logger.error(`[getRecentBoardsWithUnivInfo] Error: ${error.message}`);
+        throw error;
+    }
+};

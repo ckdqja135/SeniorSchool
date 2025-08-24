@@ -103,3 +103,16 @@ exports.getBoardLike = async (req, res, next) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+/**
+ * 최근순으로 게시된 게시글 목록 조회 (대학교 정보 포함)
+ */
+exports.getRecentBoardsWithUnivInfo = async (req, res, next) => {
+    try {
+        const result = await boardService.getRecentBoardsWithUnivInfo();
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error(`[getRecentBoardsWithUnivInfo] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};

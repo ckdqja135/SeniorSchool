@@ -23,4 +23,7 @@ router.post('/like', boardController.toggleBoardLike);
 // 게시판 좋아요 조회
 router.get('/like/:boardId', boardController.getBoardLike);
 
+// 최근순으로 게시된 게시글 목록 조회 (대학교 정보 포함)
+router.get('/recent', boardController.getRecentBoardsWithUnivInfo);
+
 module.exports = router;
