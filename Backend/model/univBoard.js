@@ -13,6 +13,10 @@ module.exports = class UnivBoard extends Sequelize.Model {
                 type: Sequelize.STRING(45),
                 allowNull: false,
             },
+            boardContent: {
+                type: Sequelize.TEXT,
+                allowNull: true,
+            },
             univIdx: {
                 type: Sequelize.BIGINT,
                 allowNull: true,
@@ -50,7 +54,7 @@ module.exports = class UnivBoard extends Sequelize.Model {
 
     static associate(db) {
         // db.UnivBoard.belongsTo(db.UniversityInfo, { foreignKey: "UnivNo", targetKey: "UnivNo" });
-        // db.UnivBoard.hasOne(db.UnivBoardDetail, { foreignKey: "BoardNo", sourceKey: "BoardNo" });
         // db.UnivBoard.hasMany(db.UnivComment, { foreignKey: "BoardNo", sourceKey: "BoardNo" });
+        // UnivBoardDetail 관계 제거
     }
 };

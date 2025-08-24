@@ -17,4 +17,10 @@ router.put('/correct', boardController.correctBoard);
 // 게시판 삭제
 router.delete('/delete', boardController.deleteBoard);
 
+// 게시판 좋아요 토글
+router.post('/like', boardController.toggleBoardLike);
+
+// 게시판 좋아요 조회
+router.get('/like/:boardId', boardController.getBoardLike);
+
 module.exports = router;

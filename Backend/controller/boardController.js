@@ -65,3 +65,37 @@ exports.deleteBoard = async (req, res, next) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+// 게시판 좋아요 토글
+exports.toggleBoardLike = async (req, res, next) => {
+    try {
+        const { boardIdx, userId } = req.body;
+        
+        if (!boardIdx) {
+            return res.status(400).json({ error: 'boardIdx is required' });
+        }
+
+        const result = await boardService.toggleBoardLike(boardIdx, userId);
+        res.status(200).json({ success: true, message: result });
+    } catch (error) {
+        logger.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// 게시판 좋아요 조회
+exports.getBoardLike = async (req, res, next) => {
+    try {
+        const { boardId } = req.params;
+        
+        if (!boardId) {
+            return res.status(400).json({ error: 'boardId is required' });
+        }
+
+        const likeCount = await boardService.getBoardLike(boardId);
+        res.status(200).json({ likeCount });
+    } catch (error) {
+        logger.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
