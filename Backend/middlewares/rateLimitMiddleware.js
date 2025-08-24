@@ -49,7 +49,7 @@ const rateLimitMiddleware = (app) => {
     });
 
     // 일반적인 API 요청에 적용
-    app.use('/api/', generalLimiter);
+    // app.use('/api/', generalLimiter);
     
     // 민감한 API에 엄격한 제한 적용
     app.use('/api/auth/', strictLimiter);
