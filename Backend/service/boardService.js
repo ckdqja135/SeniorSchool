@@ -144,7 +144,7 @@ exports.deleteBoard = async (boardData) => {
 };
 
 // 게시판 좋아요 토글
-exports.toggleBoardLike = async (boardIdx, userId) => {
+exports.toggleBoardLike = async (boardIdx, isLiked) => {
     try {
         // 현재 좋아요 수 조회
         const board = await UnivBoard.findOne({
@@ -155,14 +155,25 @@ exports.toggleBoardLike = async (boardIdx, userId) => {
             throw new Error('Board not found');
         }
 
-        // 임시로 항상 +1 증가 (실제 구현시에는 사용자별 상태 확인 필요)
-        const [affectedCount] = await UnivBoard.update(
-            { boardLike: sequelize.literal('boardLike + 1') },
-            { where: { boardIdx: boardIdx } }
-        );
+        // isLiked 상태에 따라 좋아요 수 조정
+        if (isLiked) {
+            // 좋아요 추가 (+1)
+            const [affectedCount] = await UnivBoard.update(
+                { boardLike: sequelize.literal('boardLike + 1') },
+                { where: { boardIdx: boardIdx } }
+            );
+            logger.info(`[toggleBoardLike] Board like added (+1). BoardIdx: ${boardIdx}`);
+            return { action: 'liked', message: '좋아요가 추가되었습니다.' };
+        } else {
+            // 좋아요 취소 (-1)
+            const [affectedCount] = await UnivBoard.update(
+                { boardLike: sequelize.literal('boardLike - 1') },
+                { where: { boardIdx: boardIdx } }
+            );
+            logger.info(`[toggleBoardLike] Board like removed (-1). BoardIdx: ${boardIdx}`);
+            return { action: 'unliked', message: '좋아요가 취소되었습니다.' };
+        }
 
-        logger.info(`[toggleBoardLike] Board like toggled successfully. BoardIdx: ${boardIdx}`);
-        return 'Board like toggled successfully';
     } catch (error) {
         logger.error(`[toggleBoardLike] Error: ${error.message}`);
         throw error;

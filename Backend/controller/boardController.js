@@ -69,14 +69,18 @@ exports.deleteBoard = async (req, res, next) => {
 // 게시판 좋아요 토글
 exports.toggleBoardLike = async (req, res, next) => {
     try {
-        const { boardIdx, userId } = req.body;
+        const { boardIdx, isLiked } = req.body;
         
         if (!boardIdx) {
             return res.status(400).json({ error: 'boardIdx is required' });
         }
 
-        const result = await boardService.toggleBoardLike(boardIdx, userId);
-        res.status(200).json({ success: true, message: result });
+        if (typeof isLiked !== 'boolean') {
+            return res.status(400).json({ error: 'isLiked must be boolean (true/false)' });
+        }
+
+        const result = await boardService.toggleBoardLike(boardIdx, isLiked);
+        res.status(200).json({ success: true, ...result });
     } catch (error) {
         logger.error(error);
         res.status(500).json({ error: 'Internal Server Error' });
