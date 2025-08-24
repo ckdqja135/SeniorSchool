@@ -53,8 +53,17 @@ module.exports = class UnivBoard extends Sequelize.Model {
     }
 
     static associate(db) {
-        // db.UnivBoard.belongsTo(db.UniversityInfo, { foreignKey: "UnivNo", targetKey: "UnivNo" });
-        // db.UnivBoard.hasMany(db.UnivComment, { foreignKey: "BoardNo", sourceKey: "BoardNo" });
-        // UnivBoardDetail 관계 제거
+        // UnivBoard와 UniversityInfo 간의 관계 설정
+        db.UnivBoard.belongsTo(db.University, { 
+            foreignKey: "univIdx", 
+            targetKey: "univIdx",
+            as: 'university'
+        });
+        
+        // UnivBoard와 UnivComment 간의 관계 설정
+        db.UnivBoard.hasMany(db.UnivComment, { 
+            foreignKey: "boardIdx", 
+            sourceKey: "boardIdx" 
+        });
     }
 };

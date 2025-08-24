@@ -80,5 +80,10 @@ module.exports = class UniversityInfo extends Sequelize.Model {
     }
 
     static associate(db) {
+        // UniversityInfo와 UnivBoard 간의 관계 설정
+        db.University.hasMany(db.UnivBoard, { 
+            foreignKey: "univIdx", 
+            sourceKey: "univIdx" 
+        });
     }
 };
