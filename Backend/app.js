@@ -6,7 +6,7 @@ const { httpLogger } = logger;
 const routes = require('./routes');
 const securityMiddleware = require('./middlewares/securityMiddleware');
 const xssMiddleware = require('./middlewares/xssMiddleware');
-const rateLimitMiddleware = require('./middlewares/rateLimitMiddleware');
+// const rateLimitMiddleware = require('./middlewares/rateLimitMiddleware');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 

@@ -18,8 +18,8 @@ const rateLimitMiddleware = (app) => {
             skipSuccessfulRequests: true,
         });
         
-        app.use('/api/', devLimiter);
-        console.log('🔧 개발 환경: Rate Limiting 완화됨 (1분당 10000회)');
+        // app.use('/api/', devLimiter);
+        // console.log('🔧 개발 환경: Rate Limiting 비활성화됨');
         return;
     }
     
@@ -51,9 +51,9 @@ const rateLimitMiddleware = (app) => {
     // 일반적인 API 요청에 적용
     // app.use('/api/', generalLimiter);
     
-    // 민감한 API에 엄격한 제한 적용
-    app.use('/api/auth/', strictLimiter);
-    app.use('/api/admin/', strictLimiter);
+    // 민감한 API에 엄격한 제한 적용 (비활성화)
+    // app.use('/api/auth/', strictLimiter);
+    // app.use('/api/admin/', strictLimiter);
 };
 
 module.exports = rateLimitMiddleware; 
