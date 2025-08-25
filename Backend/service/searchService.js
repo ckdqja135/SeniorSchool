@@ -38,7 +38,7 @@ exports.getSchoolInfo = async (univName) => {
             { where: { univIdx: university.univIdx }, transaction } // Primary Key 기준 업데이트
         );
 
-        await transaction.commit(); // ✅ 트랜잭션 커밋
+        await transaction.commit(); // 트랜잭션 커밋
 
         logger.info(`[getSchoolInfo] 대학교 검색 완료: ${univName}`);
 

@@ -34,7 +34,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 securityMiddleware(app);
 
 // Rate Limiting
-rateLimitMiddleware(app);
+// rateLimitMiddleware(app);
 
 // XSS 미들웨어
 app.use(xssMiddleware);
