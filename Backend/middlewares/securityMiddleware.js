@@ -79,12 +79,12 @@ const securityMiddleware = (app) => {
         legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     });
 
-    // 모든 API 요청에 Rate Limiting 적용
-    app.use('/admin/', limiter);
-    app.use('/board/', limiter);
-    app.use('/search/', limiter);
-    app.use('/comment/', limiter);
-    app.use('/admin/', limiter);
+    // 모든 API 요청에 Rate Limiting 적용 (search 경로 제외)
+    // app.use('/admin/', limiter);
+    // app.use('/board/', limiter);
+    // app.use('/search/', limiter);  // search 경로 rate limiting 비활성화
+    // app.use('/comment/', limiter);
+    // app.use('/admin/', limiter);
 
     // SameSite 쿠키 설정을 위한 미들웨어
     app.use((req, res, next) => {
