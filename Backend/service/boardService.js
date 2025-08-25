@@ -6,7 +6,16 @@ exports.getBoards = async (univIdx) => {
 };
 
 exports.getBoardDetail = async (boardIdx) => {
-    const detailBoard = await UnivBoard.findOne({ where: { boardIdx: boardIdx } });
+    const detailBoard = await UnivBoard.findOne({ 
+        where: { boardIdx: boardIdx },
+        include: [
+            {
+                model: require('../model/index').University,
+                as: 'university',
+                attributes: ['univName', 'univLocate', 'univType', 'univCampos']
+            }
+        ]
+    });
 
     // 조회수 증가
     await UnivBoard.update(
