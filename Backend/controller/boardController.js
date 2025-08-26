@@ -4,12 +4,19 @@ const logger = require('../utils/logger'); // 로거 파일이 필요할 경우 
 exports.getBoards = async (req, res, next) => {
     try {
         const univIdx = req.query.univIdx;
+        const { id, title, content } = req.query;
 
         if (!univIdx) {
             return res.status(400).json({ error: 'univIdx is required' });
         }
 
-        const boards = await boardService.getBoards(univIdx);
+        // 검색 매개변수 구성
+        const searchParams = {};
+        if (id) searchParams.id = id;
+        if (title) searchParams.title = title;
+        if (content) searchParams.content = content;
+
+        const boards = await boardService.getBoards(univIdx, searchParams);
         res.status(200).json(boards);
     } catch (error) {
         logger.error(error);
