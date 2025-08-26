@@ -7,39 +7,41 @@ const hashPassword = (password) => {
     return crypto.createHash('sha256').update(password).digest('hex');
 };
 
-exports.getBoards = async (univIdx, searchQuery = null) => {
+exports.getBoards = async (univIdx, searchParams = {}) => {
     try {
         let whereClause = { univIdx: univIdx };
         
-        // 검색어가 있는 경우 검색 조건 추가
-        if (searchQuery && searchQuery.trim() !== '') {
-            const searchTerm = searchQuery.trim();
-            
-            whereClause = {
-                ...whereClause,
-                [Op.or]: [
-                    // boardTitle: LIKE 검색
-                    {
-                        boardTitle: {
-                            [Op.like]: `%${searchTerm}%`
-                        }
-                    },
-                    // boardContent: LIKE 검색
-                    {
-                        boardContent: {
-                            [Op.like]: `%${searchTerm}%`
-                        }
-                    },
-                    // boardID: 정확한 일치 검색
-                    {
-                        boardID: searchTerm
-                    }
-                ]
+        // 검색 조건이 있는 경우 추가
+        const { id, title, content } = searchParams;
+        let hasSearchCondition = false;
+        
+        if (id && id.trim() !== '') {
+            // boardID: 정확한 일치 검색
+            whereClause.boardID = id.trim();
+            hasSearchCondition = true;
+            logger.info(`[getBoards] ID search applied: "${id.trim()}" for univIdx: ${univIdx}`);
+        }
+        
+        if (title && title.trim() !== '') {
+            // boardTitle: LIKE 검색
+            whereClause.boardTitle = {
+                [Op.like]: `%${title.trim()}%`
             };
-            
-            logger.info(`[getBoards] Search query applied: "${searchTerm}" for univIdx: ${univIdx}`);
-        } else {
-            logger.info(`[getBoards] No search query, returning all boards for univIdx: ${univIdx}`);
+            hasSearchCondition = true;
+            logger.info(`[getBoards] Title search applied: "${title.trim()}" for univIdx: ${univIdx}`);
+        }
+        
+        if (content && content.trim() !== '') {
+            // boardContent: LIKE 검색
+            whereClause.boardContent = {
+                [Op.like]: `%${content.trim()}%`
+            };
+            hasSearchCondition = true;
+            logger.info(`[getBoards] Content search applied: "${content.trim()}" for univIdx: ${univIdx}`);
+        }
+        
+        if (!hasSearchCondition) {
+            logger.info(`[getBoards] No search condition, returning all boards for univIdx: ${univIdx}`);
         }
         
         const boards = await UnivBoard.findAll({ 
@@ -47,7 +49,7 @@ exports.getBoards = async (univIdx, searchQuery = null) => {
             order: [['boardRegDate', 'DESC']] // 최신순 정렬
         });
         
-        logger.info(`[getBoards] Found ${boards.length} boards for univIdx: ${univIdx}${searchQuery ? ` with search: "${searchQuery}"` : ''}`);
+        // logger.info(`[getBoards] Found ${boards.length} boards for univIdx: ${univIdx}${hasSearchCondition ? ' with search conditions' : ''}`);
         return boards;
     } catch (error) {
         logger.error(`[getBoards] Error: ${error.message}`);
