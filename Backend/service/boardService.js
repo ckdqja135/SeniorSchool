@@ -1,4 +1,4 @@
-const { UnivBoard, sequelize, UnivComment } = require('../model/index');
+const { UnivBoard, sequelize, UnivComment, Op } = require('../model/index');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
 
@@ -7,8 +7,52 @@ const hashPassword = (password) => {
     return crypto.createHash('sha256').update(password).digest('hex');
 };
 
-exports.getBoards = async (univIdx) => {
-    return await UnivBoard.findAll({ where: { univIdx: univIdx } });
+exports.getBoards = async (univIdx, searchQuery = null) => {
+    try {
+        let whereClause = { univIdx: univIdx };
+        
+        // 검색어가 있는 경우 검색 조건 추가
+        if (searchQuery && searchQuery.trim() !== '') {
+            const searchTerm = searchQuery.trim();
+            
+            whereClause = {
+                ...whereClause,
+                [Op.or]: [
+                    // boardTitle: LIKE 검색
+                    {
+                        boardTitle: {
+                            [Op.like]: `%${searchTerm}%`
+                        }
+                    },
+                    // boardContent: LIKE 검색
+                    {
+                        boardContent: {
+                            [Op.like]: `%${searchTerm}%`
+                        }
+                    },
+                    // boardID: 정확한 일치 검색
+                    {
+                        boardID: searchTerm
+                    }
+                ]
+            };
+            
+            logger.info(`[getBoards] Search query applied: "${searchTerm}" for univIdx: ${univIdx}`);
+        } else {
+            logger.info(`[getBoards] No search query, returning all boards for univIdx: ${univIdx}`);
+        }
+        
+        const boards = await UnivBoard.findAll({ 
+            where: whereClause,
+            order: [['boardRegDate', 'DESC']] // 최신순 정렬
+        });
+        
+        logger.info(`[getBoards] Found ${boards.length} boards for univIdx: ${univIdx}${searchQuery ? ` with search: "${searchQuery}"` : ''}`);
+        return boards;
+    } catch (error) {
+        logger.error(`[getBoards] Error: ${error.message}`);
+        throw error;
+    }
 };
 
 exports.getBoardDetail = async (boardIdx) => {
