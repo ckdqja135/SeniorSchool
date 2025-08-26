@@ -1,4 +1,5 @@
-const { UnivBoard, sequelize, UnivComment, Op } = require('../model/index');
+const { UnivBoard, sequelize, UnivComment } = require('../model/index');
+const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
 
