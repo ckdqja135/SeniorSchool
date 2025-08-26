@@ -22,9 +22,6 @@ exports.autoComplete = async (req, res) => {
 
 exports.getSchoolInfo = async (req, res) => {
     try {
-        logger.info(`[getSchoolInfo] Request received: ${JSON.stringify(req.query)}`);
-        logger.info(`[getSchoolInfo] Request URL: ${req.url}`);
-        logger.info(`[getSchoolInfo] Request path: ${req.path}`);
         
         const { univName } = req.query;
 

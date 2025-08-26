@@ -71,10 +71,24 @@ exports.insertBoard = async (boardData) => {
  * 게시글 수정
  */
 exports.correctBoard = async (boardData) => {
-    // logger.info(`[correctBoard] Start - boardData: ${JSON.stringify(boardData)}`);
-
+   
+    // 입력된 비밀번호 암호화
+    const hashedPassword = hashPassword(boardData.writerPw);
+    
     const transaction = await sequelize.transaction();
     try {
+        // 먼저 게시글 존재 여부와 비밀번호 확인
+        const existingBoard = await UnivBoard.findOne({
+            where: { boardIdx: boardData.boardIdx },
+            transaction,
+        });
+        
+        if (!existingBoard) {
+            logger.warn(`[correctBoard] Board not found. BoardIdx: ${boardData.boardIdx}`);
+            await transaction.rollback();
+            throw new Error('Board not found');
+        }
+        
         // UnivBoard 업데이트
         const [affectedCount] = await UnivBoard.update(
             { 
@@ -84,7 +98,7 @@ exports.correctBoard = async (boardData) => {
             {
                 where: {
                     boardIdx: boardData.boardIdx,
-                    boardPW: hashPassword(boardData.writerPw), // SHA256 암호화 적용
+                    boardPW: hashedPassword, // SHA256 암호화 적용
                 },
                 transaction,
             }
@@ -102,7 +116,9 @@ exports.correctBoard = async (boardData) => {
         return 'Board updated successfully';
     } catch (error) {
         logger.error(`[correctBoard] Error: ${error.message}. Transaction rollback.`);
-        await transaction.rollback();
+        if (transaction && !transaction.finished) {
+            await transaction.rollback();
+        }
         throw error;
     }
 };
@@ -111,7 +127,6 @@ exports.correctBoard = async (boardData) => {
  * 게시글 삭제
  */
 exports.deleteBoard = async (boardData) => {
-    // logger.info(`[deleteBoard] Start - boardData: ${JSON.stringify(boardData)}`);
 
     const transaction = await sequelize.transaction();
     try {
