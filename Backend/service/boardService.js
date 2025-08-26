@@ -1,5 +1,11 @@
 const { UnivBoard, sequelize, UnivComment } = require('../model/index');
 const logger = require('../utils/logger');
+const crypto = require('crypto');
+
+// SHA256 암호화 함수
+const hashPassword = (password) => {
+    return crypto.createHash('sha256').update(password).digest('hex');
+};
 
 exports.getBoards = async (univIdx) => {
     return await UnivBoard.findAll({ where: { univIdx: univIdx } });
@@ -45,7 +51,7 @@ exports.insertBoard = async (boardData) => {
                 boardLike: boardData.boardLike || 0,
                 boardHits: boardData.boardHits || 0,
                 boardID: boardData.boardId,
-                boardPW: boardData.boardPw,
+                boardPW: hashPassword(boardData.boardPw), // SHA256 암호화 적용
             },
             { transaction }
         );
@@ -78,7 +84,7 @@ exports.correctBoard = async (boardData) => {
             {
                 where: {
                     boardIdx: boardData.boardIdx,
-                    boardPW: boardData.writerPw,
+                    boardPW: hashPassword(boardData.writerPw), // SHA256 암호화 적용
                 },
                 transaction,
             }
@@ -113,7 +119,7 @@ exports.deleteBoard = async (boardData) => {
         const boardResult = await UnivBoard.findOne({
             where: {
                 boardIdx: boardData.boardIdx,
-                boardPW: boardData.writerPw,
+                boardPW: hashPassword(boardData.writerPw), // SHA256 암호화 적용
             },
             transaction,
         });
@@ -129,7 +135,7 @@ exports.deleteBoard = async (boardData) => {
         await UnivBoard.destroy({
             where: {
                 boardIdx: boardData.boardIdx,
-                boardPW: boardData.writerPw,
+                boardPW: hashPassword(boardData.writerPw), // SHA256 암호화 적용
             },
             transaction,
         });
