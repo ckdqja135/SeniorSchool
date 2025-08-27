@@ -19,7 +19,10 @@ exports.searchUniv = async (req, res) => {
         const result = await univService.searchUniv(data);
         logger.info(`[searchUniv] Success: ${result.totalCount} results found`);
 
-        res.status(result.status).json(result);
+        res.status(result.status).json({
+            insert: result.totalCount,
+            success: true
+        });
     } catch (error) {
         logger.error(`[searchUniv] Error: ${error.message}`);
         logger.error(`[searchUniv] Stack trace: ${error.stack}`);
