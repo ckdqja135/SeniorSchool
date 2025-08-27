@@ -4,7 +4,14 @@ const logger = require('../../utils/logger');
 exports.createUniv = async (req, res, next) => {
     try {
         const result = await univService.createUniv(req.body);
-        return res.status(201).json(result);
+        
+        // 배열인 경우 길이, 단일 객체인 경우 1로 처리
+        const insertCount = Array.isArray(result) ? result.length : 1;
+        
+        return res.status(201).json({
+            insert: insertCount,
+            success: true
+        });
     } catch (e) {
         next(e);
     }
@@ -19,10 +26,7 @@ exports.searchUniv = async (req, res) => {
         const result = await univService.searchUniv(data);
         logger.info(`[searchUniv] Success: ${result.totalCount} results found`);
 
-        res.status(result.status).json({
-            insert: result.totalCount,
-            success: true
-        });
+        res.status(result.status).json(result);
     } catch (error) {
         logger.error(`[searchUniv] Error: ${error.message}`);
         logger.error(`[searchUniv] Stack trace: ${error.stack}`);
