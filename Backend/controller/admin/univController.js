@@ -14,11 +14,15 @@ exports.createUniv = async (req, res, next) => {
 exports.searchUniv = async (req, res) => {
     try {
         const data = req.query;
+        logger.info(`[searchUniv] Request query: ${JSON.stringify(data)}`);
+        
         const result = await univService.searchUniv(data);
+        logger.info(`[searchUniv] Success: ${result.totalCount} results found`);
 
         res.status(result.status).json(result);
     } catch (error) {
         logger.error(`[searchUniv] Error: ${error.message}`);
+        logger.error(`[searchUniv] Stack trace: ${error.stack}`);
         res.status(500).json({ status: 500, message: '서버 오류가 발생했습니다.' });
     }
 };

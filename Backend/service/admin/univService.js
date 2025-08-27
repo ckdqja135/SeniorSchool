@@ -52,8 +52,9 @@ exports.createUniv = async (univData) => {
  * @returns {Promise<Object>} - 검색 결과, 페이징 정보 포함
  */
 exports.searchUniv = async (data) => {
-    const rowsPerPage = data.rowsPerPage || 10;
-    const page = data.page || 1;
+    // 파라미터 타입을 명시적으로 숫자로 변환
+    const rowsPerPage = parseInt(data.rowsPerPage, 10) || 10;
+    const page = parseInt(data.page || data.currentPage, 10) || 1;
     const keyword = data.keyword || '';
     const offset = (page - 1) * rowsPerPage;
 
@@ -74,22 +75,37 @@ exports.searchUniv = async (data) => {
         }
     }
 
-    // 실제 DB 검색
-    const { count, rows } = await University.findAndCountAll({
-        where: whereClause,
-        limit: rowsPerPage,
-        offset,
-        order: [['univIdx', 'ASC']],
-    });
+    try {
+        // 파라미터 유효성 검사
+        if (rowsPerPage <= 0 || page <= 0) {
+            throw new Error('rowsPerPage와 page는 1 이상의 양수여야 합니다.');
+        }
 
-    // 결과를 객체 형태로 리턴
-    return {
-        status: 200,
-        data: rows,
-        totalCount: count,
-        currentPage: page,
-        rowsPerPage,
-    };
+        logger.info(`[searchUniv] Query params - rowsPerPage: ${rowsPerPage}, page: ${page}, offset: ${offset}`);
+
+        // 실제 DB 검색
+        const { count, rows } = await University.findAndCountAll({
+            where: whereClause,
+            limit: rowsPerPage,
+            offset,
+            order: [['univIdx', 'ASC']],
+        });
+
+        logger.info(`[searchUniv] Query executed successfully - found ${count} total records`);
+
+        // 결과를 객체 형태로 리턴
+        return {
+            status: 200,
+            data: rows,
+            totalCount: count,
+            currentPage: page,
+            rowsPerPage,
+        };
+    } catch (error) {
+        logger.error(`[searchUniv] Database query error: ${error.message}`);
+        logger.error(`[searchUniv] Query params - rowsPerPage: ${rowsPerPage}, page: ${page}, offset: ${offset}`);
+        throw error;
+    }
 };
 
 // 학교 상세보기 서비스
