@@ -32,9 +32,9 @@ exports.getSchoolInfo = async (univName) => {
             return null; // 학교 정보가 없으면 null 반환
         }
 
-        // UnivViewCount 증가
+        // univViewCount 증가
         await University.update(
-            { UnivViewCount: Sequelize.literal("univViewCount + 1") },
+            { univViewCount: Sequelize.literal("univViewCount + 1") },
             { where: { univIdx: university.univIdx }, transaction } // Primary Key 기준 업데이트
         );
 
@@ -45,6 +45,40 @@ exports.getSchoolInfo = async (univName) => {
         return university;
     } catch (error) {
         logger.error(`[searchService.getSchoolInfo] Error: ${error.message}`);
+        await transaction.rollback(); // 에러 발생 시 트랜잭션 롤백
         throw error;
     }
 };
+
+// univViewCount 높은 순으로 상위 10개 대학교 조회
+exports.getTopViewedUniversities = async () => {
+    try {
+        const topUniversities = await University.findAll({
+            attributes: [
+                'univIdx',
+                'univName', 
+                'univLocate', 
+                'univType', 
+                'univCampos',
+                'univViewCount'
+            ],
+            where: {
+                univStatus: 1 // 활성화된 대학교만
+            },
+            order: [['univViewCount', 'DESC']], // 조회수 높은 순 정렬
+            limit: 10 // 상위 10개만
+        });
+
+        logger.info(`[getTopViewedUniversities] 상위 10개 대학교 조회 완료: ${topUniversities.length}개`);
+        
+        return {
+            status: 200,
+            data: topUniversities,
+            totalCount: topUniversities.length
+        };
+    } catch (error) {
+        logger.error(`[searchService.getTopViewedUniversities] Error: ${error.message}`);
+        throw error;
+    }
+};
+

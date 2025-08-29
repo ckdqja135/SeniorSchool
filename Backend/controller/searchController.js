@@ -43,3 +43,21 @@ exports.getSchoolInfo = async (req, res) => {
         return res.status(500).json({ error: error });
     }
 };
+
+// univViewCount 높은 순으로 상위 10개 대학교 조회
+exports.getTopViewedUniversities = async (req, res) => {
+    try {
+        const result = await searchService.getTopViewedUniversities();
+        
+        logger.info(`[getTopViewedUniversities] 상위 10개 대학교 조회 성공: ${result.totalCount}개`);
+        
+        return res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[getTopViewedUniversities] Error: ${error.message}`);
+        return res.status(500).json({ 
+            status: 500, 
+            error: '서버 오류가 발생했습니다.',
+            message: error.message 
+        });
+    }
+};
