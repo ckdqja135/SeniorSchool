@@ -26,4 +26,7 @@ router.get('/like/:boardId', boardController.getBoardLike);
 // 최근순으로 게시된 게시글 목록 조회 (대학교 정보 포함)
 router.get('/recent', boardController.getRecentBoardsWithUnivInfo);
 
+// 대학교별로 게시판 조회수 기준 인기 후기 TOP10 조회
+router.get('/top-viewed', boardController.getTopViewedBoardsByUniversity);
+
 module.exports = router;

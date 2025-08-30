@@ -322,3 +322,43 @@ exports.getRecentBoardsWithUnivInfo = async () => {
         throw error;
     }
 };
+
+/**
+ * 전체 대학교의 게시판 조회수 기준 인기 후기 TOP10 조회
+ * @returns {Promise<Object>} - 인기 후기 목록과 정보
+ */
+exports.getTopViewedBoardsByUniversity = async () => {
+    try {
+        const topBoards = await UnivBoard.findAll({
+            include: [
+                {
+                    model: require('../model/index').University,
+                    as: 'university',
+                    attributes: ['univName', 'univLocate', 'univType', 'univCampos'],
+                    where: { univStatus: 1 } // 활성화된 대학교만
+                }
+            ],
+            attributes: [
+                'boardIdx',
+                'boardTitle', 
+                'boardContent', 
+                'boardRegDate', 
+                'boardLike', 
+                'boardHits', 
+                'boardID'
+            ],
+            order: [['boardHits', 'DESC']], // 조회수 높은 순 정렬
+            limit: 10 // 상위 10개만
+        });
+
+        logger.info(`[getTopViewedBoardsByUniversity] 전체 대학교의 인기 후기 TOP10 조회 완료: ${topBoards.length}개`);
+        
+        return {
+            status: 200,
+            data: topBoards
+        };
+    } catch (error) {
+        logger.error(`[getTopViewedBoardsByUniversity] Error: ${error.message}`);
+        throw error;
+    }
+};

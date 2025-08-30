@@ -123,3 +123,23 @@ exports.getRecentBoardsWithUnivInfo = async (req, res, next) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+/**
+ * 전체 대학교의 게시판 조회수 기준 인기 후기 TOP10 조회
+ */
+exports.getTopViewedBoardsByUniversity = async (req, res, next) => {
+    try {
+        const result = await boardService.getTopViewedBoardsByUniversity();
+        
+        logger.info(`[getTopViewedBoardsByUniversity] 전체 대학교의 인기 후기 TOP10 조회 성공: ${result.totalCount}개`);
+        
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[getTopViewedBoardsByUniversity] Error: ${error.message}`);
+        res.status(500).json({ 
+            status: 500, 
+            error: '서버 오류가 발생했습니다.',
+            message: error.message 
+        });
+    }
+};
