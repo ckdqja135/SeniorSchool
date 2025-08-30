@@ -45,6 +45,7 @@ univComment.associate(db);
 user.associate(db);
 reportBoard.associate(db);
 univRequest.associate(db);
+
 sequelize.authenticate()
     .then(() => logger.info('✅ 데이터베이스 연결 성공'))
     .catch((error) => logger.error(`❌ 데이터베이스 연결 실패: ${error.message}`));
