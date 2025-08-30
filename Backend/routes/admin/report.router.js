@@ -4,7 +4,7 @@ const reportController = require('../../controller/admin/reportController');
 const { isAdmin, authenticateToken } = require('../../middlewares/authMiddleware');
 
 // 신고 게시판 등록
-router.post('/createReport', authenticateToken, isAdmin, reportController.createReport);
+router.post('/createReport', isAdmin, reportController.createReport);
 
 // 신고 게시판 리스트
 router.get('/getReports', authenticateToken, isAdmin, reportController.getReports);
