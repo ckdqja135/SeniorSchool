@@ -4,7 +4,7 @@ const university = require('./universityinfo');
 const reportBoard = require('./tb_univ_report_board');
 const user = require('./user');
 const univComment = require('./univcomment');
-const univRequest = require('./univRequest');
+const univRequest = require('./tb_univ_request');
 const config = require('../conf/sequelize');
 const logger = require('../utils/logger');
 
