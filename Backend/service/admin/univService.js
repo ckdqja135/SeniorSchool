@@ -316,10 +316,10 @@ exports.updateUnivRequestStatus = async (requestIdx, status, adminNote = null) =
             throw new Error('존재하지 않는 요청입니다.');
         }
 
-        // 상태 업데이트
+        // 상태와 관리자 메모 업데이트
         const updateData = {
             requestStatus: status,
-            adminNote: adminNote
+            adminNote: adminNote || null // adminNote가 없으면 null로 설정
         };
 
         // 처리 완료인 경우 처리 날짜 추가
