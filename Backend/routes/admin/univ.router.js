@@ -30,7 +30,7 @@ router.put('/putUnivData', authenticateToken, isAdmin, univController.putUnivDat
 router.post('/request', univController.createUnivRequest);
 
 // 대학교 요청 목록 조회 (관리자만)
-router.get('/requests', authenticateToken, isAdmin, univController.getUnivRequests);
+router.get('/request', authenticateToken, isAdmin, univController.getUnivRequests);
 
 // 대학교 요청 상태 업데이트 (관리자만)
 router.put('/request/:requestIdx/status', authenticateToken, isAdmin, univController.updateUnivRequestStatus);
