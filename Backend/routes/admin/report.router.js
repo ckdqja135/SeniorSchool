@@ -13,7 +13,7 @@ router.get('/getReports', authenticateToken, isAdmin, reportController.getReport
 router.get('/getReportDetail', authenticateToken, isAdmin, reportController.getReportDetail);
 
 // 신고 처리 상태 업데이트
-router.patch('/updateReportStatus', authenticateToken, isAdmin, reportController.updateReportStatus);
+router.put('/updateReportStatus', authenticateToken, isAdmin, reportController.updateReportStatus);
 
 // 신고 게시판 삭제
 router.delete('/deleteReportBoard', authenticateToken, isAdmin, reportController.deleteReportBoard);
