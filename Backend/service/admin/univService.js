@@ -207,3 +207,144 @@ exports.putUnivData = async (updateParams) => {
         affectedCount
     };
 };
+
+/**
+ * 대학교 요청 생성 서비스
+ * @param {Object} requestData - 요청 데이터 (univName, univPresident, univYears, univAddr)
+ * @returns {Promise<Object>} - 생성 결과
+ */
+exports.createUnivRequest = async (requestData) => {
+    try {
+        const { univName, univPresident, univYears, univAddr } = requestData;
+
+        // 필수값 체크 (대학교 이름만 필수)
+        if (!univName || univName.trim() === '') {
+            throw new Error('대학교 이름은 필수입니다.');
+        }
+
+        // 대학교 이름 중복 체크 (이미 요청된 대학교인지)
+        const existingRequest = await require('../../model/index').UnivRequest.findOne({
+            where: { univName: univName.trim() }
+        });
+
+        if (existingRequest) {
+            return {
+                success: false,
+                message: '이미 요청된 대학교입니다.',
+                existingRequest
+            };
+        }
+
+        // 요청 데이터 생성
+        const newRequest = await require('../../model/index').UnivRequest.create({
+            univName: univName.trim(),
+            univPresident: univPresident ? univPresident.trim() : null,
+            univYears: univYears ? univYears.trim() : null,
+            univAddr: univAddr ? univAddr.trim() : null,
+            requestStatus: 'pending',
+            requestDate: new Date()
+        });
+
+        logger.info(`[createUnivRequest] 대학교 요청 생성 완료: ${newRequest.requestIdx} - ${newRequest.univName}`);
+        
+        return {
+            success: true,
+            message: '대학교 요청이 성공적으로 등록되었습니다.',
+            data: newRequest
+        };
+    } catch (error) {
+        logger.error(`[createUnivRequest] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 대학교 요청 목록 조회 서비스 (관리자용)
+ * @param {Object} searchParams - 검색 조건 (status, page, rowsPerPage)
+ * @returns {Promise<Object>} - 요청 목록과 페이징 정보
+ */
+exports.getUnivRequests = async (searchParams = {}) => {
+    try {
+        const { status, page = 1, rowsPerPage = 10 } = searchParams;
+        const offset = (page - 1) * rowsPerPage;
+
+        // 검색 조건 구성
+        const whereClause = {};
+        if (status && ['pending', 'completed'].includes(status)) {
+            whereClause.requestStatus = status;
+        }
+
+        // 요청 목록 조회
+        const { count, rows } = await require('../../model/index').UnivRequest.findAndCountAll({
+            where: whereClause,
+            order: [['requestDate', 'DESC']], // 최신 요청순
+            limit: rowsPerPage,
+            offset
+        });
+
+        logger.info(`[getUnivRequests] 대학교 요청 목록 조회 완료: ${rows.length}개 / 총 ${count}개`);
+        
+        return {
+            status: 200,
+            data: rows,
+            totalCount: count,
+            currentPage: page,
+            rowsPerPage,
+            totalPages: Math.ceil(count / rowsPerPage)
+        };
+    } catch (error) {
+        logger.error(`[getUnivRequests] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 대학교 요청 상태 업데이트 서비스 (관리자용)
+ * @param {number} requestIdx - 요청 인덱스
+ * @param {string} status - 새로운 상태 ('pending' 또는 'completed')
+ * @param {string} adminNote - 관리자 메모
+ * @returns {Promise<Object>} - 업데이트 결과
+ */
+exports.updateUnivRequestStatus = async (requestIdx, status, adminNote = null) => {
+    try {
+        // 요청 존재 여부 확인
+        const request = await require('../../model/index').UnivRequest.findOne({
+            where: { requestIdx }
+        });
+
+        if (!request) {
+            throw new Error('존재하지 않는 요청입니다.');
+        }
+
+        // 상태 업데이트
+        const updateData = {
+            requestStatus: status,
+            adminNote: adminNote
+        };
+
+        // 처리 완료인 경우 처리 날짜 추가
+        if (status === 'completed') {
+            updateData.processedDate = new Date();
+        }
+
+        const [affectedCount] = await require('../../model/index').UnivRequest.update(updateData, {
+            where: { requestIdx }
+        });
+
+        if (affectedCount === 0) {
+            throw new Error('요청 상태 업데이트에 실패했습니다.');
+        }
+
+        logger.info(`[updateUnivRequestStatus] 대학교 요청 상태 업데이트 완료: ${requestIdx} -> ${status}`);
+        
+        return {
+            success: true,
+            message: '요청 상태가 성공적으로 업데이트되었습니다.',
+            requestIdx,
+            newStatus: status
+        };
+    } catch (error) {
+        logger.error(`[updateUnivRequestStatus] Error: ${error.message}`);
+        throw error;
+    }
+};

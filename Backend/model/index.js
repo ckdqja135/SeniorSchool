@@ -1,9 +1,10 @@
 const Sequelize = require('sequelize');
 const univBoard = require('./univBoard');
 const university = require('./universityinfo');
-const reportBoard = require('./tb_report_board');
+const reportBoard = require('./tb_univ_report_board');
 const user = require('./user');
 const univComment = require('./univcomment');
+const univRequest = require('./univRequest');
 const config = require('../conf/sequelize');
 const logger = require('../utils/logger');
 
@@ -26,6 +27,7 @@ db.University = university;
 db.UnivComment = univComment;
 db.User = user;
 db.ReportBoard = reportBoard;
+db.UnivRequest = univRequest;
 
 //init이 실행되어야 테이블이 모델로 연결됨
 univBoard.init(sequelize);
@@ -33,6 +35,7 @@ university.init(sequelize);
 univComment.init(sequelize);
 user.init(sequelize);
 reportBoard.init(sequelize);
+univRequest.init(sequelize);
 
 
 // 다른 테이블과의 관계를 연결함
@@ -41,6 +44,7 @@ university.associate(db);
 univComment.associate(db);
 user.associate(db);
 reportBoard.associate(db);
+univRequest.associate(db);
 sequelize.authenticate()
     .then(() => logger.info('✅ 데이터베이스 연결 성공'))
     .catch((error) => logger.error(`❌ 데이터베이스 연결 실패: ${error.message}`));

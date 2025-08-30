@@ -22,4 +22,17 @@ router.delete('/deleteUniv', authenticateToken, isAdmin, univController.deleteUn
 // 학교 데이터 수정
 router.put('/putUnivData', authenticateToken, isAdmin, univController.putUnivData);
 
+/**
+ * Admin - 대학교 요청 관리 API
+ */
+
+// 대학교 요청 생성 (일반 사용자도 접근 가능)
+router.post('/request', univController.createUnivRequest);
+
+// 대학교 요청 목록 조회 (관리자만)
+router.get('/requests', authenticateToken, isAdmin, univController.getUnivRequests);
+
+// 대학교 요청 상태 업데이트 (관리자만)
+router.put('/request/:requestIdx/status', authenticateToken, isAdmin, univController.updateUnivRequestStatus);
+
 module.exports = router;

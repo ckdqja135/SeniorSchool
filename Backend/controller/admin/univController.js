@@ -80,3 +80,71 @@ exports.putUnivData = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * 대학교 요청 생성 컨트롤러
+ */
+exports.createUnivRequest = async (req, res, next) => {
+    try {
+        const result = await univService.createUnivRequest(req.body);
+        
+        if (result.success) {
+            return res.status(201).json(result);
+        } else {
+            return res.status(409).json(result); // 409 Conflict for duplicate request
+        }
+    } catch (error) {
+        logger.error(`[createUnivRequest] Error: ${error.message}`);
+        next(error);
+    }
+};
+
+/**
+ * 대학교 요청 목록 조회 컨트롤러 (관리자용)
+ */
+exports.getUnivRequests = async (req, res, next) => {
+    try {
+        const searchParams = req.query;
+        const result = await univService.getUnivRequests(searchParams);
+        
+        logger.info(`[getUnivRequests] 대학교 요청 목록 조회 성공: ${result.totalCount}개`);
+        
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[getUnivRequests] Error: ${error.message}`);
+        next(error);
+    }
+};
+
+/**
+ * 대학교 요청 상태 업데이트 컨트롤러 (관리자용)
+ */
+exports.updateUnivRequestStatus = async (req, res, next) => {
+    try {
+        const { requestIdx } = req.params;
+        const { status, adminNote } = req.body;
+        
+        if (!requestIdx) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'requestIdx is required' 
+            });
+        }
+        
+        if (!status || !['pending', 'completed'].includes(status)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'status must be "pending" or "completed"' 
+            });
+        }
+
+        const result = await univService.updateUnivRequestStatus(requestIdx, status, adminNote);
+        
+        logger.info(`[updateUnivRequestStatus] 대학교 요청 상태 업데이트 성공: ${requestIdx} -> ${status}`);
+        
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error(`[updateUnivRequestStatus] Error: ${error.message}`);
+        next(error);
+    }
+};
