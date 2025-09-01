@@ -67,9 +67,9 @@ exports.modifyComment = async (req, res) => {
 
 exports.deleteComment = async (req, res) => {
     try {
-        const { commentPw, commentNo } = req.body;
+        const { commentPw, commentIdx } = req.body;
 
-        const isDeleted = await commentService.deleteComment({ commentPw, commentNo });
+        const isDeleted = await commentService.deleteComment({ commentPw, commentIdx });
 
         if (isDeleted) {
             return res.status(200).json({ success: true, message: 'Comment deleted successfully' });
