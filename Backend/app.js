@@ -26,6 +26,9 @@ app.use(cors(corsOptions));
 // OPTIONS 요청 처리
 app.options('*', cors(corsOptions));
 
+// XSS 미들웨어 (body 파서보다 먼저 실행)
+app.use(xssMiddleware);
+
 // body 파서
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -35,9 +38,6 @@ securityMiddleware(app);
 
 // Rate Limiting
 // rateLimitMiddleware(app);
-
-// XSS 미들웨어
-app.use(xssMiddleware);
 
 // 로깅
 app.use(httpLogger);

@@ -4,6 +4,11 @@ const { xss } = require('express-xss-sanitizer');
 const xssPatterns = [
     // 스크립트 태그 관련
     '<script', '</script>', 'javascript:', 'vbscript:', 'data:text/html',
+    // 정규식 패턴 (더 정확한 매칭)
+    /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+    /alert\s*\(/gi,
+    /confirm\s*\(/gi,
+    /prompt\s*\(/gi,
     // 이벤트 핸들러
     'onload=', 'onerror=', 'onclick=', 'onmouseover=', 'onmouseout=',
     'onmousedown=', 'onmouseup=', 'onmousemove=', 'onkeydown=', 'onkeypress=',
@@ -49,7 +54,13 @@ const xssMiddleware = (req, res, next) => {
     const urlParams = new URLSearchParams(req.url.split('?')[1]);
     for (const [key, value] of urlParams) {
         const decodedValue = decodeURIComponent(value);
-        if (xssPatterns.some(pattern => decodedValue.toLowerCase().includes(pattern.toLowerCase()))) {
+        if (xssPatterns.some(pattern => {
+            if (pattern instanceof RegExp) {
+                return pattern.test(decodedValue);
+            } else {
+                return decodedValue.toLowerCase().includes(pattern.toLowerCase());
+            }
+        })) {
             return res.status(400).json({
                 status: 400,
                 message: '잘못된 요청입니다. XSS 공격 시도가 감지되었습니다.'
@@ -60,7 +71,13 @@ const xssMiddleware = (req, res, next) => {
     // body 데이터 검사
     if (req.body) {
         const bodyStr = JSON.stringify(req.body);
-        if (xssPatterns.some(pattern => bodyStr.toLowerCase().includes(pattern.toLowerCase()))) {
+        if (xssPatterns.some(pattern => {
+            if (pattern instanceof RegExp) {
+                return pattern.test(bodyStr);
+            } else {
+                return bodyStr.toLowerCase().includes(pattern.toLowerCase());
+            }
+        })) {
             return res.status(400).json({
                 status: 400,
                 message: '잘못된 요청입니다. XSS 공격 시도가 감지되었습니다.'
