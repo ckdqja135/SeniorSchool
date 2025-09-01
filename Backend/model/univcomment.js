@@ -38,6 +38,16 @@ module.exports = class UnivComment extends Sequelize.Model {
                 type: Sequelize.STRING(200),
                 allowNull: false,
             },
+            regDate: {
+                type: Sequelize.DATE,
+                allowNull: false,
+                defaultValue: Sequelize.NOW,
+            },
+            modDate: {
+                type: Sequelize.DATE,
+                allowNull: false,
+                defaultValue: Sequelize.NOW,
+            },
         }, {
             sequelize,
             modelName: "UnivComment",

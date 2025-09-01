@@ -22,7 +22,9 @@ exports.getComments = async (boardIdx) => {
             'commentDepth',
             'writerId',
             'commentPerent',
-            'commentContent'
+            'commentContent',
+            'regDate',
+            'modDate'
         ]
     });
 };
@@ -35,6 +37,7 @@ exports.insertComment = async (commentData) => {
 
     const transaction = await sequelize.transaction();
     try {
+        const now = new Date();
         // 댓글 생성
         const comment = await UnivComment.create({
             boardIdx: commentData.boardIdx,
@@ -44,6 +47,8 @@ exports.insertComment = async (commentData) => {
             commentPerent: commentData.parentIdx,
             commentContent: commentData.commentContent,
             commentLike: commentData.commentLike,
+            regDate: now,
+            modDate: null,
         }, { transaction });
 
         logger.debug(`[insertComment] UnivComment created. CommentId: ${comment.commentIdx}`);
@@ -67,7 +72,10 @@ exports.modifyComment = async ({ commentPw, commentIdx, commentContent }) => {
     try {
         // 댓글 내용 업데이트 (단일 쿼리이므로 트랜잭션 optional)
         const [updateCount] = await UnivComment.update(
-            { commentContent: commentContent },
+            { 
+                commentContent: commentContent,
+                modDate: new Date() // 수정일 업데이트
+            },
             {
                 where: {
                     commentIdx: commentIdx,
@@ -90,25 +98,22 @@ exports.modifyComment = async ({ commentPw, commentIdx, commentContent }) => {
 };
 
 /**
- * 댓글 삭제(내용만 변경)
+ * 댓글 삭제
  */
 exports.deleteComment = async ({ commentPw, commentIdx }) => {
-    logger.info(`[deleteComment] Start - commentNo: ${commentIdx}, commentPw: ${commentPw}`);
+    logger.info(`[deleteComment] Start - commentIdx: ${commentIdx}, commentPw: ${commentPw}`);
 
     try {
-        // 댓글 내용 "작성자가 삭제한 글입니다."로 수정
-        const [updateCount] = await UnivComment.update(
-            { commentContent: '작성자가 삭제한 글입니다.' },
-            {
-                where: {
-                    commentIdx: commentIdx,
-                    writerPw: hashPassword(commentPw), // SHA256 암호화 적용
-                },
-            }
-        );
+        // 댓글을 데이터베이스에서 완전히 삭제
+        const deleteCount = await UnivComment.destroy({
+            where: {
+                commentIdx: commentIdx,
+                writerPw: hashPassword(commentPw), // SHA256 암호화 적용
+            },
+        });
 
-        if (updateCount > 0) {
-            logger.info(`[deleteComment] Comment 'deleted' successfully. CommentId: ${commentIdx}`);
+        if (deleteCount > 0) {
+            logger.info(`[deleteComment] Comment deleted successfully. CommentId: ${commentIdx}`);
             return true;
         } else {
             logger.warn(`[deleteComment] No matching comment found. CommentId: ${commentIdx}`);
