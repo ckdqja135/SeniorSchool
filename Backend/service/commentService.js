@@ -61,8 +61,8 @@ exports.insertComment = async (commentData) => {
 /**
  * 댓글 수정
  */
-exports.modifyComment = async ({ replyPw, commentIdx, commentContent }) => {
-    // logger.info(`[modifyComment] Start - commentNo: ${commentNo}, replyPw: ${replyPw}, commentContent: ${commentContent}`);
+exports.modifyComment = async ({ commentPw, commentIdx, commentContent }) => {
+    // logger.info(`[modifyComment] Start - commentIdx: ${commentIdx}, commentPw: ${commentPw}, commentContent: ${commentContent}`);
 
     try {
         // 댓글 내용 업데이트 (단일 쿼리이므로 트랜잭션 optional)
@@ -71,7 +71,7 @@ exports.modifyComment = async ({ replyPw, commentIdx, commentContent }) => {
             {
                 where: {
                     commentIdx: commentIdx,
-                    writerPw: hashPassword(replyPw), // SHA256 암호화 적용
+                    writerPw: hashPassword(commentPw), // SHA256 암호화 적용
                 },
             }
         );
