@@ -140,7 +140,7 @@ exports.updateUnivRequestStatus = async (req, res, next) => {
 
         const result = await univService.updateUnivRequestStatus(requestIdx, status, adminNote);
         
-        logger.info(`[updateUnivRequestStatus] 대학교 요청 상태 업데이트 성공: ${requestIdx} -> ${status}`);
+        logger.info(`[updateUnivRequestStatus] 대학교 요청 상태 업데이트 성공: ${requestIdx} -> ${status}${adminNote ? ` (메모: ${adminNote})` : ''}`);
         
         res.status(200).json(result);
     } catch (error) {

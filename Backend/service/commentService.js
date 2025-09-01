@@ -1,5 +1,11 @@
 const { UnivComment, sequelize } = require('../model/index');
 const logger = require('../utils/logger');
+const crypto = require('crypto');
+
+// SHA256 암호화 함수
+const hashPassword = (password) => {
+    return crypto.createHash('sha256').update(password).digest('hex');
+};
 
 /**
  * 댓글 조회
@@ -34,7 +40,7 @@ exports.insertComment = async (commentData) => {
             boardIdx: commentData.boardIdx,
             commentDepth: commentData.depth,
             writerId: commentData.commentWriter,
-            writerPw: commentData.commentPw,
+            writerPw: hashPassword(commentData.commentPw), // SHA256 암호화 적용
             commentPerent: commentData.parentIdx,
             commentContent: commentData.commentContent,
             commentLike: commentData.commentLike,
@@ -65,7 +71,7 @@ exports.modifyComment = async ({ replyPw, commentIdx, commentContent }) => {
             {
                 where: {
                     commentIdx: commentIdx,
-                    writerPw: replyPw,
+                    writerPw: hashPassword(replyPw), // SHA256 암호화 적용
                 },
             }
         );
@@ -96,7 +102,7 @@ exports.deleteComment = async ({ commentPw, commentIdx }) => {
             {
                 where: {
                     commentIdx: commentIdx,
-                    writerPw: commentPw,
+                    writerPw: hashPassword(commentPw), // SHA256 암호화 적용
                 },
             }
         );
