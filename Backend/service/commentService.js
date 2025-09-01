@@ -48,7 +48,7 @@ exports.insertComment = async (commentData) => {
             commentContent: commentData.commentContent,
             commentLike: commentData.commentLike,
             regDate: now,
-            modDate: null,
+            modDate: now, // 작성 시에도 수정일을 현재 시간으로 설정
         }, { transaction });
 
         logger.debug(`[insertComment] UnivComment created. CommentId: ${comment.commentIdx}`);
