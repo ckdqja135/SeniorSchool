@@ -1,4 +1,4 @@
-const { xss } = require('express-xss-sanitizer');
+// const { xss } = require('express-xss-sanitizer'); // 주석 처리 - req.query를 읽기 전용으로 만드는 문제 해결
 
 // XSS 공격 패턴 목록
 const xssPatterns = [
@@ -85,8 +85,9 @@ const xssMiddleware = (req, res, next) => {
         }
     }
 
-    // xss-clean 미들웨어 적용
-    xss()(req, res, next);
+    // xss-clean 미들웨어 비활성화 - req.query 읽기 전용 문제 해결
+    // 대신 위에서 이미 XSS 패턴 검사를 수행했으므로 next() 호출
+    next();
 };
 
 module.exports = xssMiddleware;
