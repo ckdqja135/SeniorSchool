@@ -83,3 +83,62 @@ exports.getChurchStats = async (req, res) => {
         res.status(500).json({ status: 500, message: '서버 오류가 발생했습니다.' });
     }
 };
+
+// 교회 추가 요청 생성 (일반 사용자도 접근 가능)
+exports.createChurchRequest = async (req, res) => {
+    try {
+        const result = await churchService.createChurchRequest(req.body);
+        res.status(201).json({
+            success: true,
+            message: '교회 추가 요청이 성공적으로 등록되었습니다.',
+            data: result
+        });
+    } catch (error) {
+        logger.error(`[createChurchRequest] Error: ${error.message}`);
+        res.status(500).json({ 
+            status: 500, 
+            message: '서버 오류가 발생했습니다.',
+            error: error.message 
+        });
+    }
+};
+
+// 교회 추가 요청 목록 조회 (관리자만)
+exports.getChurchRequests = async (req, res) => {
+    try {
+        const { page = 1, rowsPerPage = 10, status } = req.query;
+        
+        const result = await churchService.getChurchRequests({
+            page: parseInt(page),
+            rowsPerPage: parseInt(rowsPerPage),
+            status: status
+        });
+        
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[getChurchRequests] Error: ${error.message}`);
+        res.status(500).json({ 
+            status: 500, 
+            message: '서버 오류가 발생했습니다.',
+            error: error.message 
+        });
+    }
+};
+
+// 교회 추가 요청 상태 업데이트 (관리자만)
+exports.updateChurchRequestStatus = async (req, res) => {
+    try {
+        const { requestIdx } = req.params;
+        const { status, adminNote } = req.body;
+        
+        const result = await churchService.updateChurchRequestStatus(requestIdx, status, adminNote);
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[updateChurchRequestStatus] Error: ${error.message}`);
+        res.status(500).json({ 
+            status: 500, 
+            message: '서버 오류가 발생했습니다.',
+            error: error.message 
+        });
+    }
+};

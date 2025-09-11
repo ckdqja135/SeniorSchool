@@ -25,4 +25,17 @@ router.delete('/:churchIdx', authenticateToken, isAdmin, churchController.delete
 // 교회 통계 조회
 router.get('/stats/overview', authenticateToken, isAdmin, churchController.getChurchStats);
 
+/**
+ * Admin - 교회 추가 요청 관리 API
+ */
+
+// 교회 추가 요청 생성 (일반 사용자도 접근 가능)
+router.post('/requests', churchController.createChurchRequest);
+
+// 교회 추가 요청 목록 조회 (관리자만)
+router.get('/requests', authenticateToken, isAdmin, churchController.getChurchRequests);
+
+// 교회 추가 요청 상태 업데이트 (관리자만)
+router.put('/requests/:requestIdx/status', authenticateToken, isAdmin, churchController.updateChurchRequestStatus);
+
 module.exports = router;

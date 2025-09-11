@@ -1,4 +1,4 @@
-const { ChurchInfo } = require('../../model/index');
+const { ChurchInfo, ChurchRequest } = require('../../model/index');
 const { Op } = require('sequelize');
 const logger = require('../../utils/logger');
 
@@ -292,6 +292,143 @@ exports.getChurchStats = async () => {
         };
     } catch (error) {
         logger.error(`[getChurchStats] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 교회 추가 요청 생성
+ * @param {Object} requestData - 요청 데이터
+ * @returns {Object} 생성 결과
+ */
+exports.createChurchRequest = async (requestData) => {
+    try {
+        const { churchName, churchPastor, churchType, churchAddr } = requestData;
+
+        // 필수값 체크
+        if (!churchName) {
+            throw new Error('교회 이름은 필수입니다.');
+        }
+
+        // 교회 추가 요청 생성
+        const request = await ChurchRequest.create({
+            churchName: churchName,
+            churchPastor: churchPastor || null,
+            churchType: churchType || null,
+            churchAddr: churchAddr || null,
+            requestStatus: 'pending',
+            requestDate: new Date()
+        });
+
+        logger.info(`[createChurchRequest] 교회 추가 요청 생성 완료: ${request.requestIdx}`);
+
+        return {
+            status: 201,
+            message: '교회 추가 요청이 성공적으로 등록되었습니다.',
+            data: request
+        };
+    } catch (error) {
+        logger.error(`[createChurchRequest] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 교회 추가 요청 목록 조회
+ * @param {Object} searchParams - 검색 조건
+ * @returns {Object} 요청 목록
+ */
+exports.getChurchRequests = async (searchParams) => {
+    try {
+        const {
+            page = 1,
+            rowsPerPage = 10,
+            status
+        } = searchParams;
+
+        // 검색 조건 구성
+        const whereClause = {};
+        if (status) {
+            whereClause.requestStatus = status;
+        }
+
+        // 페이징 계산
+        const offset = (page - 1) * rowsPerPage;
+
+        // 요청 목록 조회
+        const { count, rows } = await ChurchRequest.findAndCountAll({
+            where: whereClause,
+            order: [['requestDate', 'DESC']],
+            limit: parseInt(rowsPerPage),
+            offset: offset
+        });
+
+        const totalPages = Math.ceil(count / rowsPerPage);
+
+        logger.info(`[getChurchRequests] 교회 요청 목록 조회 완료: ${count}개 중 ${rows.length}개 반환`);
+
+        return {
+            status: 200,
+            data: rows,
+            totalCount: count,
+            currentPage: parseInt(page),
+            totalPages: totalPages,
+            rowsPerPage: parseInt(rowsPerPage)
+        };
+    } catch (error) {
+        logger.error(`[getChurchRequests] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 교회 추가 요청 상태 업데이트
+ * @param {number} requestIdx - 요청 인덱스
+ * @param {string} status - 새로운 상태
+ * @param {string} adminNote - 관리자 메모
+ * @returns {Object} 업데이트 결과
+ */
+exports.updateChurchRequestStatus = async (requestIdx, status, adminNote) => {
+    try {
+        const request = await ChurchRequest.findByPk(requestIdx);
+
+        if (!request) {
+            return {
+                status: 404,
+                message: '교회 요청을 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        // 상태 업데이트
+        const updateData = {
+            requestStatus: status
+        };
+
+        if (status === 'completed') {
+            updateData.processedDate = new Date();
+        }
+
+        if (adminNote) {
+            updateData.adminNote = adminNote;
+        }
+
+        await ChurchRequest.update(updateData, {
+            where: { requestIdx: requestIdx }
+        });
+
+        // 업데이트된 요청 정보 조회
+        const updatedRequest = await ChurchRequest.findByPk(requestIdx);
+
+        logger.info(`[updateChurchRequestStatus] 교회 요청 상태 업데이트 완료: ${requestIdx} -> ${status}`);
+
+        return {
+            status: 200,
+            message: '교회 요청 상태가 성공적으로 업데이트되었습니다.',
+            data: updatedRequest
+        };
+    } catch (error) {
+        logger.error(`[updateChurchRequestStatus] Error: ${error.message}`);
         throw error;
     }
 };
