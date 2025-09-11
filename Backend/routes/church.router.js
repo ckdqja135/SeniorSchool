@@ -5,8 +5,8 @@ const churchController = require('../controller/churchController');
 // 교회 목록 조회
 router.get('/', churchController.getChurches);
 
-// 교회 상세 조회
-router.get('/:churchIdx', churchController.getChurchDetail);
+// 교회 상세 조회 (churchName, churchAddr로 조회 가능)
+router.get('/church', churchController.getChurchDetail);
 
 // 교회 등록
 router.post('/', churchController.createChurch);

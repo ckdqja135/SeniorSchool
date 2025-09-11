@@ -22,13 +22,14 @@ exports.getChurches = async (req, res, next) => {
 // 교회 상세 조회
 exports.getChurchDetail = async (req, res, next) => {
     try {
-        const { churchIdx } = req.params;
+        const { churchName, churchAddr } = req.query;
         
-        if (!churchIdx) {
-            return res.status(400).json({ error: 'churchIdx is required' });
+        // churchName, churchAddr 중 하나는 필수
+        if (!churchName && !churchAddr) {
+            return res.status(400).json({ error: 'churchName or churchAddr is required' });
         }
 
-        const church = await churchService.getChurchDetail(churchIdx);
+        const church = await churchService.getChurchDetail(null, churchName, churchAddr);
         res.status(200).json(church);
     } catch (error) {
         logger.error(`[getChurchDetail] Error: ${error.message}`);

@@ -42,13 +42,21 @@ exports.getChurches = async (searchParams = {}) => {
 };
 
 // 교회 상세 조회
-exports.getChurchDetail = async (churchIdx) => {
+exports.getChurchDetail = async (churchIdx, churchName, churchAddr) => {
     try {
+        let whereClause = { churchStatus: 1 };
+        
+        // 검색 조건 구성
+        if (churchIdx) {
+            whereClause.churchIdx = churchIdx;
+        } else if (churchName) {
+            whereClause.churchName = churchName;
+        } else if (churchAddr) {
+            whereClause.churchAddr = churchAddr;
+        }
+
         const church = await ChurchInfo.findOne({
-            where: { 
-                churchIdx: churchIdx,
-                churchStatus: 1 
-            }
+            where: whereClause
         });
 
         if (!church) {
@@ -58,10 +66,10 @@ exports.getChurchDetail = async (churchIdx) => {
         // 조회수 증가
         await ChurchInfo.update(
             { churchViewCount: sequelize.literal('churchViewCount + 1') },
-            { where: { churchIdx: churchIdx } }
+            { where: { churchIdx: church.churchIdx } }
         );
 
-        logger.info(`[getChurchDetail] Church detail retrieved. ChurchIdx: ${churchIdx}`);
+        logger.info(`[getChurchDetail] Church detail retrieved. ChurchIdx: ${church.churchIdx}, ChurchName: ${church.churchName}`);
         return church;
     } catch (error) {
         logger.error(`[getChurchDetail] Error: ${error.message}`);
@@ -204,7 +212,7 @@ exports.deleteChurch = async (churchIdx) => {
 exports.autoComplete = async (keyword) => {
     try {
         const churches = await ChurchInfo.findAll({
-            attributes: ['churchName', 'churchLocation', 'churchType'],
+            attributes: ['churchName', 'churchAddr', 'churchPastor'],
             where: {
                 churchName: {
                     [Op.not]: '',

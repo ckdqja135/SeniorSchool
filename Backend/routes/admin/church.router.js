@@ -14,7 +14,7 @@ router.post('/createChurch', authenticateToken, isAdmin, churchController.create
 router.get('/searchChurch', authenticateToken, isAdmin, churchController.searchChurch);
 
 // 교회 상세보기 API
-router.get('/:churchIdx', authenticateToken, isAdmin, churchController.getChurchDetail);
+router.get('/church', authenticateToken, isAdmin, churchController.getChurchDetail);
 
 // 교회 데이터 수정
 router.put('/:churchIdx', authenticateToken, isAdmin, churchController.updateChurch);
