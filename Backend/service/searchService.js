@@ -21,7 +21,7 @@ exports.getSchoolInfo = async (univName) => {
         const university = await University.findOne({
             where: {
                 univName: {
-                    [Op.like]: `%${univName}%`,
+                    [Op.eq]: univName,
                 },
             },
             transaction
