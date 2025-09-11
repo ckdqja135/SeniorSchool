@@ -1,0 +1,83 @@
+const churchCommentService = require('../service/churchCommentService');
+const logger = require('../utils/logger');
+
+exports.getChurchComments = async (req, res) => {
+    try {
+        const { boardIdx } = req.query;
+
+        if (!boardIdx) {
+            return res.status(400).json({ error: 'boardIdx is required' });
+        }
+
+        const comments = await churchCommentService.getChurchComments(boardIdx);
+        return res.status(200).json(comments);
+    } catch (error) {
+        logger.error(`[getChurchComments] ${error.message}`);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+exports.insertChurchComment = async (req, res) => {
+    try {
+        const {
+            commentWriter,
+            commentPw,
+            commentContent,
+            boardIdx,
+            parentIdx,
+            depth,
+            commentLike
+        } = req.body;
+
+        // 입력값 파싱 및 유효성 검사
+        const commentData = {
+            commentWriter,
+            commentPw,
+            commentContent,
+            boardIdx: parseInt(boardIdx),
+            parentIdx: parseInt(parentIdx),
+            depth: parseInt(depth),
+            commentLike: parseInt(commentLike)
+        };
+
+        await churchCommentService.insertChurchComment(commentData);
+        return res.status(200).json({ success: true, message: 'Comment inserted successfully' });
+    } catch (error) {
+        logger.error(`[insertChurchComment] ${error.message}`);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+exports.modifyChurchComment = async (req, res) => {
+    try {
+        const { commentPw, commentIdx, commentContent } = req.body;
+
+        const isUpdated = await churchCommentService.modifyChurchComment({ commentPw, commentIdx, commentContent });
+
+        if (isUpdated) {
+            return res.status(200).json({ success: true, message: 'Comment updated successfully' });
+        } else {
+            return res.status(404).json({ error: 'Comment not found or password incorrect' });
+        }
+    } catch (error) {
+        logger.error(`[modifyChurchComment] ${error.message}`);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+exports.deleteChurchComment = async (req, res) => {
+    try {
+        const { commentPw, commentIdx } = req.body;
+
+        const isDeleted = await churchCommentService.deleteChurchComment({ commentPw, commentIdx });
+
+        if (isDeleted) {
+            return res.status(200).json({ success: true, message: 'Comment deleted successfully' });
+        } else {
+            return res.status(404).json({ error: 'Comment not found or password incorrect' });
+        }
+    } catch (error) {
+        logger.error(`[deleteChurchComment] ${error.message}`);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+};

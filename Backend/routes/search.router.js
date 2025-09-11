@@ -11,4 +11,16 @@ router.get('/school', searchController.getSchoolInfo);
 // univViewCount 높은 순으로 상위 10개 대학교 조회
 router.get('/top-viewed', searchController.getTopViewedUniversities);
 
+// 회사 검색
+router.get('/comp/', searchController.searchCompany);
+
+// 교회 자동 완성 검색
+router.get('/church/auto', searchController.autoCompleteChurch);
+
+// 교회 정보 검색
+router.get('/church/info', searchController.getChurchInfo);
+
+// 교회 조회수 높은 순으로 상위 10개 교회 조회
+router.get('/church/top-viewed', searchController.getTopViewedChurches);
+
 module.exports = router;

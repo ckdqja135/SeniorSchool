@@ -1,0 +1,294 @@
+const { CompInfo } = require('../../model/index');
+const { Op } = require('sequelize');
+const logger = require('../../utils/logger');
+
+// 회사 생성
+exports.createComp = async (compData) => {
+    try {
+        // 배열 형태의 데이터인지 확인
+        if (Array.isArray(compData)) {
+            // 배열인 경우 여러 회사를 일괄 생성
+            const results = [];
+            for (const comp of compData) {
+                const { compName, compLocate, compLateX, compLateY } = comp;
+
+                // 필수값 체크
+                if (!compName || !compLocate || !compLateX || !compLateY) {
+                    logger.warn(`[createComp] Missing required fields: ${JSON.stringify(comp)}`);
+                    throw new Error('필수값이 누락되었습니다. (compName, compLocate, compLateX, compLateY)');
+                }
+
+                // DB에 데이터 생성
+                const created = await CompInfo.create(comp);
+                results.push(created);
+                logger.info(`[createComp] 회사 등록 완료! : ${created.compIdx}`);
+            }
+            return results;
+        } else {
+            // 단일 객체인 경우
+            const { compName, compLocate, compLateX, compLateY } = compData;
+
+            // 필수값 체크
+            if (!compName || !compLocate || !compLateX || !compLateY) {
+                logger.warn(`[createComp] Missing required fields: ${JSON.stringify(compData)}`);
+                throw new Error('필수값이 누락되었습니다. (compName, compLocate, compLateX, compLateY)');
+            }
+
+            // DB에 데이터 생성
+            const created = await CompInfo.create(compData);
+            logger.info(`[createComp] 회사 등록 완료! : ${created.compIdx}`);
+
+            return created;
+        }
+    } catch (error) {
+        // 에러 로그 출력 후, 상위 컨트롤러/서비스로 재전달
+        logger.error(`[createComp] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 회사 검색 서비스
+ * @param {Object} searchParams - 검색 파라미터
+ * @returns {Object} 검색 결과
+ */
+exports.searchComp = async (searchParams) => {
+    try {
+        const {
+            compName,
+            compLocate,
+            compType,
+            compIndustry,
+            compStatus,
+            rowsPerPage = 20,
+            currentPage = 1
+        } = searchParams;
+
+        // 검색 조건 구성
+        const whereClause = {};
+
+        if (compName) {
+            whereClause.compName = {
+                [Op.like]: `%${compName}%`
+            };
+        }
+
+        if (compLocate) {
+            whereClause.compLocate = {
+                [Op.like]: `%${compLocate}%`
+            };
+        }
+
+        if (compType) {
+            whereClause.compType = compType;
+        }
+
+        if (compIndustry) {
+            whereClause.compIndustry = {
+                [Op.like]: `%${compIndustry}%`
+            };
+        }
+
+        if (compStatus !== undefined) {
+            whereClause.compStatus = compStatus;
+        }
+
+        // 페이지네이션 설정
+        const limit = parseInt(rowsPerPage);
+        const offset = (parseInt(currentPage) - 1) * limit;
+
+        logger.info(`[searchComp] Search conditions: ${JSON.stringify(whereClause)}`);
+        logger.info(`[searchComp] Pagination: limit=${limit}, offset=${offset}`);
+
+        // 전체 개수 조회
+        const totalCount = await CompInfo.count({
+            where: whereClause
+        });
+
+        // 데이터 조회
+        const companies = await CompInfo.findAll({
+            where: whereClause,
+            limit: limit,
+            offset: offset,
+            order: [['compIdx', 'DESC']]
+        });
+
+        const totalPages = Math.ceil(totalCount / limit);
+
+        logger.info(`[searchComp] Found ${totalCount} companies, returning ${companies.length} companies`);
+
+        return {
+            status: 200,
+            message: '회사 검색이 완료되었습니다.',
+            data: companies,
+            pagination: {
+                totalCount: totalCount,
+                totalPages: totalPages,
+                currentPage: parseInt(currentPage),
+                rowsPerPage: limit,
+                hasNextPage: parseInt(currentPage) < totalPages,
+                hasPrevPage: parseInt(currentPage) > 1
+            }
+        };
+
+    } catch (error) {
+        logger.error(`[searchComp] Error: ${error.message}`);
+        logger.error(`[searchComp] Stack trace: ${error.stack}`);
+        throw error;
+    }
+};
+
+/**
+ * 회사 상세보기 서비스
+ * @param {number} compIdx - 회사 인덱스
+ * @returns {Object} 회사 상세 정보
+ */
+exports.getCompDetail = async (compIdx) => {
+    try {
+        logger.info(`[getCompDetail] Searching for compIdx: ${compIdx}`);
+
+        const company = await CompInfo.findByPk(compIdx);
+
+        if (!company) {
+            logger.warn(`[getCompDetail] Company not found: ${compIdx}`);
+            return {
+                status: 404,
+                message: '회사를 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        // 조회수 증가
+        await company.increment('compViewCount');
+
+        logger.info(`[getCompDetail] Company found: ${company.compName}`);
+
+        return {
+            status: 200,
+            message: '회사 상세 정보를 조회했습니다.',
+            data: company
+        };
+
+    } catch (error) {
+        logger.error(`[getCompDetail] Error: ${error.message}`);
+        logger.error(`[getCompDetail] Stack trace: ${error.stack}`);
+        throw error;
+    }
+};
+
+/**
+ * 회사 정보 수정 서비스
+ * @param {number} compIdx - 회사 인덱스
+ * @param {Object} updateData - 수정할 데이터
+ * @returns {Object} 수정 결과
+ */
+exports.putCompData = async (compIdx, updateData) => {
+    try {
+        logger.info(`[putCompData] Updating compIdx: ${compIdx}`);
+        logger.info(`[putCompData] Update data: ${JSON.stringify(updateData)}`);
+
+        const company = await CompInfo.findByPk(compIdx);
+
+        if (!company) {
+            logger.warn(`[putCompData] Company not found: ${compIdx}`);
+            return {
+                status: 404,
+                message: '회사를 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        // 데이터 업데이트
+        await company.update(updateData);
+
+        logger.info(`[putCompData] Company updated successfully: ${compIdx}`);
+
+        return {
+            status: 200,
+            message: '회사 정보가 수정되었습니다.',
+            data: company
+        };
+
+    } catch (error) {
+        logger.error(`[putCompData] Error: ${error.message}`);
+        logger.error(`[putCompData] Stack trace: ${error.stack}`);
+        throw error;
+    }
+};
+
+/**
+ * 회사 삭제 서비스
+ * @param {number} compIdx - 회사 인덱스
+ * @returns {Object} 삭제 결과
+ */
+exports.deleteComp = async (compIdx) => {
+    try {
+        logger.info(`[deleteComp] Deleting compIdx: ${compIdx}`);
+
+        const company = await CompInfo.findByPk(compIdx);
+
+        if (!company) {
+            logger.warn(`[deleteComp] Company not found: ${compIdx}`);
+            return {
+                status: 404,
+                message: '회사를 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        // 회사 삭제
+        await company.destroy();
+
+        logger.info(`[deleteComp] Company deleted successfully: ${compIdx}`);
+
+        return {
+            status: 200,
+            message: '회사가 삭제되었습니다.',
+            data: null
+        };
+
+    } catch (error) {
+        logger.error(`[deleteComp] Error: ${error.message}`);
+        logger.error(`[deleteComp] Stack trace: ${error.stack}`);
+        throw error;
+    }
+};
+
+/**
+ * 회사 상태 변경 서비스
+ * @param {number} compIdx - 회사 인덱스
+ * @param {number} compStatus - 새로운 상태 (0: 비활성, 1: 활성)
+ * @returns {Object} 상태 변경 결과
+ */
+exports.updateCompStatus = async (compIdx, compStatus) => {
+    try {
+        logger.info(`[updateCompStatus] Updating compIdx: ${compIdx}, status: ${compStatus}`);
+
+        const company = await CompInfo.findByPk(compIdx);
+
+        if (!company) {
+            logger.warn(`[updateCompStatus] Company not found: ${compIdx}`);
+            return {
+                status: 404,
+                message: '회사를 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        // 상태 업데이트
+        await company.update({ compStatus: compStatus });
+
+        logger.info(`[updateCompStatus] Company status updated successfully: ${compIdx} -> ${compStatus}`);
+
+        return {
+            status: 200,
+            message: '회사 상태가 변경되었습니다.',
+            data: company
+        };
+
+    } catch (error) {
+        logger.error(`[updateCompStatus] Error: ${error.message}`);
+        logger.error(`[updateCompStatus] Stack trace: ${error.stack}`);
+        throw error;
+    }
+};

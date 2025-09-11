@@ -1,4 +1,6 @@
 const searchService = require('../service/searchService');
+const compService = require('../service/admin/compService');
+const churchService = require('../service/churchService');
 const logger = require('../utils/logger');
 
 exports.autoComplete = async (req, res) => {
@@ -54,6 +56,105 @@ exports.getTopViewedUniversities = async (req, res) => {
         return res.status(result.status).json(result);
     } catch (error) {
         logger.error(`[getTopViewedUniversities] Error: ${error.message}`);
+        return res.status(500).json({ 
+            status: 500, 
+            error: '서버 오류가 발생했습니다.',
+            message: error.message 
+        });
+    }
+};
+
+// 회사 검색 (일반 사용자용)
+exports.searchCompany = async (req, res) => {
+    try {
+        const { compName } = req.query;
+
+        if (!compName) {
+            logger.warn("[searchCompany] Missing compName in request");
+            return res.status(400).json({ error: "compName is required" });
+        }
+
+        const decodedCompName = decodeURIComponent(compName);
+        const searchParams = {
+            compName: decodedCompName,
+            compStatus: 1, // 활성 상태인 회사만 검색
+            rowsPerPage: 20,
+            currentPage: 1
+        };
+
+        const result = await compService.searchComp(searchParams);
+
+        if (result.data.length === 0) {
+            return res.status(404).json({ 
+                error: "회사를 찾을 수 없습니다.",
+                data: []
+            });
+        }
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error(`[searchCompany] ${error.message}`);
+        return res.status(500).json({ 
+            error: '서버 오류가 발생했습니다.',
+            message: error.message 
+        });
+    }
+};
+
+// 교회 자동 검색
+exports.autoCompleteChurch = async (req, res) => {
+    try {
+        const { keyword } = req.query;
+
+        if (!keyword) {
+            logger.warn("[autoCompleteChurch] Missing keyword in request");
+            return res.status(400).json({ error: 'Keyword is required' });
+        }
+
+        const decodedKeyword = decodeURIComponent(keyword);
+        const churches = await churchService.autoComplete(decodedKeyword);
+
+        return res.status(200).json(churches);
+    } catch (error) {
+        logger.error(`[autoCompleteChurch] ${error.message}`);
+        return res.status(500).json({ error: error });
+    }
+};
+
+// 교회 정보 조회
+exports.getChurchInfo = async (req, res) => {
+    try {
+        const { churchName } = req.query;
+
+        if (!churchName) {
+            logger.warn("[getChurchInfo] Missing churchName in request");
+            return res.status(400).json({ error: "churchName is required" });
+        }
+
+        const decodedChurchName = decodeURIComponent(churchName);
+        const churchInfo = await churchService.getChurchInfoByName(decodedChurchName);
+
+        if (!churchInfo) {
+            return res.status(404).json({ error: "Church not found" });
+        }
+
+        return res.status(200).json(churchInfo);
+    } catch (error) {
+        logger.error(`[getChurchInfo] ${error.message}`);
+        return res.status(500).json({ error: error });
+    }
+};
+
+// 교회 조회수 높은 순으로 상위 10개 교회 조회
+exports.getTopViewedChurches = async (req, res) => {
+    try {
+        const result = await churchService.getTopViewedChurches();
+        
+        logger.info(`[getTopViewedChurches] 상위 10개 교회 조회 성공: ${result.totalCount}개`);
+        
+        return res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[getTopViewedChurches] Error: ${error.message}`);
         return res.status(500).json({ 
             status: 500, 
             error: '서버 오류가 발생했습니다.',
