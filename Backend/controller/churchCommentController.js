@@ -21,6 +21,7 @@ exports.insertChurchComment = async (req, res) => {
     try {
         const {
             commentWriter,
+            commentID,
             commentPw,
             commentContent,
             boardIdx,
@@ -31,13 +32,13 @@ exports.insertChurchComment = async (req, res) => {
 
         // 입력값 파싱 및 유효성 검사
         const commentData = {
-            commentWriter,
+            commentWriter: commentWriter || commentID,  // commentWriter가 없으면 commentID 사용
             commentPw,
             commentContent,
             boardIdx: parseInt(boardIdx),
-            parentIdx: parseInt(parentIdx),
-            depth: parseInt(depth),
-            commentLike: parseInt(commentLike)
+            parentIdx: parseInt(parentIdx) || 0,  // 기본값 0
+            depth: parseInt(depth) || 0,  // 기본값 0
+            commentLike: parseInt(commentLike) || 0  // 기본값 0
         };
 
         await churchCommentService.insertChurchComment(commentData);
