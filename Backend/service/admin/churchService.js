@@ -388,7 +388,11 @@ exports.createChurchRequest = async (requestData) => {
 exports.getChurchRequests = async (searchParams = {}) => {
     try {
         const { status, page = 1, rowsPerPage = 10 } = searchParams;
-        const offset = (page - 1) * rowsPerPage;
+        
+        // 문자열로 전달된 page와 rowsPerPage를 숫자로 변환
+        const pageNum = parseInt(page, 10) || 1;
+        const rowsPerPageNum = parseInt(rowsPerPage, 10) || 10;
+        const offset = (pageNum - 1) * rowsPerPageNum;
 
         // 검색 조건 구성
         const whereClause = {};
@@ -400,7 +404,7 @@ exports.getChurchRequests = async (searchParams = {}) => {
         const { count, rows } = await ChurchRequest.findAndCountAll({
             where: whereClause,
             order: [['requestDate', 'DESC']], // 최신 요청순
-            limit: rowsPerPage,
+            limit: rowsPerPageNum,
             offset
         });
 
@@ -410,9 +414,9 @@ exports.getChurchRequests = async (searchParams = {}) => {
             status: 200,
             data: rows,
             totalCount: count,
-            currentPage: page,
-            rowsPerPage,
-            totalPages: Math.ceil(count / rowsPerPage)
+            currentPage: pageNum,
+            rowsPerPage: rowsPerPageNum,
+            totalPages: Math.ceil(count / rowsPerPageNum)
         };
     } catch (error) {
         logger.error(`[getChurchRequests] Error: ${error.message}`);
