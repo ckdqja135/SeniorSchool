@@ -29,11 +29,13 @@ router.get('/stats/overview', authenticateToken, isAdmin, churchController.getCh
  * Admin - 교회 추가 요청 관리 API
  */
 
+// 교회 추가 요청 생성 (일반 사용자도 접근 가능)
+router.post('/request', churchController.createChurchRequest);
 
 // 교회 추가 요청 목록 조회 (관리자만)
-router.get('/requests', authenticateToken, isAdmin, churchController.getChurchRequests);
+router.get('/request', authenticateToken, isAdmin, churchController.getChurchRequests);
 
 // 교회 추가 요청 상태 업데이트 (관리자만)
-router.put('/requests/:requestIdx/status', authenticateToken, isAdmin, churchController.updateChurchRequestStatus);
+router.put('/request/:requestIdx/status', authenticateToken, isAdmin, churchController.updateChurchRequestStatus);
 
 module.exports = router;
