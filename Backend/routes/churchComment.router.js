@@ -12,6 +12,6 @@ router.post('/insert', churchCommentController.insertChurchComment);
 router.put('/modify', churchCommentController.modifyChurchComment);
 
 // 교회 댓글 삭제
-router.put('/delete', churchCommentController.deleteChurchComment);
+router.delete('/delete', churchCommentController.deleteChurchComment);
 
 module.exports = router;
