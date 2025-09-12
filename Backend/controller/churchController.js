@@ -1,5 +1,4 @@
 const churchService = require('../service/churchService');
-const churchBoardService = require('../service/churchBoardService');
 const logger = require('../utils/logger');
 
 // 교회 목록 조회
@@ -117,7 +116,7 @@ exports.getChurchBoards = async (req, res, next) => {
         if (title) searchParams.title = title;
         if (content) searchParams.content = content;
 
-        const boards = await churchBoardService.getChurchBoards(churchIdx, searchParams);
+        const boards = await churchService.getChurchBoards(churchIdx, searchParams);
         res.status(200).json(boards);
     } catch (error) {
         logger.error(error);
@@ -134,7 +133,7 @@ exports.getChurchBoardDetail = async (req, res, next) => {
             return res.status(400).json({ error: 'boardIdx is required' });
         }
 
-        const detailBoard = await churchBoardService.getChurchBoardDetail(boardIdx);
+        const detailBoard = await churchService.getChurchBoardDetail(boardIdx);
         res.status(200).json(detailBoard);
     } catch (error) {
         logger.error(error);
@@ -146,7 +145,7 @@ exports.getChurchBoardDetail = async (req, res, next) => {
 exports.insertChurchBoard = async (req, res, next) => {
     try {
         const boardData = req.body;
-        const result = await churchBoardService.insertChurchBoard(boardData);
+        const result = await churchService.insertChurchBoard(boardData);
         res.status(200).json({ success: true, message: result });
     } catch (error) {
         logger.error(error);
@@ -158,7 +157,7 @@ exports.insertChurchBoard = async (req, res, next) => {
 exports.correctChurchBoard = async (req, res, next) => {
     try {
         const boardData = req.body;
-        const result = await churchBoardService.correctChurchBoard(boardData);
+        const result = await churchService.correctChurchBoard(boardData);
         res.status(200).json({ success: true, message: result });
     } catch (error) {
         logger.error(error);
@@ -170,7 +169,7 @@ exports.correctChurchBoard = async (req, res, next) => {
 exports.deleteChurchBoard = async (req, res, next) => {
     try {
         const boardData = req.body;
-        const result = await churchBoardService.deleteChurchBoard(boardData);
+        const result = await churchService.deleteChurchBoard(boardData);
         res.status(200).json({ success: true, message: result });
     } catch (error) {
         logger.error(error);
@@ -191,7 +190,7 @@ exports.toggleChurchBoardLike = async (req, res, next) => {
             return res.status(400).json({ error: 'isLiked must be boolean (true/false)' });
         }
 
-        const result = await churchBoardService.toggleChurchBoardLike(boardIdx, isLiked);
+        const result = await churchService.toggleChurchBoardLike(boardIdx, isLiked);
         res.status(200).json({ success: true, ...result });
     } catch (error) {
         logger.error(error);
@@ -208,7 +207,7 @@ exports.getChurchBoardLike = async (req, res, next) => {
             return res.status(400).json({ error: 'boardId is required' });
         }
 
-        const likeCount = await churchBoardService.getChurchBoardLike(boardId);
+        const likeCount = await churchService.getChurchBoardLike(boardId);
         res.status(200).json({ likeCount });
     } catch (error) {
         logger.error(error);
@@ -219,7 +218,7 @@ exports.getChurchBoardLike = async (req, res, next) => {
 // 최근순으로 게시된 교회 후기 목록 조회 (교회 정보 포함)
 exports.getRecentChurchBoardsWithInfo = async (req, res, next) => {
     try {
-        const result = await churchBoardService.getRecentChurchBoardsWithInfo();
+        const result = await churchService.getRecentChurchBoardsWithInfo();
         res.status(200).json(result);
     } catch (error) {
         logger.error(error);
@@ -230,7 +229,7 @@ exports.getRecentChurchBoardsWithInfo = async (req, res, next) => {
 // 교회별로 후기 조회수 기준 인기 후기 TOP10 조회
 exports.getTopViewedChurchBoardsByChurch = async (req, res, next) => {
     try {
-        const result = await churchBoardService.getTopViewedChurchBoardsByChurch();
+        const result = await churchService.getTopViewedChurchBoardsByChurch();
         res.status(200).json(result);
     } catch (error) {
         logger.error(error);
