@@ -78,48 +78,38 @@ exports.getChurchStats = async (req, res) => {
 };
 
 // 교회 추가 요청 생성 (일반 사용자도 접근 가능)
-exports.createChurchRequest = async (req, res) => {
+exports.createChurchRequest = async (req, res, next) => {
     try {
         const result = await churchService.createChurchRequest(req.body);
-        res.status(201).json({
-            success: true,
-            message: '교회 추가 요청이 성공적으로 등록되었습니다.',
-            data: result
-        });
+        
+        if (result.success) {
+            return res.status(201).json(result);
+        } else {
+            return res.status(409).json(result); // 409 Conflict for duplicate request
+        }
     } catch (error) {
         logger.error(`[createChurchRequest] Error: ${error.message}`);
-        res.status(500).json({ 
-            status: 500, 
-            message: '서버 오류가 발생했습니다.',
-            error: error.message 
-        });
+        next(error);
     }
 };
 
 // 교회 추가 요청 목록 조회 (관리자만)
-exports.getChurchRequests = async (req, res) => {
+exports.getChurchRequests = async (req, res, next) => {
     try {
-        const { page = 1, rowsPerPage = 10, status } = req.query;
+        const searchParams = req.query;
+        const result = await churchService.getChurchRequests(searchParams);
         
-        const result = await churchService.getChurchRequests({
-            page: parseInt(page),
-            rowsPerPage: parseInt(rowsPerPage),
-            status: status
-        });
+        logger.info(`[getChurchRequests] 교회 요청 목록 조회 성공: ${result.totalCount}개`);
         
         res.status(result.status).json(result);
     } catch (error) {
         logger.error(`[getChurchRequests] Error: ${error.message}`);
-        res.status(500).json({ 
-            status: 500, 
-            message: '서버 오류가 발생했습니다.',
-            error: error.message 
-        });
+        next(error);
     }
 };
 
 // 교회 추가 요청 상태 업데이트 (관리자만)
-exports.updateChurchRequestStatus = async (req, res) => {
+exports.updateChurchRequestStatus = async (req, res, next) => {
     try {
         const { requestIdx } = req.params;
         const { status, adminNote } = req.body;
@@ -128,10 +118,6 @@ exports.updateChurchRequestStatus = async (req, res) => {
         res.status(result.status).json(result);
     } catch (error) {
         logger.error(`[updateChurchRequestStatus] Error: ${error.message}`);
-        res.status(500).json({ 
-            status: 500, 
-            message: '서버 오류가 발생했습니다.',
-            error: error.message 
-        });
+        next(error);
     }
 };

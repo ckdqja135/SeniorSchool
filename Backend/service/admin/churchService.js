@@ -332,34 +332,47 @@ exports.getChurchStats = async () => {
 
 /**
  * 교회 추가 요청 생성
- * @param {Object} requestData - 요청 데이터
- * @returns {Object} 생성 결과
+ * @param {Object} requestData - 요청 데이터 (churchName, churchPastor, churchType, churchAddr)
+ * @returns {Promise<Object>} - 생성 결과
  */
 exports.createChurchRequest = async (requestData) => {
     try {
         const { churchName, churchPastor, churchType, churchAddr } = requestData;
 
-        // 필수값 체크
-        if (!churchName) {
+        // 필수값 체크 (교회 이름만 필수)
+        if (!churchName || churchName.trim() === '') {
             throw new Error('교회 이름은 필수입니다.');
         }
 
-        // 교회 추가 요청 생성
-        const request = await ChurchRequest.create({
-            churchName: churchName,
-            churchPastor: churchPastor || null,
-            churchType: churchType || null,
-            churchAddr: churchAddr || null,
+        // 교회 이름 중복 체크 (이미 요청된 교회인지)
+        const existingRequest = await ChurchRequest.findOne({
+            where: { churchName: churchName.trim() }
+        });
+
+        if (existingRequest) {
+            return {
+                success: false,
+                message: '이미 요청된 교회입니다.',
+                existingRequest
+            };
+        }
+
+        // 요청 데이터 생성
+        const newRequest = await ChurchRequest.create({
+            churchName: churchName.trim(),
+            churchPastor: churchPastor ? churchPastor.trim() : null,
+            churchType: churchType ? churchType.trim() : null,
+            churchAddr: churchAddr ? churchAddr.trim() : null,
             requestStatus: 'pending',
             requestDate: new Date()
         });
 
-        logger.info(`[createChurchRequest] 교회 추가 요청 생성 완료: ${request.requestIdx}`);
-
+        logger.info(`[createChurchRequest] 교회 요청 생성 완료: ${newRequest.requestIdx} - ${newRequest.churchName}`);
+        
         return {
-            status: 201,
-            message: '교회 추가 요청이 성공적으로 등록되었습니다.',
-            data: request
+            success: true,
+            message: '교회 요청이 성공적으로 등록되었습니다.',
+            data: newRequest
         };
     } catch (error) {
         logger.error(`[createChurchRequest] Error: ${error.message}`);
@@ -368,46 +381,38 @@ exports.createChurchRequest = async (requestData) => {
 };
 
 /**
- * 교회 추가 요청 목록 조회
- * @param {Object} searchParams - 검색 조건
- * @returns {Object} 요청 목록
+ * 교회 추가 요청 목록 조회 서비스 (관리자용)
+ * @param {Object} searchParams - 검색 조건 (status, page, rowsPerPage)
+ * @returns {Promise<Object>} - 요청 목록과 페이징 정보
  */
-exports.getChurchRequests = async (searchParams) => {
+exports.getChurchRequests = async (searchParams = {}) => {
     try {
-        const {
-            page = 1,
-            rowsPerPage = 10,
-            status
-        } = searchParams;
+        const { status, page = 1, rowsPerPage = 10 } = searchParams;
+        const offset = (page - 1) * rowsPerPage;
 
         // 검색 조건 구성
         const whereClause = {};
-        if (status) {
+        if (status && ['pending', 'completed'].includes(status)) {
             whereClause.requestStatus = status;
         }
-
-        // 페이징 계산
-        const offset = (page - 1) * rowsPerPage;
 
         // 요청 목록 조회
         const { count, rows } = await ChurchRequest.findAndCountAll({
             where: whereClause,
-            order: [['requestDate', 'DESC']],
-            limit: parseInt(rowsPerPage),
-            offset: offset
+            order: [['requestDate', 'DESC']], // 최신 요청순
+            limit: rowsPerPage,
+            offset
         });
 
-        const totalPages = Math.ceil(count / rowsPerPage);
-
-        logger.info(`[getChurchRequests] 교회 요청 목록 조회 완료: ${count}개 중 ${rows.length}개 반환`);
-
+        logger.info(`[getChurchRequests] 교회 요청 목록 조회 완료: ${rows.length}개 / 총 ${count}개`);
+        
         return {
             status: 200,
             data: rows,
             totalCount: count,
-            currentPage: parseInt(page),
-            totalPages: totalPages,
-            rowsPerPage: parseInt(rowsPerPage)
+            currentPage: page,
+            rowsPerPage,
+            totalPages: Math.ceil(count / rowsPerPage)
         };
     } catch (error) {
         logger.error(`[getChurchRequests] Error: ${error.message}`);
@@ -416,11 +421,11 @@ exports.getChurchRequests = async (searchParams) => {
 };
 
 /**
- * 교회 추가 요청 상태 업데이트
+ * 교회 추가 요청 상태 업데이트 서비스 (관리자용)
  * @param {number} requestIdx - 요청 인덱스
- * @param {string} status - 새로운 상태
+ * @param {string} status - 새로운 상태 ('pending' 또는 'completed')
  * @param {string} adminNote - 관리자 메모
- * @returns {Object} 업데이트 결과
+ * @returns {Promise<Object>} - 업데이트 결과
  */
 exports.updateChurchRequestStatus = async (requestIdx, status, adminNote) => {
     try {
