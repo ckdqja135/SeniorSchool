@@ -486,7 +486,7 @@ exports.insertChurchBoard = async (boardData) => {
                 boardLike: boardData.boardLike || 0,
                 boardHits: boardData.boardHits || 0,
                 boardID: boardData.boardId,
-                boardPW: boardData.boardPw ? require('crypto').createHash('sha256').update(boardData.boardPw).digest('hex') : null,
+                boardPW: boardData.boardPw && boardData.boardPw.trim() !== '' ? require('crypto').createHash('sha256').update(boardData.boardPw).digest('hex') : null,
             },
             { transaction }
         );
