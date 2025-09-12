@@ -8,8 +8,6 @@ router.get('/', churchController.getChurches);
 // 교회 상세 조회 (churchName, churchAddr로 조회 가능)
 router.get('/church', churchController.getChurchDetail);
 
-// 교회 등록
-router.post('/', churchController.createChurch);
 
 // 교회 수정
 router.put('/:churchIdx', churchController.updateChurch);

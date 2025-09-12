@@ -79,40 +79,79 @@ exports.getChurchDetail = async (churchIdx, churchName, churchAddr) => {
 
 // 교회 등록
 exports.createChurch = async (churchData) => {
-    const transaction = await sequelize.transaction({ autocommit: false });
-
     try {
-        // 필수 필드 검증
-        const requiredFields = ['churchName', 'churchLocation', 'churchType', 'churchPastor'];
-        for (const field of requiredFields) {
-            if (!churchData[field] || churchData[field].trim() === '') {
-                throw new Error(`${field} is required`);
+        // 배열 형태의 데이터인지 확인
+        if (Array.isArray(churchData)) {
+            // 배열인 경우 여러 교회를 일괄 생성
+            const results = [];
+            for (const church of churchData) {
+                const { churchName, churchLocation, churchType, churchPastor } = church;
+
+                // 필수값 체크
+                if (!churchName || !churchLocation || !churchType || !churchPastor) {
+                    logger.warn(`[createChurch] Missing required fields: ${JSON.stringify(church)}`);
+                    throw new Error('필수값이 누락되었습니다. (churchName, churchLocation, churchType, churchPastor)');
+                }
+
+                // DB에 데이터 생성
+                const created = await ChurchInfo.create({
+                    churchName: church.churchName,
+                    churchLocation: church.churchLocation,
+                    churchType: church.churchType,
+                    churchEstablished: church.churchEstablished || '',
+                    churchPastor: church.churchPastor,
+                    churchLatX: church.churchLatX || 0,
+                    churchLatY: church.churchLatY || 0,
+                    churchURL: church.churchURL || '',
+                    churchLotAddr: church.churchLotAddr || '',
+                    churchAddr: church.churchAddr || '',
+                    churchMapIMG: church.churchMapIMG || null,
+                    churchStatus: 1,
+                    churchViewCount: 0
+                });
+                results.push(created);
+                logger.info(`[createChurch] 교회 등록 완료! : ${created.churchIdx}`);
             }
+            return {
+                insert: results.length,
+                success: true
+            };
+        } else {
+            // 단일 객체인 경우
+            const { churchName, churchLocation, churchType, churchPastor } = churchData;
+
+            // 필수값 체크
+            if (!churchName || !churchLocation || !churchType || !churchPastor) {
+                logger.warn(`[createChurch] Missing required fields: ${JSON.stringify(churchData)}`);
+                throw new Error('필수값이 누락되었습니다. (churchName, churchLocation, churchType, churchPastor)');
+            }
+
+            // DB에 데이터 생성
+            const created = await ChurchInfo.create({
+                churchName: churchData.churchName,
+                churchLocation: churchData.churchLocation,
+                churchType: churchData.churchType,
+                churchEstablished: churchData.churchEstablished || '',
+                churchPastor: churchData.churchPastor,
+                churchLatX: churchData.churchLatX || 0,
+                churchLatY: churchData.churchLatY || 0,
+                churchURL: churchData.churchURL || '',
+                churchLotAddr: churchData.churchLotAddr || '',
+                churchAddr: churchData.churchAddr || '',
+                churchMapIMG: churchData.churchMapIMG || null,
+                churchStatus: 1,
+                churchViewCount: 0
+            });
+            logger.info(`[createChurch] 교회 등록 완료! : ${created.churchIdx}`);
+
+            return {
+                insert: 1,
+                success: true
+            };
         }
-
-        // 교회 생성
-        const church = await ChurchInfo.create({
-            churchName: churchData.churchName,
-            churchLocation: churchData.churchLocation,
-            churchType: churchData.churchType,
-            churchEstablished: churchData.churchEstablished || '',
-            churchPastor: churchData.churchPastor,
-            churchLatX: churchData.churchLatX || 0,
-            churchLatY: churchData.churchLatY || 0,
-            churchURL: churchData.churchURL || '',
-            churchLotAddr: churchData.churchLotAddr || '',
-            churchAddr: churchData.churchAddr || '',
-            churchMapIMG: churchData.churchMapIMG || null,
-            churchStatus: 1,
-            churchViewCount: 0
-        }, { transaction });
-
-        await transaction.commit();
-        logger.info(`[createChurch] Church created successfully. ChurchIdx: ${church.churchIdx}`);
-        return church;
     } catch (error) {
-        logger.error(`[createChurch] Error: ${error.message}. Transaction rollback.`);
-        await transaction.rollback();
+        // 에러 로그 출력 후, 상위 컨트롤러/서비스로 재전달
+        logger.error(`[createChurch] Error: ${error.message}`);
         throw error;
     }
 };

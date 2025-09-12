@@ -42,7 +42,7 @@ exports.createChurch = async (req, res, next) => {
     try {
         const churchData = req.body;
         const result = await churchService.createChurch(churchData);
-        res.status(201).json({ success: true, message: 'Church created successfully', data: result });
+        res.status(201).json(result);
     } catch (error) {
         logger.error(`[createChurch] Error: ${error.message}`);
         res.status(500).json({ error: 'Internal Server Error' });

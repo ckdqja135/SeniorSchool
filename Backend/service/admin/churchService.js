@@ -18,11 +18,28 @@ exports.createChurch = async (churchData) => {
                 }
 
                 // DB에 데이터 생성
-                const created = await ChurchInfo.create(church);
+                const created = await ChurchInfo.create({
+                    churchName: church.churchName,
+                    churchLocation: church.churchLocation,
+                    churchType: church.churchType,
+                    churchEstablished: church.churchEstablished || '',
+                    churchPastor: church.churchPastor,
+                    churchLatX: church.churchLatX || 0,
+                    churchLatY: church.churchLatY || 0,
+                    churchURL: church.churchURL || '',
+                    churchLotAddr: church.churchLotAddr || '',
+                    churchAddr: church.churchAddr || '',
+                    churchMapIMG: church.churchMapIMG || null,
+                    churchStatus: 1,
+                    churchViewCount: 0
+                });
                 results.push(created);
                 logger.info(`[createChurch] 교회 등록 완료! : ${created.churchIdx}`);
             }
-            return results;
+            return {
+                insert: results.length,
+                success: true
+            };
         } else {
             // 단일 객체인 경우
             const { churchName, churchLocation, churchType, churchPastor } = churchData;
@@ -34,10 +51,27 @@ exports.createChurch = async (churchData) => {
             }
 
             // DB에 데이터 생성
-            const created = await ChurchInfo.create(churchData);
+            const created = await ChurchInfo.create({
+                churchName: churchData.churchName,
+                churchLocation: churchData.churchLocation,
+                churchType: churchData.churchType,
+                churchEstablished: churchData.churchEstablished || '',
+                churchPastor: churchData.churchPastor,
+                churchLatX: churchData.churchLatX || 0,
+                churchLatY: churchData.churchLatY || 0,
+                churchURL: churchData.churchURL || '',
+                churchLotAddr: churchData.churchLotAddr || '',
+                churchAddr: churchData.churchAddr || '',
+                churchMapIMG: churchData.churchMapIMG || null,
+                churchStatus: 1,
+                churchViewCount: 0
+            });
             logger.info(`[createChurch] 교회 등록 완료! : ${created.churchIdx}`);
 
-            return created;
+            return {
+                insert: 1,
+                success: true
+            };
         }
     } catch (error) {
         // 에러 로그 출력 후, 상위 컨트롤러/서비스로 재전달

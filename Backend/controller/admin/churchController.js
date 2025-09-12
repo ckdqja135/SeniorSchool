@@ -4,14 +4,7 @@ const logger = require('../../utils/logger');
 exports.createChurch = async (req, res, next) => {
     try {
         const result = await churchService.createChurch(req.body);
-        
-        // 배열인 경우 길이, 단일 객체인 경우 1로 처리
-        const insertCount = Array.isArray(result) ? result.length : 1;
-        
-        return res.status(201).json({
-            insert: insertCount,
-            success: true
-        });
+        res.status(201).json(result);
     } catch (e) {
         next(e);
     }
