@@ -486,7 +486,7 @@ exports.insertChurchBoard = async (boardData) => {
                 boardLike: boardData.boardLike || 0,
                 boardHits: boardData.boardHits || 0,
                 boardID: boardData.boardId,
-                boardPW: boardData.boardPw && boardData.boardPw.trim() !== '' ? require('crypto').createHash('sha256').update(boardData.boardPw).digest('hex') : null,
+                boardPW: (boardData.writerPw || boardData.boardPw) && (boardData.writerPw || boardData.boardPw).trim() !== '' ? require('crypto').createHash('sha256').update((boardData.writerPw || boardData.boardPw).trim()).digest('hex') : null,
             },
             { transaction }
         );
@@ -507,7 +507,7 @@ exports.correctChurchBoard = async (boardData) => {
     const transaction = await sequelize.transaction({ autocommit: false });
 
     try {
-        const { boardIdx, boardTitle, boardContent, boardPw } = boardData;
+        const { boardIdx, boardTitle, boardContent, boardPw, writerPw } = boardData;
 
         if (!boardIdx) {
             throw new Error('boardIdx is required');
@@ -524,8 +524,9 @@ exports.correctChurchBoard = async (boardData) => {
         }
 
         // 비밀번호 확인 (비밀번호가 있는 경우)
-        if (boardPw) {
-            const hashedPassword = require('crypto').createHash('sha256').update(boardPw).digest('hex');
+        const password = writerPw || boardPw;
+        if (password && typeof password === 'string' && password.trim() !== '') {
+            const hashedPassword = require('crypto').createHash('sha256').update(password.trim()).digest('hex');
             if (existingBoard.boardPW !== hashedPassword) {
                 throw new Error('Invalid password');
             }
@@ -558,7 +559,7 @@ exports.deleteChurchBoard = async (boardData) => {
     const transaction = await sequelize.transaction({ autocommit: false });
 
     try {
-        const { boardIdx, boardPw } = boardData;
+        const { boardIdx, boardPw, writerPw } = boardData;
 
         if (!boardIdx) {
             throw new Error('boardIdx is required');
@@ -575,8 +576,9 @@ exports.deleteChurchBoard = async (boardData) => {
         }
 
         // 비밀번호 확인
-        if (boardPw) {
-            const hashedPassword = require('crypto').createHash('sha256').update(boardPw).digest('hex');
+        const password = writerPw || boardPw;
+        if (password && typeof password === 'string' && password.trim() !== '') {
+            const hashedPassword = require('crypto').createHash('sha256').update(password.trim()).digest('hex');
             if (existingBoard.boardPW !== hashedPassword) {
                 throw new Error('Invalid password');
             }
