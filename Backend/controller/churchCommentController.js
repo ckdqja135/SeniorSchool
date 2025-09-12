@@ -26,7 +26,9 @@ exports.insertChurchComment = async (req, res) => {
             commentContent,
             boardIdx,
             parentIdx,
+            commentParent,  // 프론트엔드에서 보내는 필드명
             depth,
+            commentDepth,   // 프론트엔드에서 보내는 필드명
             commentLike
         } = req.body;
 
@@ -36,8 +38,8 @@ exports.insertChurchComment = async (req, res) => {
             commentPw,
             commentContent,
             boardIdx: parseInt(boardIdx),
-            parentIdx: parseInt(parentIdx) || 0,  // 기본값 0
-            depth: parseInt(depth) || 0,  // 기본값 0
+            parentIdx: parseInt(parentIdx || commentParent) || 0,  // parentIdx가 없으면 commentParent 사용
+            depth: parseInt(depth || commentDepth) || 0,  // depth가 없으면 commentDepth 사용
             commentLike: parseInt(commentLike) || 0  // 기본값 0
         };
 
