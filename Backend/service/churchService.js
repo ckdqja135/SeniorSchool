@@ -660,7 +660,7 @@ exports.getRecentChurchBoardsWithInfo = async () => {
                 }
             ],
             order: [['boardRegDate', 'DESC']],
-            limit: 20 // 최근 20개
+            limit: 5 // 최근 5개
         });
 
         logger.info(`[getRecentChurchBoardsWithInfo] 최근 교회 후기 조회 완료: ${recentBoards.length}개`);
