@@ -283,7 +283,7 @@ exports.getRecentBoardsWithCompInfo = async () => {
                 'boardTitle', 
                 'boardContent',
                 'boardID',
-                'boardHit',
+                'boardHits',
                 'boardLike',
                 'boardRegDate',
                 'compIdx'
@@ -324,13 +324,13 @@ exports.getTopViewedBoardsByCompany = async () => {
                 'boardTitle',
                 'boardContent', 
                 'boardID',
-                'boardHit',
+                'boardHits',
                 'boardLike',
                 'boardRegDate',
                 'compIdx'
             ],
             order: [
-                ['boardHit', 'DESC'],    // 조회수 기준 내림차순
+                ['boardHits', 'DESC'],    // 조회수 기준 내림차순
                 ['boardRegDate', 'DESC'] // 동일 조회수일 경우 최신순
             ],
             limit: 10 // TOP 10만 조회
