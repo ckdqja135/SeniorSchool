@@ -131,7 +131,7 @@ exports.getTopViewedBoardsByCompany = async (req, res, next) => {
     try {
         const result = await compBoardService.getTopViewedBoardsByCompany();
         
-        logger.info(`[getTopViewedBoardsByCompany] 전체 회사의 인기 후기 TOP10 조회 성공: ${result.totalCount}개`);
+        logger.info(`[getTopViewedBoardsByCompany] 인기 회사 TOP10 조회 성공: ${result.totalCount}개`);
         
         res.status(result.status).json(result);
     } catch (error) {

@@ -307,42 +307,34 @@ exports.getRecentBoardsWithCompInfo = async () => {
 
 
 /**
- * 전체 회사의 게시판 조회수 기준 인기 후기 TOP10 조회
+ * 회사 조회수 기준 인기 회사 TOP10 조회
  */
 exports.getTopViewedBoardsByCompany = async () => {
     try {
         const { CompInfo } = require('../model/index');
         
-        const topViewedBoards = await CompBoard.findAll({
-            include: [{
-                model: CompInfo,
-                as: 'company',
-                attributes: ['compName', 'compLocate']
-            }],
+        const topViewedCompanies = await CompInfo.findAll({
             attributes: [
-                'boardIdx',
-                'boardTitle',
-                'boardContent', 
-                'boardID',
-                'boardHits',
-                'boardLike',
-                'boardRegDate',
-                'compIdx'
+                'compIdx',
+                'compName',
+                'compLocate',
+                'compType',
+                'compCEO',
+                'compViewCount'
             ],
             order: [
-                ['boardHits', 'DESC'],    // 조회수 기준 내림차순
-                ['boardRegDate', 'DESC'] // 동일 조회수일 경우 최신순
+                ['compViewCount', 'DESC'], // 회사 조회수 기준 내림차순
+                ['compName', 'ASC']        // 동일 조회수일 경우 회사명 오름차순
             ],
             limit: 10 // TOP 10만 조회
         });
 
-        logger.info(`[getTopViewedBoardsByCompany] 인기 후기 TOP10 조회 성공: ${topViewedBoards.length}개`);
+        logger.info(`[getTopViewedBoardsByCompany] 인기 회사 TOP10 조회 성공: ${topViewedCompanies.length}개`);
         
         return {
             status: 200,
-            data: topViewedBoards,
-            totalCount: topViewedBoards.length,
-            message: '전체 회사의 인기 후기 TOP10 조회 성공'
+            data: topViewedCompanies,
+            totalCount: topViewedCompanies.length
         };
     } catch (error) {
         logger.error(`[getTopViewedBoardsByCompany] Error: ${error.message}`);
