@@ -124,22 +124,3 @@ exports.getRecentBoardsWithCompInfo = async (req, res, next) => {
     }
 };
 
-/**
- * 전체 회사의 게시판 조회수 기준 인기 후기 TOP10 조회
- */
-exports.getTopViewedBoardsByCompany = async (req, res, next) => {
-    try {
-        const result = await compBoardService.getTopViewedBoardsByCompany();
-        
-        logger.info(`[getTopViewedBoardsByCompany] 인기 회사 TOP10 조회 성공: ${result.totalCount}개`);
-        
-        res.status(result.status).json(result);
-    } catch (error) {
-        logger.error(`[getTopViewedBoardsByCompany] Error: ${error.message}`);
-        res.status(500).json({ 
-            status: 500, 
-            error: '서버 오류가 발생했습니다.',
-            message: error.message 
-        });
-    }
-};

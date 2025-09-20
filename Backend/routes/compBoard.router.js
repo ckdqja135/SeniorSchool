@@ -26,7 +26,5 @@ router.get('/like/:boardId', compBoardController.getBoardLike);
 // 최근순으로 게시된 게시글 목록 조회 (회사 정보 포함)
 router.get('/recent', compBoardController.getRecentBoardsWithCompInfo);
 
-// 회사 조회수 기준 인기 회사 TOP10 조회
-router.get('/top-viewed', compBoardController.getTopViewedBoardsByCompany);
 
 module.exports = router;

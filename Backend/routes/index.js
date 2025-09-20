@@ -15,6 +15,7 @@ const churchBoardRouter = require('./churchBoard.router');
 const churchCommentRouter = require('./churchComment.router');
 
 // 회사 오빠 (comp) 라우터들
+const compRouter = require('./comp.router');
 const compBoardRouter = require('./compBoard.router');
 const compCommentRouter = require('./compComment.router');
 
@@ -36,6 +37,7 @@ router.use('/church/board', churchBoardRouter);
 router.use('/church/comment', churchCommentRouter);
 
 // 회사 오빠 (comp) 라우터들
+router.use('/comp', compRouter);
 router.use('/comp/board', compBoardRouter);
 router.use('/comp/comment', compCommentRouter);
 
