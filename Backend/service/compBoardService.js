@@ -276,7 +276,7 @@ exports.getRecentBoardsWithCompInfo = async () => {
             include: [{
                 model: CompInfo,
                 as: 'company',
-                attributes: ['compName', 'compLocation']
+                attributes: ['compName', 'compLocate']
             }],
             attributes: [
                 'boardIdx',
@@ -317,7 +317,7 @@ exports.getTopViewedBoardsByCompany = async () => {
             include: [{
                 model: CompInfo,
                 as: 'company',
-                attributes: ['compName', 'compLocation']
+                attributes: ['compName', 'compLocate']
             }],
             attributes: [
                 'boardIdx',
