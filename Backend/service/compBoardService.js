@@ -319,6 +319,7 @@ exports.getTopViewedBoardsByCompany = async () => {
                 'compName',
                 'compLocate',
                 'compType',
+                'compIndustry',
                 'compCEO',
                 'compViewCount'
             ],
