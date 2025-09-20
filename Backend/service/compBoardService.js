@@ -275,7 +275,7 @@ exports.getRecentBoardsWithCompInfo = async () => {
         const recentBoards = await CompBoard.findAll({
             include: [{
                 model: CompInfo,
-                as: 'Company',
+                as: 'company',
                 attributes: ['compName', 'compLocation']
             }],
             attributes: [
@@ -316,7 +316,7 @@ exports.getTopViewedBoardsByCompany = async () => {
         const topViewedBoards = await CompBoard.findAll({
             include: [{
                 model: CompInfo,
-                as: 'Company',
+                as: 'company',
                 attributes: ['compName', 'compLocation']
             }],
             attributes: [
