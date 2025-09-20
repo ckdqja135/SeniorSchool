@@ -27,7 +27,7 @@ module.exports = class CompInfo extends Sequelize.Model {
                 },
                 compEstablish: {
                     type: Sequelize.STRING(45),
-                    allowNull: false,
+                    allowNull: true,
                     comment: '회사 설립일'
                 },
                 compCEO: {

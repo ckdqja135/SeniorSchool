@@ -13,9 +13,12 @@ exports.createComp = async (compData) => {
                 const { compName, compLocate, compLateX, compLateY } = comp;
 
                 // 필수값 체크
-                if (!compName || !compLocate || !compLateX || !compLateY) {
-                    logger.warn(`[createComp] Missing required fields: ${JSON.stringify(comp)}`);
-                    throw new Error('필수값이 누락되었습니다. (compName, compLocate, compLateX, compLateY)');
+                const requiredFields = ['compName', 'compLocate', 'compType', 'compCEO', 'compIndustry', 'compLateX', 'compLateY', 'compLotAddr', 'compAddr'];
+                const missingFields = requiredFields.filter(field => !comp[field]);
+                
+                if (missingFields.length > 0) {
+                    logger.warn(`[createComp] Missing required fields: ${missingFields.join(', ')}`);
+                    throw new Error(`필수값이 누락되었습니다. (${missingFields.join(', ')})`);
                 }
 
                 // DB에 데이터 생성
@@ -29,9 +32,12 @@ exports.createComp = async (compData) => {
             const { compName, compLocate, compLateX, compLateY } = compData;
 
             // 필수값 체크
-            if (!compName || !compLocate || !compLateX || !compLateY) {
-                logger.warn(`[createComp] Missing required fields: ${JSON.stringify(compData)}`);
-                throw new Error('필수값이 누락되었습니다. (compName, compLocate, compLateX, compLateY)');
+            const requiredFields = ['compName', 'compLocate', 'compType', 'compCEO', 'compIndustry', 'compLateX', 'compLateY', 'compLotAddr', 'compAddr'];
+            const missingFields = requiredFields.filter(field => !compData[field]);
+            
+            if (missingFields.length > 0) {
+                logger.warn(`[createComp] Missing required fields: ${missingFields.join(', ')}`);
+                throw new Error(`필수값이 누락되었습니다. (${missingFields.join(', ')})`);
             }
 
             // DB에 데이터 생성
