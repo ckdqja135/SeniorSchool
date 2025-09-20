@@ -349,4 +349,3 @@ exports.getTopViewedBoardsByCompany = async () => {
         throw error;
     }
 };
-ㄴㄴ
