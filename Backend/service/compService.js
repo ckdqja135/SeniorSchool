@@ -1,4 +1,4 @@
-const { CompInfo } = require('../model/index');
+const { CompInfo, CompRequest } = require('../model/index');
 const logger = require('../utils/logger');
 
 /**
@@ -32,6 +32,41 @@ exports.getTopViewedCompanies = async () => {
         };
     } catch (error) {
         logger.error(`[getTopViewedCompanies] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 회사 추가 요청 생성
+ */
+exports.createCompRequest = async (requestData) => {
+    try {
+        const { compName, compLocation, compType, compIndustry, compCEO, compAddr, requesterId } = requestData;
+
+        // 필수값 체크
+        if (!compName) {
+            throw new Error('회사명은 필수입니다.');
+        }
+
+        const request = await CompRequest.create({
+            compName,
+            compCEO: compCEO || null,
+            compType: compType || null,
+            compIndustry: compIndustry || null,
+            compAddr: compAddr || null,
+            requesterId: requesterId || null,
+            requestStatus: 'pending'
+        });
+
+        logger.info(`[createCompRequest] 회사 추가 요청 생성 완료: ${request.requestIdx}`);
+        
+        return {
+            status: 201,
+            data: request,
+            message: '회사 추가 요청이 성공적으로 제출되었습니다.'
+        };
+    } catch (error) {
+        logger.error(`[createCompRequest] Error: ${error.message}`);
         throw error;
     }
 };

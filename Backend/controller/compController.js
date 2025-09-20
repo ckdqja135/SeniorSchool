@@ -20,3 +20,23 @@ exports.getTopViewedCompanies = async (req, res, next) => {
         });
     }
 };
+
+/**
+ * 회사 추가 요청 생성
+ */
+exports.createCompRequest = async (req, res, next) => {
+    try {
+        const result = await compService.createCompRequest(req.body);
+        
+        logger.info(`[createCompRequest] 회사 추가 요청 생성 성공: ${result.data.requestIdx}`);
+        
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[createCompRequest] Error: ${error.message}`);
+        res.status(500).json({ 
+            status: 500, 
+            error: '서버 오류가 발생했습니다.',
+            message: error.message 
+        });
+    }
+};
