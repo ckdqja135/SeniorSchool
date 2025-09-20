@@ -289,7 +289,7 @@ exports.getRecentBoardsWithCompInfo = async () => {
                 'compIdx'
             ],
             order: [['boardRegDate', 'DESC']],
-            limit: 20 // 최근 20개만 조회
+            limit: 5 // 최근 5개 조회
         });
 
         logger.info(`[getRecentBoardsWithCompInfo] 최근 게시글 조회 성공: ${recentBoards.length}개`);
@@ -304,6 +304,7 @@ exports.getRecentBoardsWithCompInfo = async () => {
         throw error;
     }
 };
+
 
 /**
  * 전체 회사의 게시판 조회수 기준 인기 후기 TOP10 조회
@@ -348,3 +349,4 @@ exports.getTopViewedBoardsByCompany = async () => {
         throw error;
     }
 };
+ㄴㄴ
