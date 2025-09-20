@@ -101,6 +101,32 @@ exports.searchCompany = async (req, res) => {
     }
 };
 
+// 회사 상세보기 (일반 유저용)
+exports.getCompanyDetail = async (req, res) => {
+    try {
+        const { compIdx } = req.params;
+
+        if (!compIdx) {
+            logger.warn("[getCompanyDetail] Missing compIdx in request");
+            return res.status(400).json({ error: "compIdx is required" });
+        }
+
+        const result = await compService.getCompDetail(compIdx);
+
+        if (result.status === 404) {
+            return res.status(404).json(result);
+        }
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error(`[getCompanyDetail] ${error.message}`);
+        return res.status(500).json({ 
+            error: '서버 오류가 발생했습니다.',
+            message: error.message 
+        });
+    }
+};
+
 // 교회 자동 검색
 exports.autoCompleteChurch = async (req, res) => {
     try {

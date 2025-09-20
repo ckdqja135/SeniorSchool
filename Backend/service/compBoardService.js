@@ -64,7 +64,7 @@ exports.getBoardDetail = async (boardIdx) => {
     try {
         // 조회수 증가
         await CompBoard.update(
-            { boardHit: sequelize.literal('boardHit + 1') },
+            { boardHits: sequelize.literal('boardHits + 1') },
             { 
                 where: { boardIdx: boardIdx },
                 transaction 
@@ -104,11 +104,11 @@ exports.insertBoard = async (boardData) => {
             boardTitle: boardData.boardTitle,
             boardContent: boardData.boardContent,
             boardID: boardData.boardID,
-            boardPw: hashPassword(boardData.boardPw), // SHA256 암호화 적용
-            boardHit: 0, // 초기 조회수는 0
+            boardPW: hashPassword(boardData.boardPw), // SHA256 암호화 적용
+            boardHits: 0, // 초기 조회수는 0
             boardLike: 0, // 초기 좋아요는 0
-            boardRegDate: now,
-            boardModDate: now, // 작성 시에도 수정일을 현재 시간으로 설정
+            boardRegDate: now.toISOString().slice(0, 19).replace('T', ' '), // 문자열 형태로 저장
+            isDeleted: false
         }, { transaction });
 
         logger.debug(`[insertBoard] Board created. BoardId: ${board.boardIdx}`);
@@ -138,7 +138,7 @@ exports.correctBoard = async (boardData) => {
 
         // 입력된 비밀번호와 저장된 비밀번호 비교
         const hashedInputPassword = hashPassword(boardData.boardPw);
-        if (board.boardPw !== hashedInputPassword) {
+        if (board.boardPW !== hashedInputPassword) {
             throw new Error('Incorrect password');
         }
 
@@ -147,7 +147,7 @@ exports.correctBoard = async (boardData) => {
         await CompBoard.update({
             boardTitle: boardData.boardTitle,
             boardContent: boardData.boardContent,
-            boardModDate: now
+            boardRegDate: now.toISOString().slice(0, 19).replace('T', ' ')
         }, {
             where: { boardIdx: boardData.boardIdx },
             transaction
@@ -178,7 +178,7 @@ exports.deleteBoard = async (boardData) => {
 
         // 입력된 비밀번호와 저장된 비밀번호 비교
         const hashedInputPassword = hashPassword(boardData.boardPw);
-        if (board.boardPw !== hashedInputPassword) {
+        if (board.boardPW !== hashedInputPassword) {
             throw new Error('Incorrect password');
         }
 
