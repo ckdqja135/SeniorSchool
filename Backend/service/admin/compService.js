@@ -1,4 +1,4 @@
-const { CompInfo } = require('../../model/index');
+const { CompInfo, CompRequest } = require('../../model/index');
 const { Op } = require('sequelize');
 const logger = require('../../utils/logger');
 
@@ -295,6 +295,50 @@ exports.updateCompStatus = async (compIdx, compStatus) => {
     } catch (error) {
         logger.error(`[updateCompStatus] Error: ${error.message}`);
         logger.error(`[updateCompStatus] Stack trace: ${error.stack}`);
+        throw error;
+    }
+};
+
+/**
+ * 회사 추가 요청 목록 조회 서비스 (관리자용)
+ * @param {Object} searchParams - 검색 조건 (status, page, rowsPerPage)
+ * @returns {Promise<Object>} - 요청 목록과 페이징 정보
+ */
+exports.getCompRequests = async (searchParams = {}) => {
+    try {
+        const { status, page = 1, rowsPerPage = 10 } = searchParams;
+        
+        // 문자열로 전달된 page와 rowsPerPage를 숫자로 변환
+        const pageNum = parseInt(page, 10) || 1;
+        const rowsPerPageNum = parseInt(rowsPerPage, 10) || 10;
+        const offset = (pageNum - 1) * rowsPerPageNum;
+
+        // 검색 조건 구성
+        const whereClause = {};
+        if (status && ['pending', 'completed'].includes(status)) {
+            whereClause.requestStatus = status;
+        }
+
+        // 요청 목록 조회
+        const { count, rows } = await CompRequest.findAndCountAll({
+            where: whereClause,
+            order: [['requestDate', 'DESC']], // 최신 요청순
+            limit: rowsPerPageNum,
+            offset
+        });
+
+        logger.info(`[getCompRequests] 회사 요청 목록 조회 완료: ${rows.length}개 / 총 ${count}개`);
+        
+        return {
+            status: 200,
+            data: rows,
+            totalCount: count,
+            currentPage: pageNum,
+            rowsPerPage: rowsPerPageNum,
+            totalPages: Math.ceil(count / rowsPerPageNum)
+        };
+    } catch (error) {
+        logger.error(`[getCompRequests] Error: ${error.message}`);
         throw error;
     }
 };

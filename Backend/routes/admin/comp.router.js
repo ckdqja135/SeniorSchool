@@ -13,6 +13,9 @@ router.post('/createComp', authenticateToken, isAdmin, compController.createComp
 // 회사 검색
 router.get('/searchComp', authenticateToken, isAdmin, compController.searchComp);
 
+// 회사 추가 요청 목록 조회
+router.get('/request', authenticateToken, isAdmin, compController.getCompRequests);
+
 // 회사 상세보기 API
 router.get('/comp/:compIdx', authenticateToken, isAdmin, compController.getCompDetail);
 

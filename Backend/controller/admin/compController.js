@@ -36,6 +36,23 @@ exports.searchComp = async (req, res) => {
     }
 };
 
+// 회사 추가 요청 목록 조회 (관리자용)
+exports.getCompRequests = async (req, res) => {
+    try {
+        const data = req.query;
+        logger.info(`[getCompRequests] Request query: ${JSON.stringify(data)}`);
+        
+        const result = await compService.getCompRequests(data);
+        logger.info(`[getCompRequests] Success: ${result.totalCount} requests found`);
+
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[getCompRequests] Error: ${error.message}`);
+        logger.error(`[getCompRequests] Stack trace: ${error.stack}`);
+        res.status(500).json({ status: 500, message: '서버 오류가 발생했습니다.' });
+    }
+};
+
 // 회사 상세보기
 exports.getCompDetail = async (req, res) => {
     const { compIdx } = req.params;
