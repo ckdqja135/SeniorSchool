@@ -5,16 +5,19 @@ const logger = require('../../utils/logger');
 // 신고 게시판 생성
 exports.createReport = async (data) => {
     try {
-        const { boardIdx, serviceType, reportReason, reporterId } = data;
+        const { boardIdx, serviceType, reportType, reportReason, reporterId } = data;
 
-        if (!boardIdx || !serviceType || !reportReason) {
+        // serviceType 또는 reportType 중 하나는 있어야 함
+        const finalServiceType = serviceType || reportType;
+
+        if (!boardIdx || !finalServiceType || !reportReason) {
             logger.warn(`[createReport] 필수값 누락됨: ${JSON.stringify(data)}`);
-            throw new Error('필수값이 누락되었습니다. (boardIdx, serviceType, reportReason)');
+            throw new Error('필수값이 누락되었습니다. (boardIdx, serviceType/reportType, reportReason)');
         }
 
         const created = await ReportBoard.create({
             boardIdx,
-            serviceType,
+            serviceType: finalServiceType,
             reportReason,
             reporterId,
             reportStatus: 'pending',
