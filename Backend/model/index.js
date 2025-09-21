@@ -1,20 +1,18 @@
 const Sequelize = require('sequelize');
 const univBoard = require('./univBoard');
 const university = require('./universityinfo');
-const reportBoard = require('./tb_univ_report_board');
+const reportBoard = require('./tb_report_board');
 const user = require('./user');
 const univComment = require('./univcomment');
 const univRequest = require('./tb_univ_request');
 const compInfo = require('./compInfo');
 const compBoard = require('./compBoard');
 const compComment = require('./compComment');
-const compReportBoard = require('./compReportBoard');
 const compRequest = require('./compRequest');
 const compStatistics = require('./compStatistics');
 const churchInfo = require('./churchInfo');
 const churchBoard = require('./churchBoard');
 const churchComment = require('./churchComment');
-const churchReportBoard = require('./tb_church_report_board');
 const churchRequest = require('./tb_church_request');
 const config = require('../conf/sequelize');
 const logger = require('../utils/logger');
@@ -42,13 +40,11 @@ db.UnivRequest = univRequest;
 db.CompInfo = compInfo;
 db.CompBoard = compBoard;
 db.CompComment = compComment;
-db.CompReportBoard = compReportBoard;
 db.CompRequest = compRequest;
 db.CompStatistics = compStatistics;
 db.ChurchInfo = churchInfo;
 db.ChurchBoard = churchBoard;
 db.ChurchComment = churchComment;
-db.ChurchReportBoard = churchReportBoard;
 db.ChurchRequest = churchRequest;
 
 //init이 실행되어야 테이블이 모델로 연결됨
@@ -61,13 +57,11 @@ univRequest.init(sequelize);
 compInfo.init(sequelize);
 compBoard.init(sequelize);
 compComment.init(sequelize);
-compReportBoard.init(sequelize);
 compRequest.init(sequelize);
 compStatistics.init(sequelize);
 churchInfo.init(sequelize);
 churchBoard.init(sequelize);
 churchComment.init(sequelize);
-churchReportBoard.init(sequelize);
 churchRequest.init(sequelize);
 
 
@@ -81,13 +75,11 @@ univRequest.associate(db);
 compInfo.associate(db);
 compBoard.associate(db);
 compComment.associate(db);
-compReportBoard.associate(db);
 compRequest.associate(db);
 compStatistics.associate(db);
 churchInfo.associate(db);
 churchBoard.associate(db);
 churchComment.associate(db);
-churchReportBoard.associate(db);
 churchRequest.associate(db);
 
 sequelize.authenticate()

@@ -52,23 +52,7 @@ CREATE TABLE tb_church_comment (
     INDEX idx_church_comment_regDate (regDate)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='교회 댓글 테이블';
 
--- 4. 교회 신고 게시판 테이블
-CREATE TABLE tb_church_report_board (
-    reportIdx BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '신고 인덱스',
-    boardIdx BIGINT NOT NULL COMMENT '게시글 인덱스 (외래키)',
-    serviceType VARCHAR(20) NOT NULL COMMENT '서비스 구분: church, company 등',
-    reportReason VARCHAR(255) NULL COMMENT '신고 사유',
-    reportDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '신고 날짜',
-    reportStatus VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT '신고 처리 상태: pending, reviewed, rejected',
-    reportResult TEXT NULL COMMENT '신고 처리 결과',
-    reporterId VARCHAR(45) NULL COMMENT '신고자 ID',
-    isDeleted BOOLEAN NOT NULL DEFAULT FALSE COMMENT '삭제 여부',
-    INDEX idx_church_report_boardIdx (boardIdx),
-    INDEX idx_church_report_status (reportStatus),
-    INDEX idx_church_report_date (reportDate)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='교회 신고 게시판 테이블';
-
--- 5. 교회 추가 요청 테이블
+-- 4. 교회 추가 요청 테이블
 CREATE TABLE tb_church_request (
     requestIdx INT AUTO_INCREMENT PRIMARY KEY COMMENT '요청 인덱스',
     churchName VARCHAR(60) NOT NULL COMMENT '교회 이름 (필수)',
@@ -94,7 +78,3 @@ ADD CONSTRAINT fk_church_comment_boardIdx
 FOREIGN KEY (boardIdx) REFERENCES tb_church_board(boardIdx) 
 ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE tb_church_report_board 
-ADD CONSTRAINT fk_church_report_boardIdx 
-FOREIGN KEY (boardIdx) REFERENCES tb_church_board(boardIdx) 
-ON DELETE CASCADE ON UPDATE CASCADE;

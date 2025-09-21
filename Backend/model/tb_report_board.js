@@ -16,7 +16,7 @@ module.exports = class ReportBoard extends Sequelize.Model {
             serviceType: {
                 type: Sequelize.STRING(20),
                 allowNull: false,
-                comment: '서비스 구분: univ, company 등',
+                comment: '서비스 구분: univ, company, church 등',
             },
             reportReason: {
                 type: Sequelize.STRING(255),
@@ -49,7 +49,7 @@ module.exports = class ReportBoard extends Sequelize.Model {
         }, {
             sequelize,
             modelName: "ReportBoard",
-            tableName: "tb_univ_report_board",
+            tableName: "tb_report_board",
             charset: "utf8",
             timestamps: false,
         });

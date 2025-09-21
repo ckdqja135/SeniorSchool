@@ -110,24 +110,7 @@ CREATE TABLE `tb_comp_comment` (
   KEY `idx_comp_comment_deleted` (`isDeleted`),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='회사 댓글 테이블';
 
--- 4. 회사 신고 테이블
-CREATE TABLE `tb_comp_report_board` (
-  `reportIdx` bigint NOT NULL AUTO_INCREMENT COMMENT '신고 인덱스',
-  `boardIdx` bigint NOT NULL COMMENT '신고된 게시글 인덱스',
-  `serviceType` varchar(20) NOT NULL DEFAULT 'company' COMMENT '서비스 구분: company',
-  `reportReason` varchar(255) DEFAULT NULL COMMENT '신고 사유',
-  `reportDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '신고 날짜',
-  `reportStatus` varchar(20) NOT NULL DEFAULT 'pending' COMMENT '신고 처리 상태: pending, reviewed, rejected',
-  `reportResult` text COMMENT '신고 처리 결과',
-  `reporterId` varchar(45) DEFAULT NULL COMMENT '신고자 ID',
-  `isDeleted` tinyint NOT NULL DEFAULT '0' COMMENT '삭제 여부',
-  PRIMARY KEY (`reportIdx`),
-  KEY `idx_comp_report_board` (`boardIdx`),
-  KEY `idx_comp_report_status` (`reportStatus`),
-  KEY `idx_comp_report_deleted` (`isDeleted`),
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='회사 신고 테이블';
-
--- 5. 회사 요청 테이블
+-- 4. 회사 요청 테이블
 CREATE TABLE `tb_comp_request` (
   `requestIdx` bigint NOT NULL AUTO_INCREMENT COMMENT '요청 인덱스',
   `compName` varchar(60) NOT NULL COMMENT '회사명 (필수)',
