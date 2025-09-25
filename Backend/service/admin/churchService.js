@@ -94,7 +94,7 @@ exports.searchChurch = async (searchParams) => {
             churchPastor,
             churchStatus,
             rowsPerPage = 10,
-            currentPage = 1
+            page = 1
         } = searchParams;
 
         // 검색 조건 구성
@@ -129,7 +129,7 @@ exports.searchChurch = async (searchParams) => {
         }
 
         // 페이징 계산
-        const offset = (currentPage - 1) * rowsPerPage;
+        const offset = (parseInt(page) - 1) * parseInt(rowsPerPage);
 
         // 검색 실행
         const { count, rows } = await ChurchInfo.findAndCountAll({
@@ -147,7 +147,7 @@ exports.searchChurch = async (searchParams) => {
             status: 200,
             data: rows,
             totalCount: count,
-            currentPage: parseInt(currentPage),
+            currentPage: parseInt(page),
             totalPages: totalPages,
             rowsPerPage: parseInt(rowsPerPage)
         };

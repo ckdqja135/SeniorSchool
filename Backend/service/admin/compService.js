@@ -67,7 +67,7 @@ exports.searchComp = async (searchParams) => {
             compIndustry,
             compStatus,
             rowsPerPage = 20,
-            currentPage = 1
+            page = 1
         } = searchParams;
 
         // 검색 조건 구성
@@ -101,7 +101,7 @@ exports.searchComp = async (searchParams) => {
 
         // 페이지네이션 설정
         const limit = parseInt(rowsPerPage);
-        const offset = (parseInt(currentPage) - 1) * limit;
+        const offset = (parseInt(page) - 1) * limit;
 
         logger.info(`[searchComp] Search conditions: ${JSON.stringify(whereClause)}`);
         logger.info(`[searchComp] Pagination: limit=${limit}, offset=${offset}`);
@@ -130,10 +130,10 @@ exports.searchComp = async (searchParams) => {
             pagination: {
                 totalCount: totalCount,
                 totalPages: totalPages,
-                currentPage: parseInt(currentPage),
+                currentPage: parseInt(page),
                 rowsPerPage: limit,
-                hasNextPage: parseInt(currentPage) < totalPages,
-                hasPrevPage: parseInt(currentPage) > 1
+                hasNextPage: parseInt(page) < totalPages,
+                hasPrevPage: parseInt(page) > 1
             }
         };
 
