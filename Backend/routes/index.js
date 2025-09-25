@@ -19,6 +19,9 @@ const compRouter = require('./comp.router');
 const compBoardRouter = require('./compBoard.router');
 const compCommentRouter = require('./compComment.router');
 
+// 신고 라우터
+const reportRouter = require('./report.router');
+
 // 기타 라우터들
 const searchRouter = require('./search.router');
 const adminRouter = require('./admin/index');
@@ -40,6 +43,9 @@ router.use('/church/comment', churchCommentRouter);
 router.use('/comp', compRouter);
 router.use('/comp/board', compBoardRouter);
 router.use('/comp/comment', compCommentRouter);
+
+// 통합 신고 라우터
+router.use('/report', reportRouter);
 
 // 기타 라우터들
 router.use('/search', searchRouter);
