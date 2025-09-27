@@ -14,8 +14,8 @@ router.get('/top-viewed', searchController.getTopViewedUniversities);
 // 회사 검색
 router.get('/comp/', searchController.searchCompany);
 
-// 회사 상세보기 (일반 유저용)
-router.get('/comp/:compIdx', searchController.getCompanyDetail);
+// 회사 상세보기 (일반 유저용) - 이름 기반
+router.get('/comp', searchController.getCompanyDetail);
 
 // 교회 자동 완성 검색
 router.get('/church/auto', searchController.autoCompleteChurch);

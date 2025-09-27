@@ -53,7 +53,7 @@ exports.getCompRequests = async (req, res) => {
     }
 };
 
-// 회사 상세보기
+// 회사 상세보기 (idx 기반)
 exports.getCompDetail = async (req, res) => {
     const { compIdx } = req.params;
 

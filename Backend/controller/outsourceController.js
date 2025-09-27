@@ -37,6 +37,32 @@ exports.getOutsourceDetail = async (req, res, next) => {
     }
 };
 
+// 외주업체 상세 조회 (idx로 조회)
+exports.getOutsourceDetailByIdx = async (req, res, next) => {
+    try {
+        const { outsourceIdx } = req.params;
+
+        if (!outsourceIdx) {
+            logger.warn("[getOutsourceDetailByIdx] Missing outsourceIdx in request");
+            return res.status(400).json({ error: "outsourceIdx is required" });
+        }
+
+        const result = await outsourceService.getOutsourceDetailByIdx(outsourceIdx);
+
+        if (result.status === 404) {
+            return res.status(404).json(result);
+        }
+
+        return res.status(200).json(result);
+    } catch (error) {
+        logger.error(`[getOutsourceDetailByIdx] ${error.message}`);
+        return res.status(500).json({ 
+            error: '서버 오류가 발생했습니다.',
+            message: error.message 
+        });
+    }
+};
+
 // 외주업체 등록
 exports.createOutsource = async (req, res, next) => {
     try {

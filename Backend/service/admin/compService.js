@@ -145,7 +145,7 @@ exports.searchComp = async (searchParams) => {
 };
 
 /**
- * 회사 상세보기 서비스
+ * 회사 상세보기 서비스 (idx 기반)
  * @param {number} compIdx - 회사 인덱스
  * @returns {Object} 회사 상세 정보
  */
@@ -178,6 +178,49 @@ exports.getCompDetail = async (compIdx) => {
     } catch (error) {
         logger.error(`[getCompDetail] Error: ${error.message}`);
         logger.error(`[getCompDetail] Stack trace: ${error.stack}`);
+        throw error;
+    }
+};
+
+/**
+ * 회사 상세보기 서비스 (이름 기반)
+ * @param {string} compName - 회사명
+ * @returns {Object} 회사 상세 정보
+ */
+exports.getCompDetailByName = async (compName) => {
+    try {
+        logger.info(`[getCompDetailByName] Searching for compName: ${compName}`);
+
+        const company = await CompInfo.findOne({
+            where: {
+                compName: compName,
+                compStatus: 1 // 활성화된 회사만
+            }
+        });
+
+        if (!company) {
+            logger.warn(`[getCompDetailByName] Company not found: ${compName}`);
+            return {
+                status: 404,
+                message: '회사를 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        // 조회수 증가
+        await company.increment('compViewCount');
+
+        logger.info(`[getCompDetailByName] Company found: ${company.compName}`);
+
+        return {
+            status: 200,
+            message: '회사 상세 정보를 조회했습니다.',
+            data: company
+        };
+
+    } catch (error) {
+        logger.error(`[getCompDetailByName] Error: ${error.message}`);
+        logger.error(`[getCompDetailByName] Stack trace: ${error.stack}`);
         throw error;
     }
 };

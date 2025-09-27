@@ -16,7 +16,7 @@ router.get('/searchComp', authenticateToken, isAdmin, compController.searchComp)
 // 회사 추가 요청 목록 조회
 router.get('/request', authenticateToken, isAdmin, compController.getCompRequests);
 
-// 회사 상세보기 API
+// 회사 상세보기 API (idx 기반)
 router.get('/comp/:compIdx', authenticateToken, isAdmin, compController.getCompDetail);
 
 // 회사 데이터 삭제
