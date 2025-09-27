@@ -23,6 +23,9 @@ router.get('/church/auto', searchController.autoCompleteChurch);
 // 교회 정보 검색
 router.get('/church/info', searchController.getChurchInfo);
 
+// 외주업체 자동 완성 검색
+router.get('/outsource/auto', searchController.autoCompleteOutsource);
+
 // 교회 조회수 높은 순으로 상위 10개 교회 조회
 router.get('/church/top-viewed', searchController.getTopViewedChurches);
 

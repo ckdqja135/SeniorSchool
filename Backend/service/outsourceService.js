@@ -485,3 +485,27 @@ exports.getTopViewedOutsourceBoardsByOutsource = async () => {
         throw error;
     }
 };
+
+// 외주업체 자동 완성 검색
+exports.autoComplete = async (keyword) => {
+    try {
+        const outsources = await OutsourceInfo.findAll({
+            attributes: ['outsourceName', 'outsourceAddr', 'outsourceCEO', 'outsourceType'],
+            where: {
+                outsourceName: {
+                    [Op.not]: '',
+                    [Op.like]: `%${keyword}%`,
+                },
+                outsourceStatus: 1 // 활성화된 외주업체만
+            },
+            order: [['outsourceName', 'ASC']],
+            limit: 10 // 최대 10개까지만
+        });
+        
+        logger.info(`[autoComplete] Found ${outsources.length} outsources for keyword: "${keyword}"`);
+        return outsources;
+    } catch (error) {
+        logger.error(`[autoComplete] Error: ${error.message}`);
+        throw error;
+    }
+};

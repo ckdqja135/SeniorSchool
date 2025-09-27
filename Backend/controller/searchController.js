@@ -1,6 +1,7 @@
 const searchService = require('../service/searchService');
 const compService = require('../service/admin/compService');
 const churchService = require('../service/churchService');
+const outsourceService = require('../service/outsourceService');
 const logger = require('../utils/logger');
 
 exports.autoComplete = async (req, res) => {
@@ -143,6 +144,26 @@ exports.autoCompleteChurch = async (req, res) => {
         return res.status(200).json(churches);
     } catch (error) {
         logger.error(`[autoCompleteChurch] ${error.message}`);
+        return res.status(500).json({ error: error });
+    }
+};
+
+// 외주업체 자동 완성 검색
+exports.autoCompleteOutsource = async (req, res) => {
+    try {
+        const { keyword } = req.query;
+
+        if (!keyword) {
+            logger.warn("[autoCompleteOutsource] Missing keyword in request");
+            return res.status(400).json({ error: 'Keyword is required' });
+        }
+
+        const decodedKeyword = decodeURIComponent(keyword);
+        const outsources = await outsourceService.autoComplete(decodedKeyword);
+
+        return res.status(200).json(outsources);
+    } catch (error) {
+        logger.error(`[autoCompleteOutsource] ${error.message}`);
         return res.status(500).json({ error: error });
     }
 };
