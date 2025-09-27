@@ -93,7 +93,12 @@ exports.insertOutsourceBoard = async (boardData) => {
         // boardPW 또는 boardPw 둘 다 지원
         const password = boardPW || boardPw;
         
+        // 디버깅을 위한 로그
+        logger.info(`[insertOutsourceBoard] Received data: ${JSON.stringify(boardData)}`);
+        logger.info(`[insertOutsourceBoard] Parsed fields - boardTitle: ${boardTitle}, boardContent: ${boardContent}, outsourceIdx: ${outsourceIdx}, boardID: ${boardID}, password: ${password}`);
+        
         if (!boardTitle || !boardContent || !outsourceIdx || !boardID || !password) {
+            logger.error(`[insertOutsourceBoard] Missing fields - boardTitle: ${!!boardTitle}, boardContent: ${!!boardContent}, outsourceIdx: ${!!outsourceIdx}, boardID: ${!!boardID}, password: ${!!password}`);
             throw new Error('필수 입력값이 누락되었습니다.');
         }
 

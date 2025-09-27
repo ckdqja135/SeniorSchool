@@ -45,11 +45,22 @@ exports.getOutsourceBoardDetail = async (req, res, next) => {
 // 외주업체 게시판 등록
 exports.insertOutsourceBoard = async (req, res, next) => {
     try {
+        logger.info(`[insertOutsourceBoard Controller] Request received`);
+        logger.info(`[insertOutsourceBoard Controller] Request body: ${JSON.stringify(req.body)}`);
+        
         const boardData = req.body;
+        
+        if (!boardData) {
+            logger.error(`[insertOutsourceBoard Controller] boardData is null or undefined`);
+            return res.status(400).json({ error: 'Request body is required' });
+        }
+        
+        logger.info(`[insertOutsourceBoard Controller] Calling service...`);
         const result = await outsourceBoardService.insertOutsourceBoard(boardData);
         res.status(200).json({ success: true, message: result });
     } catch (error) {
-        logger.error(`[insertOutsourceBoard] Error: ${error.message}`);
+        logger.error(`[insertOutsourceBoard Controller] Error: ${error.message}`);
+        logger.error(`[insertOutsourceBoard Controller] Error stack: ${error.stack}`);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };

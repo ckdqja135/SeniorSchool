@@ -51,7 +51,7 @@ router.use('/comp/comment', compCommentRouter);
 
 // 외주 오빠 (outsource) 라우터들
 router.use('/outsource', outsourceRouter);
-router.use('/outsource/board', outsourceBoardRouter);
+router.use('/outsource/boards', outsourceBoardRouter);
 router.use('/outsource/comment', outsourceCommentRouter);
 
 // 통합 신고 라우터
