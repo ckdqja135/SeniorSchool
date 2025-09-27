@@ -88,9 +88,12 @@ exports.insertOutsourceBoard = async (boardData) => {
     
     try {
         // 필수 필드 검증
-        const { boardTitle, boardContent, outsourceIdx, boardID, boardPW } = boardData;
+        const { boardTitle, boardContent, outsourceIdx, boardID, boardPW, boardPw } = boardData;
         
-        if (!boardTitle || !boardContent || !outsourceIdx || !boardID || !boardPW) {
+        // boardPW 또는 boardPw 둘 다 지원
+        const password = boardPW || boardPw;
+        
+        if (!boardTitle || !boardContent || !outsourceIdx || !boardID || !password) {
             throw new Error('필수 입력값이 누락되었습니다.');
         }
 
@@ -106,7 +109,7 @@ exports.insertOutsourceBoard = async (boardData) => {
             boardLike: 0,
             boardHits: 0,
             boardID: boardID,
-            boardPW: hashPassword(boardPW) // SHA256 암호화 적용
+            boardPW: hashPassword(password) // SHA256 암호화 적용
         }, { transaction });
 
         await transaction.commit();
@@ -124,19 +127,20 @@ exports.correctOutsourceBoard = async (boardData) => {
     const transaction = await sequelize.transaction();
     
     try {
-        const { boardIdx, boardTitle, boardContent, boardID, boardPW } = boardData;
+        const { boardIdx, boardTitle, boardContent, boardID, boardPW, boardPw } = boardData;
         
         // 필수 필드 검증
-        if (!boardIdx || !boardID || !boardPW) {
+        const password = boardPW || boardPw;
+        
+        if (!boardIdx || !boardID || !password) {
             throw new Error('필수 입력값이 누락되었습니다.');
         }
-
-        // 기존 게시글 조회 및 작성자 확인
+        
         const existingBoard = await OutsourceBoard.findOne({
             where: { 
                 boardIdx: boardIdx,
                 boardID: boardID,
-                boardPW: hashPassword(boardPW) // SHA256 암호화된 비밀번호로 비교
+                boardPW: hashPassword(password) // SHA256 암호화된 비밀번호로 비교
             }
         }, { transaction });
 
@@ -168,10 +172,12 @@ exports.deleteOutsourceBoard = async (boardData) => {
     const transaction = await sequelize.transaction();
     
     try {
-        const { boardIdx, boardID, boardPW } = boardData;
+        const { boardIdx, boardID, boardPW, boardPw } = boardData;
         
         // 필수 필드 검증
-        if (!boardIdx || !boardID || !boardPW) {
+        const password = boardPW || boardPw;
+        
+        if (!boardIdx || !boardID || !password) {
             throw new Error('필수 입력값이 누락되었습니다.');
         }
 
@@ -180,7 +186,7 @@ exports.deleteOutsourceBoard = async (boardData) => {
             where: { 
                 boardIdx: boardIdx,
                 boardID: boardID,
-                boardPW: hashPassword(boardPW) // SHA256 암호화된 비밀번호로 비교
+                boardPW: hashPassword(password) // SHA256 암호화된 비밀번호로 비교
             }
         }, { transaction });
 
