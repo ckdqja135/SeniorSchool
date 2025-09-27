@@ -23,9 +23,9 @@ exports.insertOutsourceComment = async (req, res, next) => {
     try {
         const commentData = req.body;
         
-        // 필수 필드 검증
-        if (!commentData.boardIdx || !commentData.commentWriter || !commentData.commentPw || !commentData.commentContent) {
-            return res.status(400).json({ error: 'Required fields missing: boardIdx, commentWriter, commentPw, commentContent' });
+        // 필수 필드 검증 (프론트엔드 필드명에 맞춰 수정)
+        if (!commentData.boardIdx || !commentData.writerId || !commentData.writerPw || !commentData.commentContent) {
+            return res.status(400).json({ error: 'Required fields missing: boardIdx, writerId, writerPw, commentContent' });
         }
 
         const result = await outsourceCommentService.insertOutsourceComment(commentData);

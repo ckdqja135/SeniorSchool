@@ -36,15 +36,15 @@ exports.insertOutsourceComment = async (commentData) => {
     const transaction = await sequelize.transaction();
     try {
         const now = new Date();
-        // 댓글 생성
+        // 댓글 생성 (프론트엔드 필드명에 맞춰 수정)
         const comment = await OutsourceComment.create({
             boardIdx: commentData.boardIdx,
-            commentDepth: commentData.depth,
-            writerId: commentData.commentWriter,
-            writerPw: hashPassword(commentData.commentPw), // SHA256 암호화 적용
-            commentParent: commentData.parentIdx,
+            commentDepth: commentData.commentDepth || 0,
+            writerId: commentData.writerId,
+            writerPw: hashPassword(commentData.writerPw), // SHA256 암호화 적용
+            commentParent: commentData.commentPerent || 0,
             commentContent: commentData.commentContent,
-            commentLike: commentData.commentLike,
+            commentLike: 0,
             regDate: now,
             modDate: now, // 작성 시에도 수정일을 현재 시간으로 설정
         }, { transaction });
