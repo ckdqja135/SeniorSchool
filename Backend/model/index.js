@@ -14,6 +14,10 @@ const churchInfo = require('./churchInfo');
 const churchBoard = require('./churchBoard');
 const churchComment = require('./churchComment');
 const churchRequest = require('./tb_church_request');
+const outsourceInfo = require('./outsourceInfo');
+const outsourceBoard = require('./outsourceBoard');
+const outsourceComment = require('./outsourceComment');
+const outsourceRequest = require('./tb_outsource_request');
 const config = require('../conf/sequelize');
 const logger = require('../utils/logger');
 
@@ -46,6 +50,10 @@ db.ChurchInfo = churchInfo;
 db.ChurchBoard = churchBoard;
 db.ChurchComment = churchComment;
 db.ChurchRequest = churchRequest;
+db.OutsourceInfo = outsourceInfo;
+db.OutsourceBoard = outsourceBoard;
+db.OutsourceComment = outsourceComment;
+db.OutsourceRequest = outsourceRequest;
 
 //init이 실행되어야 테이블이 모델로 연결됨
 univBoard.init(sequelize);
@@ -63,6 +71,10 @@ churchInfo.init(sequelize);
 churchBoard.init(sequelize);
 churchComment.init(sequelize);
 churchRequest.init(sequelize);
+outsourceInfo.init(sequelize);
+outsourceBoard.init(sequelize);
+outsourceComment.init(sequelize);
+outsourceRequest.init(sequelize);
 
 
 // 다른 테이블과의 관계를 연결함
@@ -81,6 +93,10 @@ churchInfo.associate(db);
 churchBoard.associate(db);
 churchComment.associate(db);
 churchRequest.associate(db);
+outsourceInfo.associate(db);
+outsourceBoard.associate(db);
+outsourceComment.associate(db);
+outsourceRequest.associate(db);
 
 sequelize.authenticate()
     .then(() => logger.info('✅ 데이터베이스 연결 성공'))

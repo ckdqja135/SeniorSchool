@@ -19,6 +19,11 @@ const compRouter = require('./comp.router');
 const compBoardRouter = require('./compBoard.router');
 const compCommentRouter = require('./compComment.router');
 
+// 외주 오빠 (outsource) 라우터들
+const outsourceRouter = require('./outsource.router');
+const outsourceBoardRouter = require('./outsourceBoard.router');
+const outsourceCommentRouter = require('./outsourceComment.router');
+
 // 신고 라우터
 const reportRouter = require('./report.router');
 
@@ -43,6 +48,11 @@ router.use('/church/comment', churchCommentRouter);
 router.use('/comp', compRouter);
 router.use('/comp/board', compBoardRouter);
 router.use('/comp/comment', compCommentRouter);
+
+// 외주 오빠 (outsource) 라우터들
+router.use('/outsource', outsourceRouter);
+router.use('/outsource/board', outsourceBoardRouter);
+router.use('/outsource/comment', outsourceCommentRouter);
 
 // 통합 신고 라우터
 router.use('/report', reportRouter);
