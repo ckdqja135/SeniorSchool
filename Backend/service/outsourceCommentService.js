@@ -115,18 +115,24 @@ exports.deleteOutsourceComment = async (commentData) => {
     try {
         const { commentIdx, commentWriter, commentPw } = commentData;
         
-        // 필수 필드 검증
-        if (!commentIdx || !commentWriter || !commentPw) {
+        // 필수 필드 검증 - commentWriter 필수 조건 제거
+        if (!commentIdx || !commentPw) {
             throw new Error('필수 입력값이 누락되었습니다.');
+        }
+
+        // commentWriter가 없으면 commentIdx와 비밀번호만으로 삭제
+        const whereCondition = { 
+            commentIdx: commentIdx,
+            writerPw: hashPassword(commentPw) // SHA256 암호화된 비밀번호로 비교
+        };
+        
+        if (commentWriter) {
+            whereCondition.writerId = commentWriter;
         }
 
         // 작성자 확인 후 삭제
         const deleteResult = await OutsourceComment.destroy({
-            where: { 
-                commentIdx: commentIdx,
-                writerId: commentWriter,
-                writerPw: hashPassword(commentPw) // SHA256 암호화된 비밀번호로 비교
-            }
+            where: whereCondition
         }, { transaction });
 
         if (deleteResult === 0) {
