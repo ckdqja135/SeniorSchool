@@ -102,18 +102,17 @@ exports.searchCompany = async (req, res) => {
     }
 };
 
-// 회사 상세보기 (일반 유저용) - 이름 기반
+// 회사 상세보기 (일반 유저용) - compIdx 기반
 exports.getCompanyDetail = async (req, res) => {
     try {
-        const { compName } = req.query;
+        const { compIdx } = req.params;
 
-        if (!compName) {
-            logger.warn("[getCompanyDetail] Missing compName in request");
-            return res.status(400).json({ error: "compName is required" });
+        if (!compIdx) {
+            logger.warn("[getCompanyDetail] Missing compIdx in request");
+            return res.status(400).json({ error: "compIdx is required" });
         }
 
-        const decodedCompName = decodeURIComponent(compName);
-        const result = await compService.getCompDetailByName(decodedCompName);
+        const result = await compService.getCompDetail(compIdx);
 
         if (result.status === 404) {
             return res.status(404).json(result);
