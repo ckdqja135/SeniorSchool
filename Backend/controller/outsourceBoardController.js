@@ -68,11 +68,22 @@ exports.insertOutsourceBoard = async (req, res, next) => {
 // 외주업체 게시판 수정
 exports.correctOutsourceBoard = async (req, res, next) => {
     try {
+        logger.info(`[correctOutsourceBoard Controller] Request received`);
+        logger.info(`[correctOutsourceBoard Controller] Request body: ${JSON.stringify(req.body)}`);
+        
         const boardData = req.body;
+        
+        if (!boardData) {
+            logger.error(`[correctOutsourceBoard Controller] boardData is null or undefined`);
+            return res.status(400).json({ error: 'Request body is required' });
+        }
+        
+        logger.info(`[correctOutsourceBoard Controller] Calling service...`);
         const result = await outsourceBoardService.correctOutsourceBoard(boardData);
         res.status(200).json({ success: true, message: result });
     } catch (error) {
-        logger.error(`[correctOutsourceBoard] Error: ${error.message}`);
+        logger.error(`[correctOutsourceBoard Controller] Error: ${error.message}`);
+        logger.error(`[correctOutsourceBoard Controller] Error stack: ${error.stack}`);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -80,11 +91,22 @@ exports.correctOutsourceBoard = async (req, res, next) => {
 // 외주업체 게시판 삭제
 exports.deleteOutsourceBoard = async (req, res, next) => {
     try {
+        logger.info(`[deleteOutsourceBoard Controller] Request received`);
+        logger.info(`[deleteOutsourceBoard Controller] Request body: ${JSON.stringify(req.body)}`);
+        
         const boardData = req.body;
+        
+        if (!boardData) {
+            logger.error(`[deleteOutsourceBoard Controller] boardData is null or undefined`);
+            return res.status(400).json({ error: 'Request body is required' });
+        }
+        
+        logger.info(`[deleteOutsourceBoard Controller] Calling service...`);
         const result = await outsourceBoardService.deleteOutsourceBoard(boardData);
         res.status(200).json({ success: true, message: result });
     } catch (error) {
-        logger.error(`[deleteOutsourceBoard] Error: ${error.message}`);
+        logger.error(`[deleteOutsourceBoard Controller] Error: ${error.message}`);
+        logger.error(`[deleteOutsourceBoard Controller] Error stack: ${error.stack}`);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };

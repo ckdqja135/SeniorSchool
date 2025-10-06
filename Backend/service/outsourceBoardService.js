@@ -132,21 +132,24 @@ exports.correctOutsourceBoard = async (boardData) => {
     const transaction = await sequelize.transaction();
     
     try {
-        const { boardIdx, boardTitle, boardContent, boardID, boardPW, boardPw } = boardData;
+        const { boardIdx, boardTitle, boardContent, boardID, boardPW, boardPw, writerPw } = boardData;
         
-        // 필수 필드 검증
-        const password = boardPW || boardPw;
+        // 필수 필드 검증 - 프론트엔드 데이터 형식에 맞춰 수정
+        const password = boardPW || boardPw || writerPw;
         
-        if (!boardIdx || !boardID || !password) {
+        if (!boardIdx || !password) {
             throw new Error('필수 입력값이 누락되었습니다.');
         }
         
+        // boardID가 없으면 boardIdx로만 조회 (프론트엔드에서 boardID를 보내지 않는 경우)
+        const whereCondition = { boardIdx: boardIdx };
+        if (boardID) {
+            whereCondition.boardID = boardID;
+        }
+        whereCondition.boardPW = hashPassword(password);
+        
         const existingBoard = await OutsourceBoard.findOne({
-            where: { 
-                boardIdx: boardIdx,
-                boardID: boardID,
-                boardPW: hashPassword(password) // SHA256 암호화된 비밀번호로 비교
-            }
+            where: whereCondition
         }, { transaction });
 
         if (!existingBoard) {
@@ -177,22 +180,25 @@ exports.deleteOutsourceBoard = async (boardData) => {
     const transaction = await sequelize.transaction();
     
     try {
-        const { boardIdx, boardID, boardPW, boardPw } = boardData;
+        const { boardIdx, boardID, boardPW, boardPw, writerPw } = boardData;
         
-        // 필수 필드 검증
-        const password = boardPW || boardPw;
+        // 필수 필드 검증 - 프론트엔드 데이터 형식에 맞춰 수정
+        const password = boardPW || boardPw || writerPw;
         
-        if (!boardIdx || !boardID || !password) {
+        if (!boardIdx || !password) {
             throw new Error('필수 입력값이 누락되었습니다.');
         }
 
+        // boardID가 없으면 boardIdx로만 조회 (프론트엔드에서 boardID를 보내지 않는 경우)
+        const whereCondition = { boardIdx: boardIdx };
+        if (boardID) {
+            whereCondition.boardID = boardID;
+        }
+        whereCondition.boardPW = hashPassword(password);
+
         // 작성자 확인 후 삭제
         const deleteResult = await OutsourceBoard.destroy({
-            where: { 
-                boardIdx: boardIdx,
-                boardID: boardID,
-                boardPW: hashPassword(password) // SHA256 암호화된 비밀번호로 비교
-            }
+            where: whereCondition
         }, { transaction });
 
         if (deleteResult === 0) {
