@@ -4,12 +4,13 @@ const logger = require('../utils/logger');
 // 외주업체 목록 조회
 exports.getOutsources = async (req, res, next) => {
     try {
-        const { name, type, location } = req.query;
+        const { name, type, location, limit } = req.query;
         
         const searchParams = {};
         if (name) searchParams.name = name;
         if (type) searchParams.type = type;
         if (location) searchParams.location = location;
+        if (limit) searchParams.limit = limit;
 
         const outsources = await outsourceService.getOutsources(searchParams);
         res.status(200).json(outsources);

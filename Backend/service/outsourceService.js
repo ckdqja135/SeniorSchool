@@ -7,7 +7,7 @@ exports.getOutsources = async (searchParams = {}) => {
     try {
         let whereClause = { outsourceStatus: 1 }; // 활성화된 외주업체만
         
-        const { name, type, location } = searchParams;
+        const { name, type, location, limit } = searchParams;
         
         if (name && name.trim() !== '') {
             whereClause.outsourceName = {
@@ -28,10 +28,18 @@ exports.getOutsources = async (searchParams = {}) => {
             logger.info(`[getOutsources] Location search applied: "${location.trim()}"`);
         }
         
-        const outsources = await OutsourceInfo.findAll({ 
+        // limit 파라미터 처리
+        const queryOptions = {
             where: whereClause,
             order: [['outsourceName', 'ASC']] // 외주업체명 순 정렬
-        });
+        };
+        
+        if (limit && !isNaN(parseInt(limit))) {
+            queryOptions.limit = parseInt(limit);
+            logger.info(`[getOutsources] Limit applied: ${limit}`);
+        }
+        
+        const outsources = await OutsourceInfo.findAll(queryOptions);
         
         logger.info(`[getOutsources] Found ${outsources.length} outsources`);
         return outsources;
