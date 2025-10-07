@@ -18,6 +18,10 @@ const outsourceInfo = require('./outsourceInfo');
 const outsourceBoard = require('./outsourceBoard');
 const outsourceComment = require('./outsourceComment');
 const outsourceRequest = require('./tb_outsource_request');
+const restaurantInfo = require('./restaurantInfo');
+const restaurantBoard = require('./restaurantBoard');
+const restaurantComment = require('./restaurantComment');
+const restaurantRequest = require('./tb_restaurant_request');
 const config = require('../conf/sequelize');
 const logger = require('../utils/logger');
 
@@ -54,6 +58,10 @@ db.OutsourceInfo = outsourceInfo;
 db.OutsourceBoard = outsourceBoard;
 db.OutsourceComment = outsourceComment;
 db.OutsourceRequest = outsourceRequest;
+db.RestaurantInfo = restaurantInfo;
+db.RestaurantBoard = restaurantBoard;
+db.RestaurantComment = restaurantComment;
+db.RestaurantRequest = restaurantRequest;
 
 //init이 실행되어야 테이블이 모델로 연결됨
 univBoard.init(sequelize);
@@ -75,6 +83,10 @@ outsourceInfo.init(sequelize);
 outsourceBoard.init(sequelize);
 outsourceComment.init(sequelize);
 outsourceRequest.init(sequelize);
+restaurantInfo.init(sequelize);
+restaurantBoard.init(sequelize);
+restaurantComment.init(sequelize);
+restaurantRequest.init(sequelize);
 
 
 // 다른 테이블과의 관계를 연결함
@@ -97,6 +109,10 @@ outsourceInfo.associate(db);
 outsourceBoard.associate(db);
 outsourceComment.associate(db);
 outsourceRequest.associate(db);
+restaurantInfo.associate(db);
+restaurantBoard.associate(db);
+restaurantComment.associate(db);
+restaurantRequest.associate(db);
 
 sequelize.authenticate()
     .then(() => logger.info('✅ 데이터베이스 연결 성공'))

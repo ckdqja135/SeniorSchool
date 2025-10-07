@@ -24,6 +24,11 @@ const outsourceRouter = require('./outsource.router');
 const outsourceBoardRouter = require('./outsourceBoard.router');
 const outsourceCommentRouter = require('./outsourceComment.router');
 
+// 맛잘알 오빠 (restaurant) 라우터들
+const restaurantRouter = require('./restaurant.router');
+const restaurantBoardRouter = require('./restaurantBoard.router');
+const restaurantCommentRouter = require('./restaurantComment.router');
+
 // 신고 라우터
 const reportRouter = require('./report.router');
 
@@ -53,6 +58,11 @@ router.use('/comp/comment', compCommentRouter);
 router.use('/outsource', outsourceRouter);
 router.use('/outsource/boards', outsourceBoardRouter);
 router.use('/outsource/comment', outsourceCommentRouter);
+
+// 맛잘알 오빠 (restaurant) 라우터들
+router.use('/restaurant', restaurantRouter);
+router.use('/restaurant/boards', restaurantBoardRouter);
+router.use('/restaurant/comment', restaurantCommentRouter);
 
 // 통합 신고 라우터
 router.use('/report', reportRouter);
