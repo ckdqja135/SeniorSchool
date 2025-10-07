@@ -8,6 +8,8 @@ router.get('/', outsourceController.getOutsources);
 // 외주업체 상세 조회 (outsourceName, outsourceAddr로 조회 가능)
 router.get('/outsource', outsourceController.getOutsourceDetail);
 
+// 외주업체 조회수 기준 TOP 조회
+router.get('/top-viewed', outsourceController.getTopViewedOutsources);
 
 // 외주업체 수정
 router.put('/:outsourceIdx', outsourceController.updateOutsource);

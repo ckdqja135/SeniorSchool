@@ -160,14 +160,3 @@ exports.getRecentRestaurantBoardsWithRestaurantInfo = async (req, res, next) => 
     }
 };
 
-// 식당별로 게시판 조회수 기준 인기 후기 TOP10 조회
-exports.getTopViewedRestaurantBoardsByRestaurant = async (req, res, next) => {
-    try {
-        const result = await restaurantBoardService.getTopViewedRestaurantBoardsByRestaurant();
-        res.status(200).json(result);
-    } catch (error) {
-        logger.error(`[getTopViewedRestaurantBoardsByRestaurant] Error: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
-

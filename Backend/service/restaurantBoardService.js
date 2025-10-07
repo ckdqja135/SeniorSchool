@@ -296,24 +296,3 @@ exports.getRecentRestaurantBoardsWithRestaurantInfo = async () => {
     }
 };
 
-exports.getTopViewedRestaurantBoardsByRestaurant = async () => {
-    try {
-        const boards = await RestaurantBoard.findAll({
-            include: [{
-                model: require('../model/index').RestaurantInfo,
-                as: 'restaurant',
-                where: { restaurantStatus: 1 }, // 활성 상태인 식당만
-                required: true
-            }],
-            order: [['boardHits', 'DESC']], // 조회수 기준 내림차순
-            limit: 10 // TOP 10
-        });
-        
-        logger.info(`[getTopViewedRestaurantBoardsByRestaurant] Found ${boards.length} top viewed boards by restaurant`);
-        return boards;
-    } catch (error) {
-        logger.error(`[getTopViewedRestaurantBoardsByRestaurant] Error: ${error.message}`);
-        throw error;
-    }
-};
-

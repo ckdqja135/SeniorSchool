@@ -8,6 +8,9 @@ router.get('/', restaurantController.getRestaurants);
 // 식당 상세 조회 (restaurantName, restaurantAddr로 조회 가능)
 router.get('/restaurant', restaurantController.getRestaurantDetail);
 
+// 식당 조회수 TOP10 조회
+router.get('/top-viewed', restaurantController.getTopViewedRestaurants);
+
 // 식당 추가 요청 생성 (일반 사용자용)
 router.post('/requests', restaurantController.createRestaurantRequest);
 

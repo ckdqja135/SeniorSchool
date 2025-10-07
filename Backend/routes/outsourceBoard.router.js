@@ -26,7 +26,5 @@ router.get('/like/:boardId', outsourceBoardController.getOutsourceBoardLike);
 // 최근순으로 게시된 외주업체 게시글 목록 조회 (외주업체 정보 포함)
 router.get('/recent', outsourceBoardController.getRecentOutsourceBoardsWithOutsourceInfo);
 
-// 외주업체별로 게시판 조회수 기준 인기 후기 TOP10 조회
-router.get('/top-viewed', outsourceBoardController.getTopViewedOutsourceBoardsByOutsource);
 
 module.exports = router;

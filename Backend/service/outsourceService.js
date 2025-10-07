@@ -428,6 +428,25 @@ exports.getTopViewedOutsourceBoardsByOutsource = async () => {
     }
 };
 
+// 외주업체 조회수 기준 TOP 조회
+exports.getTopViewedOutsources = async () => {
+    try {
+        const outsources = await OutsourceInfo.findAll({
+            where: {
+                outsourceStatus: 1 // 활성화된 외주업체만
+            },
+            order: [['outsourceViewCount', 'DESC']],
+            limit: 10 // 10개 고정
+        });
+
+        logger.info(`[getTopViewedOutsources] Found ${outsources.length} top viewed outsources`);
+        return outsources;
+    } catch (error) {
+        logger.error(`[getTopViewedOutsources] Error: ${error.message}`);
+        throw error;
+    }
+};
+
 // 외주업체 자동 완성 검색
 exports.autoComplete = async (keyword) => {
     try {

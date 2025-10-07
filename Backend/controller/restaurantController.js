@@ -55,3 +55,14 @@ exports.createRestaurantRequest = async (req, res, next) => {
     }
 };
 
+// 식당 조회수 TOP10 조회
+exports.getTopViewedRestaurants = async (req, res, next) => {
+    try {
+        const result = await restaurantService.getTopViewedRestaurants();
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error(`[getTopViewedRestaurants] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+

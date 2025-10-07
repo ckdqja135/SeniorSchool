@@ -26,8 +26,5 @@ router.get('/like/:boardId', restaurantBoardController.getRestaurantBoardLike);
 // 최근순으로 게시된 식당 게시글 목록 조회 (식당 정보 포함)
 router.get('/recent', restaurantBoardController.getRecentRestaurantBoardsWithRestaurantInfo);
 
-// 식당별로 게시판 조회수 기준 인기 후기 TOP10 조회
-router.get('/top-viewed', restaurantBoardController.getTopViewedRestaurantBoardsByRestaurant);
-
 module.exports = router;
 

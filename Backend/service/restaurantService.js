@@ -269,3 +269,20 @@ exports.autoComplete = async (keyword) => {
     }
 };
 
+// 식당 조회수 TOP10 조회
+exports.getTopViewedRestaurants = async () => {
+    try {
+        const restaurants = await RestaurantInfo.findAll({
+            where: { restaurantStatus: 1 }, // 활성 상태인 식당만
+            order: [['restaurantViewCount', 'DESC']], // 조회수 기준 내림차순
+            limit: 10 // TOP 10
+        });
+        
+        logger.info(`[getTopViewedRestaurants] Found ${restaurants.length} top viewed restaurants`);
+        return restaurants;
+    } catch (error) {
+        logger.error(`[getTopViewedRestaurants] Error: ${error.message}`);
+        throw error;
+    }
+};
+

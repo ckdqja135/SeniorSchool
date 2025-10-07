@@ -263,3 +263,14 @@ exports.getTopViewedOutsourceBoardsByOutsource = async (req, res, next) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+// 외주업체 조회수 기준 TOP 조회
+exports.getTopViewedOutsources = async (req, res, next) => {
+    try {
+        const result = await outsourceService.getTopViewedOutsources();
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error(`[getTopViewedOutsources] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
