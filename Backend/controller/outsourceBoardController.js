@@ -160,3 +160,14 @@ exports.getRecentOutsourceBoardsWithOutsourceInfo = async (req, res, next) => {
     }
 };
 
+// 외주업체별로 후기 조회수 기준 인기 후기 TOP10 조회
+exports.getTopViewedOutsourceBoardsByOutsource = async (req, res, next) => {
+    try {
+        const result = await outsourceBoardService.getTopViewedOutsourceBoardsByOutsource();
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error(`[getTopViewedOutsourceBoardsByOutsource] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+

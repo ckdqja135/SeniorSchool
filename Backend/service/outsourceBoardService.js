@@ -296,3 +296,25 @@ exports.getRecentOutsourceBoardsWithOutsourceInfo = async () => {
     }
 };
 
+// 외주업체별로 후기 조회수 기준 인기 후기 TOP10 조회
+exports.getTopViewedOutsourceBoardsByOutsource = async () => {
+    try {
+        const boards = await OutsourceBoard.findAll({
+            include: [{
+                model: require('../model/index').OutsourceInfo,
+                as: 'outsource',
+                where: { outsourceStatus: 1 }, // 활성 상태인 외주업체만
+                required: true
+            }],
+            order: [['boardHits', 'DESC']], // 조회수 기준 내림차순
+            limit: 10 // TOP 10
+        });
+        
+        logger.info(`[getTopViewedOutsourceBoardsByOutsource] Found ${boards.length} top viewed boards by outsource`);
+        return boards;
+    } catch (error) {
+        logger.error(`[getTopViewedOutsourceBoardsByOutsource] Error: ${error.message}`);
+        throw error;
+    }
+};
+
