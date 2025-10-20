@@ -344,32 +344,27 @@ class FreeBoardService {
     // 게시글 좋아요 토글
     async toggleBoardLike(boardIdx, isLiked) {
         try {
-            const increment = isLiked ? 1 : -1;
-            
-            // 좋아요 수 업데이트 (음수 방지)
-            await FreeBoard.update(
-                { 
-                    boardLike: sequelize.literal(`GREATEST(0, boardLike + ${increment})`)
-                },
-                { 
-                    where: { boardIdx: boardIdx }
-                }
-            );
-
-            // 업데이트된 좋아요 수 조회
-            const updatedBoard = await FreeBoard.findOne({
-                where: { boardIdx: boardIdx },
-                attributes: ['boardLike']
+            const board = await FreeBoard.findOne({
+                where: { boardIdx },
+                attributes: ['boardIdx', 'boardLike']
             });
 
+            if (!board) {
+                return { status: 404, data: { message: '게시글을 찾을 수 없습니다.' } };
+            }
+
+            const delta = isLiked ? 1 : -1;
+            const nextLikes = Math.max(0, Number(board.boardLike || 0) + delta);
+            await board.update({ boardLike: nextLikes });
+
             const action = isLiked ? 'increased' : 'decreased';
-            logger.info(`게시글 좋아요 ${action} - boardIdx: ${boardIdx}, 현재 좋아요: ${updatedBoard.boardLike}`);
-            
+            logger.info(`게시글 좋아요 ${action} - boardIdx: ${boardIdx}, 현재 좋아요: ${nextLikes}`);
+
             return {
                 status: 200,
                 data: {
                     message: `게시글 좋아요가 ${action}되었습니다.`,
-                    currentLikes: updatedBoard.boardLike,
+                    currentLikes: nextLikes,
                     liked: isLiked
                 }
             };
@@ -382,32 +377,27 @@ class FreeBoardService {
     // 댓글 좋아요 토글
     async toggleCommentLike(commentIdx, isLiked) {
         try {
-            const increment = isLiked ? 1 : -1;
-            
-            // 좋아요 수 업데이트 (음수 방지)
-            await FreeBoardComment.update(
-                { 
-                    commentLike: sequelize.literal(`GREATEST(0, commentLike + ${increment})`)
-                },
-                { 
-                    where: { commentIdx: commentIdx }
-                }
-            );
-
-            // 업데이트된 좋아요 수 조회
-            const updatedComment = await FreeBoardComment.findOne({
-                where: { commentIdx: commentIdx },
-                attributes: ['commentLike']
+            const comment = await FreeBoardComment.findOne({
+                where: { commentIdx },
+                attributes: ['commentIdx', 'commentLike']
             });
 
+            if (!comment) {
+                return { status: 404, data: { message: '댓글을 찾을 수 없습니다.' } };
+            }
+
+            const delta = isLiked ? 1 : -1;
+            const nextLikes = Math.max(0, Number(comment.commentLike || 0) + delta);
+            await comment.update({ commentLike: nextLikes });
+
             const action = isLiked ? 'increased' : 'decreased';
-            logger.info(`댓글 좋아요 ${action} - commentIdx: ${commentIdx}, 현재 좋아요: ${updatedComment.commentLike}`);
-            
+            logger.info(`댓글 좋아요 ${action} - commentIdx: ${commentIdx}, 현재 좋아요: ${nextLikes}`);
+
             return {
                 status: 200,
                 data: {
                     message: `댓글 좋아요가 ${action}되었습니다.`,
-                    currentLikes: updatedComment.commentLike,
+                    currentLikes: nextLikes,
                     liked: isLiked
                 }
             };
