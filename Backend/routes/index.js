@@ -29,6 +29,9 @@ const restaurantRouter = require('./restaurant.router');
 const restaurantBoardRouter = require('./restaurantBoard.router');
 const restaurantCommentRouter = require('./restaurantComment.router');
 
+// 자유게시판 라우터
+const freeBoardRouter = require('./freeBoard.router');
+
 // 신고 라우터
 const reportRouter = require('./report.router');
 
@@ -63,6 +66,9 @@ router.use('/outsource/comment', outsourceCommentRouter);
 router.use('/restaurant', restaurantRouter);
 router.use('/restaurant/boards', restaurantBoardRouter);
 router.use('/restaurant/comment', restaurantCommentRouter);
+
+// 자유게시판 라우터
+router.use('/freeboard', freeBoardRouter);
 
 // 통합 신고 라우터
 router.use('/report', reportRouter);
