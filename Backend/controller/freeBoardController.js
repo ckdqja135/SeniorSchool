@@ -35,10 +35,11 @@ class FreeBoardController {
     async createFreeBoard(req, res) {
         try {
             const { boardTitle, boardContent, category, tags } = req.body;
-            const { boardID, boardPW } = req.body;
+            const { boardID, boardPW, boardPassword } = req.body;
+            const password = typeof boardPW === 'string' && boardPW.length > 0 ? boardPW : boardPassword;
 
             // 필수 필드 검증
-            if (!boardTitle || !boardContent || !category || !boardID || !boardPW) {
+            if (!boardTitle || !boardContent || !category || !boardID || !password) {
                 return res.status(400).json({
                     status: 400,
                     message: '필수 필드가 누락되었습니다.'
@@ -51,7 +52,7 @@ class FreeBoardController {
                 category,
                 tags,
                 boardID,
-                boardPW
+                boardPW: password
             });
 
             res.status(result.status).json(result);
@@ -68,10 +69,11 @@ class FreeBoardController {
     async updateFreeBoard(req, res) {
         try {
             const { id } = req.params;
-            const { boardTitle, boardContent, category, tags, boardID, boardPW } = req.body;
+            const { boardTitle, boardContent, category, tags, boardID, boardPW, boardPassword } = req.body;
+            const password = typeof boardPW === 'string' && boardPW.length > 0 ? boardPW : boardPassword;
 
             // 필수 필드 검증
-            if (!boardTitle || !boardContent || !category || !boardID || !boardPW) {
+            if (!boardTitle || !boardContent || !category || !boardID || !password) {
                 return res.status(400).json({
                     status: 400,
                     message: '필수 필드가 누락되었습니다.'
@@ -83,7 +85,7 @@ class FreeBoardController {
                 boardContent,
                 category,
                 tags
-            }, boardID, boardPW);
+            }, boardID, password);
 
             res.status(result.status).json(result);
         } catch (error) {
@@ -99,17 +101,18 @@ class FreeBoardController {
     async deleteFreeBoard(req, res) {
         try {
             const { id } = req.params;
-            const { boardID, boardPW } = req.body;
+            const { boardID, boardPW, boardPassword } = req.body;
+            const password = typeof boardPW === 'string' && boardPW.length > 0 ? boardPW : boardPassword;
 
             // 필수 필드 검증
-            if (!boardID || !boardPW) {
+            if (!boardID || !password) {
                 return res.status(400).json({
                     status: 400,
                     message: '작성자 ID와 비밀번호가 필요합니다.'
                 });
             }
 
-            const result = await freeBoardService.deleteFreeBoard(id, boardID, boardPW);
+            const result = await freeBoardService.deleteFreeBoard(id, boardID, password);
             res.status(result.status).json(result);
         } catch (error) {
             logger.error(`자유게시판 게시글 삭제 컨트롤러 오류: ${error.message}`);
