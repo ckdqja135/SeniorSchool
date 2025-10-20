@@ -212,15 +212,9 @@ class FreeBoardController {
         try {
             const { id } = req.params;
             const { isLiked } = req.body;
+            const desiredLike = typeof isLiked === 'boolean' ? isLiked : true; // 기본값: 증가
 
-            if (typeof isLiked !== 'boolean') {
-                return res.status(400).json({
-                    status: 400,
-                    message: 'isLiked 값이 필요합니다. (true: 좋아요, false: 좋아요 취소)'
-                });
-            }
-
-            const result = await freeBoardService.toggleBoardLike(id, isLiked);
+            const result = await freeBoardService.toggleBoardLike(id, desiredLike);
             res.status(result.status).json(result);
         } catch (error) {
             logger.error(`게시글 좋아요 컨트롤러 오류: ${error.message}`);
@@ -236,15 +230,9 @@ class FreeBoardController {
         try {
             const { commentId } = req.params;
             const { isLiked } = req.body;
+            const desiredLike = typeof isLiked === 'boolean' ? isLiked : true; // 기본값: 증가
 
-            if (typeof isLiked !== 'boolean') {
-                return res.status(400).json({
-                    status: 400,
-                    message: 'isLiked 값이 필요합니다. (true: 좋아요, false: 좋아요 취소)'
-                });
-            }
-
-            const result = await freeBoardService.toggleCommentLike(commentId, isLiked);
+            const result = await freeBoardService.toggleCommentLike(commentId, desiredLike);
             res.status(result.status).json(result);
         } catch (error) {
             logger.error(`댓글 좋아요 컨트롤러 오류: ${error.message}`);
