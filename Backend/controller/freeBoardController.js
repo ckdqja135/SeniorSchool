@@ -127,21 +127,25 @@ class FreeBoardController {
     async createComment(req, res) {
         try {
             const { id } = req.params;
-            const { commentContent, commentParent, writerId, writerPw } = req.body;
+            const { commentContent, commentParent, commentPassword, commentWriter } = req.body;
 
             // 필수 필드 검증
-            if (!commentContent || !writerId || !writerPw) {
+            if (!commentContent) {
                 return res.status(400).json({
                     status: 400,
-                    message: '필수 필드가 누락되었습니다.'
+                    message: '댓글 내용이 필요합니다.'
                 });
             }
+
+            // writerId가 없으면 commentWriter 사용, 둘 다 없으면 기본값
+            const userId = commentWriter;
+            const password = commentPassword;
 
             const result = await freeBoardService.createComment(id, {
                 commentContent,
                 commentParent,
-                writerId,
-                writerPw
+                writerId: userId,
+                writerPw: password
             });
 
             res.status(result.status).json(result);
