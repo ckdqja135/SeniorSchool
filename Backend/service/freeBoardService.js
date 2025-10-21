@@ -1,6 +1,12 @@
 const { FreeBoard, FreeBoardComment, FreeBoardStats, sequelize } = require('../model');
 const { Op } = require('sequelize');
+const crypto = require('crypto');
 const logger = require('../utils/logger');
+
+// SHA256 암호화 함수
+const hashPassword = (password) => {
+    return crypto.createHash('sha256').update(password).digest('hex');
+};
 
 class FreeBoardService {
     // 자유게시판 목록 조회
@@ -162,7 +168,7 @@ class FreeBoardService {
                 category,
                 tags: tags || [],
                 boardID,
-                boardPW
+                boardPW: hashPassword(boardPW) // SHA256 암호화 적용
             });
 
             // 통계 업데이트
@@ -193,7 +199,7 @@ class FreeBoardService {
             }
 
             // 작성자 확인
-            if (board.boardID !== boardID || board.boardPW !== boardPW) {
+            if (board.boardID !== boardID || board.boardPW !== hashPassword(boardPW)) {
                 return { status: 403, message: '수정 권한이 없습니다.' };
             }
 
@@ -231,7 +237,7 @@ class FreeBoardService {
             }
 
             // 작성자 확인
-            if (board.boardID !== boardID || board.boardPW !== boardPW) {
+            if (board.boardID !== boardID || board.boardPW !== hashPassword(boardPW)) {
                 return { status: 403, message: '삭제 권한이 없습니다.' };
             }
 
@@ -260,7 +266,7 @@ class FreeBoardService {
                 commentParent: commentParent || null,
                 commentDepth: commentParent ? 1 : 0,
                 writerId,
-                writerPw
+                writerPw: hashPassword(writerPw) // SHA256 암호화 적용
             });
 
             return {
@@ -288,7 +294,7 @@ class FreeBoardService {
             }
 
             // 작성자 확인
-            if (comment.writerId !== writerId || comment.writerPw !== writerPw) {
+            if (comment.writerId !== writerId || comment.writerPw !== hashPassword(writerPw)) {
                 return { status: 403, message: '수정 권한이 없습니다.' };
             }
 
@@ -323,7 +329,7 @@ class FreeBoardService {
             }
 
             // 작성자 확인
-            if (comment.writerId !== writerId || comment.writerPw !== writerPw) {
+            if (comment.writerId !== writerId || comment.writerPw !== hashPassword(writerPw)) {
                 return { status: 403, message: '삭제 권한이 없습니다.' };
             }
 
