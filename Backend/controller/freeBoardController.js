@@ -293,7 +293,8 @@ class FreeBoardController {
     // 일괄 게시글 등록
     async bulkCreateFreeBoards(req, res) {
         try {
-            const { boards } = req.body;
+            // 배열 형태로 직접 받기
+            const boards = Array.isArray(req.body) ? req.body : req.body.boards;
 
             if (!boards || !Array.isArray(boards)) {
                 return res.status(400).json({

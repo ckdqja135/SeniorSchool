@@ -510,7 +510,21 @@ class FreeBoardService {
             for (let i = 0; i < boardsData.length; i++) {
                 try {
                     const boardData = boardsData[i];
-                    const { boardTitle, boardContent, category, tags, boardID, boardPW } = boardData;
+                    const { 
+                        boardTitle, 
+                        boardContent, 
+                        category, 
+                        tags, 
+                        boardID, 
+                        boardPW,
+                        // 기존 데이터에서 제외할 필드들 (DB에서 자동 생성)
+                        boardRegDate,
+                        boardModDate,
+                        boardLike,
+                        boardHits,
+                        isDeleted,
+                        boardIdx
+                    } = boardData;
 
                     // 필수 필드 검증
                     if (!boardTitle || !boardContent || !category || !boardID || !boardPW) {
