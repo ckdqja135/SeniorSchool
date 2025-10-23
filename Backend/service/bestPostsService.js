@@ -41,7 +41,6 @@ class BestPostsService {
                         CONVERT(boardID     USING utf8mb4) COLLATE utf8mb4_unicode_ci,
                         _utf8mb4'church'
                     FROM tb_church_board
-                    WHERE isDeleted = 0
                     UNION ALL
                     -- 회사게시판
                     SELECT 
@@ -54,7 +53,6 @@ class BestPostsService {
                         CONVERT(boardID     USING utf8mb4) COLLATE utf8mb4_unicode_ci,
                         _utf8mb4'company'
                     FROM tb_comp_board
-                    WHERE isDeleted = 0
                     UNION ALL
                     -- 아웃소싱게시판
                     SELECT 
@@ -67,7 +65,6 @@ class BestPostsService {
                         CONVERT(boardID     USING utf8mb4) COLLATE utf8mb4_unicode_ci,
                         _utf8mb4'outsource'
                     FROM tb_outsource_board
-                    WHERE isDeleted = 0
                     UNION ALL
                     -- 맛집게시판
                     SELECT 
@@ -80,7 +77,6 @@ class BestPostsService {
                         CONVERT(boardID     USING utf8mb4) COLLATE utf8mb4_unicode_ci,
                         _utf8mb4'restaurant'
                     FROM tb_restaurant_board
-                    WHERE isDeleted = 0
                     UNION ALL
                     -- 대학게시판
                     SELECT 
@@ -93,9 +89,9 @@ class BestPostsService {
                         CONVERT(boardID     USING utf8mb4) COLLATE utf8mb4_unicode_ci,
                         _utf8mb4'university'
                     FROM tb_univboard
-                    WHERE isDeleted = 0
                 ) b
                 ORDER BY weighted_score DESC, b.boardRegDate DESC
+                LIMIT 10
             `;
 
             // Sequelize로 Raw Query 실행
