@@ -567,6 +567,7 @@ class FreeBoardService {
             return {
                 status: 200,
                 data: {
+                    message: `${results.length}개 작성완료`,
                     totalProcessed: boardsData.length,
                     successCount: results.length,
                     errorCount: errors.length,
