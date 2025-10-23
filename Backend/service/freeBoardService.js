@@ -427,25 +427,49 @@ class FreeBoardService {
     // 통계 조회
     async getStats() {
         try {
-            const topCategories = await FreeBoardStats.findAll({
-                where: { tag: null },
-                order: [['count', 'DESC']],
+            // 카테고리 통계 (실제 데이터베이스에서 집계)
+            const categoryStats = await FreeBoard.findAll({
+                where: { isDeleted: false },
+                attributes: [
+                    'category',
+                    [sequelize.fn('COUNT', sequelize.col('boardIdx')), 'count']
+                ],
+                group: ['category'],
+                order: [[sequelize.fn('COUNT', sequelize.col('boardIdx')), 'DESC']],
                 limit: 10,
-                attributes: ['category', 'count']
+                raw: true
             });
 
-            const topTags = await FreeBoardStats.findAll({
-                where: { tag: { [Op.ne]: null } },
-                order: [['count', 'DESC']],
-                limit: 10,
-                attributes: ['tag', 'count']
+            // 태그 통계 (JSON 배열에서 추출하여 집계)
+            const allBoards = await FreeBoard.findAll({
+                where: { 
+                    isDeleted: false,
+                    tags: { [Op.ne]: null }
+                },
+                attributes: ['tags']
             });
+
+            // 태그 카운트 집계
+            const tagCounts = {};
+            allBoards.forEach(board => {
+                if (board.tags && Array.isArray(board.tags)) {
+                    board.tags.forEach(tag => {
+                        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                    });
+                }
+            });
+
+            // 태그를 카운트 순으로 정렬
+            const topTags = Object.entries(tagCounts)
+                .map(([tag, count]) => ({ tag, count }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 10);
 
             return {
                 status: 200,
                 data: {
-                    topCategories,
-                    topTags
+                    topCategories: categoryStats,
+                    topTags: topTags
                 }
             };
         } catch (error) {
