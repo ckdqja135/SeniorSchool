@@ -39,9 +39,24 @@ class FreeBoardController {
 
             // 필수 필드 검증
             if (!boardTitle || !boardContent || !category || !boardID || !boardPW) {
+                const missingFields = [];
+                if (!boardTitle) missingFields.push('boardTitle');
+                if (!boardContent) missingFields.push('boardContent');
+                if (!category) missingFields.push('category');
+                if (!boardID) missingFields.push('boardID');
+                if (!boardPW) missingFields.push('boardPW');
+                
                 return res.status(400).json({
                     status: 400,
-                    message: '필수 필드가 누락되었습니다.'
+                    message: '필수 필드가 누락되었습니다.',
+                    missingFields: missingFields,
+                    receivedData: {
+                        boardTitle: !!boardTitle,
+                        boardContent: !!boardContent,
+                        category: !!category,
+                        boardID: !!boardID,
+                        boardPW: !!boardPW
+                    }
                 });
             }
 
