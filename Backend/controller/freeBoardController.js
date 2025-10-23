@@ -262,6 +262,20 @@ class FreeBoardController {
         }
     }
 
+    // 최근 게시물 조회
+    async getRecentFreeBoards(req, res) {
+        try {
+            const result = await freeBoardService.getRecentFreeBoards();
+            res.status(result.status).json(result);
+        } catch (error) {
+            logger.error(`최근 게시물 조회 컨트롤러 오류: ${error.message}`);
+            res.status(500).json({
+                status: 500,
+                message: '서버 내부 오류가 발생했습니다.'
+            });
+        }
+    }
+
     // 통계 조회
     async getStats(req, res) {
         try {

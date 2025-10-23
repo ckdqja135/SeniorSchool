@@ -35,6 +35,9 @@ router.post('/comments/:commentId/like', freeBoardController.toggleCommentLike);
 // 조회수 증가
 router.post('/:id/hit', freeBoardController.incrementHits);
 
+// 최근 게시물 조회
+router.get('/recent', freeBoardController.getRecentFreeBoards);
+
 // 통계 조회
 router.get('/stats', freeBoardController.getStats);
 

@@ -454,6 +454,29 @@ class FreeBoardService {
         }
     }
 
+    // 최근 게시물 조회 (5개)
+    async getRecentFreeBoards() {
+        try {
+            const boards = await FreeBoard.findAll({
+                where: { isDeleted: false },
+                order: [['boardRegDate', 'DESC']],
+                limit: 5,
+                attributes: [
+                    'boardIdx', 'boardTitle', 'boardContent', 'boardRegDate',
+                    'boardLike', 'boardHits', 'boardID', 'category', 'tags'
+                ]
+            });
+
+            return {
+                status: 200,
+                data: boards
+            };
+        } catch (error) {
+            logger.error(`최근 게시물 조회 오류: ${error.message}`);
+            throw error;
+        }
+    }
+
     // 통계 업데이트
     async updateStats(category, tags) {
         try {
