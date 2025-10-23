@@ -35,11 +35,10 @@ class FreeBoardController {
     async createFreeBoard(req, res) {
         try {
             const { boardTitle, boardContent, category, tags } = req.body;
-            const { boardID, boardPW, boardPassword } = req.body;
-            const password = typeof boardPW === 'string' && boardPW.length > 0 ? boardPW : boardPassword;
+            const { boardID, boardPW } = req.body;
 
             // 필수 필드 검증
-            if (!boardTitle || !boardContent || !category || !boardID || !password) {
+            if (!boardTitle || !boardContent || !category || !boardID || !boardPW) {
                 return res.status(400).json({
                     status: 400,
                     message: '필수 필드가 누락되었습니다.'
