@@ -290,6 +290,36 @@ class FreeBoardController {
         }
     }
 
+    // 일괄 게시글 등록
+    async bulkCreateFreeBoards(req, res) {
+        try {
+            const { boards } = req.body;
+
+            if (!boards || !Array.isArray(boards)) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'boards 배열이 필요합니다.'
+                });
+            }
+
+            if (boards.length === 0) {
+                return res.status(400).json({
+                    status: 400,
+                    message: '등록할 게시글이 없습니다.'
+                });
+            }
+
+            const result = await freeBoardService.bulkCreateFreeBoards(boards);
+            res.status(result.status).json(result);
+        } catch (error) {
+            logger.error(`일괄 게시글 등록 컨트롤러 오류: ${error.message}`);
+            res.status(500).json({
+                status: 500,
+                message: '서버 내부 오류가 발생했습니다.'
+            });
+        }
+    }
+
     // 통계 조회
     async getStats(req, res) {
         try {

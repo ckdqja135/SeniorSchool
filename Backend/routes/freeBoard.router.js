@@ -14,8 +14,8 @@ router.get('/stats', freeBoardController.getStats);
 // 자유게시판 상세 조회
 router.get('/:id', freeBoardController.getFreeBoardDetail);
 
-// 자유게시판 게시글 작성
-router.post('/', freeBoardController.createFreeBoard);
+// 자유게시판 게시글 작성 (일괄 등록)
+router.post('/', freeBoardController.bulkCreateFreeBoards);
 
 // 자유게시판 게시글 수정
 router.put('/:id', freeBoardController.updateFreeBoard);

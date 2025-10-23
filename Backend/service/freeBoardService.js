@@ -420,7 +420,7 @@ class FreeBoardService {
             return { status: 200, data: { message: '조회수가 증가되었습니다.' } };
         } catch (error) {
             logger.error(`조회수 증가 오류: ${error.message}`);
-            throw error;
+            throw error;ㄹㄹ
         }
     }
 
@@ -497,6 +497,71 @@ class FreeBoardService {
             };
         } catch (error) {
             logger.error(`최근 게시물 조회 오류: ${error.message}`);
+            throw error;
+        }
+    }
+
+    // 일괄 게시글 등록
+    async bulkCreateFreeBoards(boardsData) {
+        try {
+            const results = [];
+            const errors = [];
+
+            for (let i = 0; i < boardsData.length; i++) {
+                try {
+                    const boardData = boardsData[i];
+                    const { boardTitle, boardContent, category, tags, boardID, boardPW } = boardData;
+
+                    // 필수 필드 검증
+                    if (!boardTitle || !boardContent || !category || !boardID || !boardPW) {
+                        errors.push({
+                            index: i,
+                            error: '필수 필드가 누락되었습니다.',
+                            data: boardData
+                        });
+                        continue;
+                    }
+
+                    const board = await FreeBoard.create({
+                        boardTitle,
+                        boardContent,
+                        category,
+                        tags: tags || [],
+                        boardID,
+                        boardPW: hashPassword(boardPW) // SHA256 암호화 적용
+                    });
+
+                    results.push({
+                        index: i,
+                        boardIdx: board.boardIdx,
+                        boardTitle: board.boardTitle,
+                        status: 'success'
+                    });
+
+                    // 통계 업데이트
+                    await this.updateStats(category, tags);
+
+                } catch (error) {
+                    errors.push({
+                        index: i,
+                        error: error.message,
+                        data: boardsData[i]
+                    });
+                }
+            }
+
+            return {
+                status: 200,
+                data: {
+                    totalProcessed: boardsData.length,
+                    successCount: results.length,
+                    errorCount: errors.length,
+                    results: results,
+                    errors: errors
+                }
+            };
+        } catch (error) {
+            logger.error(`일괄 게시글 등록 오류: ${error.message}`);
             throw error;
         }
     }
