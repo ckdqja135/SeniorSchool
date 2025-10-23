@@ -32,6 +32,9 @@ const restaurantCommentRouter = require('./restaurantComment.router');
 // 자유게시판 라우터
 const freeBoardRouter = require('./freeBoard.router');
 
+// 베스트 후기 라우터
+const bestPostsRouter = require('./bestPosts.router');
+
 // 신고 라우터
 const reportRouter = require('./report.router');
 
@@ -69,6 +72,9 @@ router.use('/restaurant/comment', restaurantCommentRouter);
 
 // 자유게시판 라우터
 router.use('/freeboard', freeBoardRouter);
+
+// 베스트 후기 라우터
+router.use('/best-posts', bestPostsRouter);
 
 // 통합 신고 라우터
 router.use('/report', reportRouter);
