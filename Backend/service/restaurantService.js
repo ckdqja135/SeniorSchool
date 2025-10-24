@@ -318,6 +318,7 @@ exports.getTopRestaurantComments = async () => {
         const boards = await RestaurantBoard.findAll({
             include: [{
                 model: RestaurantInfo,
+                as: 'restaurant',
                 attributes: ['restaurantName', 'restaurantAddr']
             }],
             order: [['boardHits', 'DESC']], // 조회수 기준 내림차순
