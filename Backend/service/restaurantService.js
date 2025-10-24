@@ -1,4 +1,4 @@
-const { RestaurantInfo, RestaurantRequest, RestaurantBoard, sequelize } = require('../model/index');
+const { RestaurantInfo, RestaurantRequest, RestaurantBoard, RestaurantComment, sequelize } = require('../model/index');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 
