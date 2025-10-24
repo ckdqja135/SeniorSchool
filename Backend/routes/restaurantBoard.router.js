@@ -8,6 +8,9 @@ router.get('/', restaurantBoardController.getRestaurantBoards);
 // 식당 게시판 상세보기
 router.get('/detail', restaurantBoardController.getRestaurantBoardDetail);
 
+// 식당 게시판 상세보기 (경로 파라미터)
+router.get('/:boardIdx', restaurantBoardController.getRestaurantBoardDetail);
+
 // 식당 게시판 등록
 router.post('/insert', restaurantBoardController.insertRestaurantBoard);
 

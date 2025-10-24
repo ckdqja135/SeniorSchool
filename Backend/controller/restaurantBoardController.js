@@ -28,7 +28,8 @@ exports.getRestaurantBoards = async (req, res, next) => {
 // 식당 게시판 상세보기
 exports.getRestaurantBoardDetail = async (req, res, next) => {
     try {
-        const boardIdx = req.query.boardIdx;
+        // 경로 파라미터 또는 쿼리 파라미터에서 boardIdx 가져오기
+        const boardIdx = req.params.boardIdx || req.query.boardIdx;
         
         if (!boardIdx) {
             return res.status(400).json({ error: 'boardIdx is required' });
