@@ -94,3 +94,23 @@ exports.getTopRestaurantComments = async (req, res, next) => {
     }
 };
 
+// 식당 후기 상세 조회
+exports.getRestaurantBoardDetail = async (req, res, next) => {
+    try {
+        const { boardIdx } = req.params;
+        
+        if (!boardIdx) {
+            return res.status(400).json({ error: 'boardIdx is required' });
+        }
+
+        const board = await restaurantService.getRestaurantBoardDetail(boardIdx);
+        res.status(200).json(board);
+    } catch (error) {
+        if (error.message === 'Board not found') {
+            return res.status(404).json({ error: 'Board not found' });
+        }
+        logger.error(`[getRestaurantBoardDetail] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+

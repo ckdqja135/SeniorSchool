@@ -333,3 +333,42 @@ exports.getTopRestaurantComments = async () => {
     }
 };
 
+// 식당 후기 상세 조회
+exports.getRestaurantBoardDetail = async (boardIdx) => {
+    try {
+        const { RestaurantBoard, RestaurantInfo, RestaurantComment } = require('../model/index');
+        
+        const board = await RestaurantBoard.findOne({
+            where: { boardIdx: boardIdx },
+            include: [
+                {
+                    model: RestaurantInfo,
+                    attributes: ['restaurantName', 'restaurantAddr', 'restaurantLocation']
+                },
+                {
+                    model: RestaurantComment,
+                    attributes: ['commentIdx', 'commentContent', 'writerId', 'regDate', 'commentLike'],
+                    order: [['regDate', 'ASC']] // 댓글은 시간순으로 정렬
+                }
+            ],
+            attributes: ['boardIdx', 'boardTitle', 'boardContent', 'boardID', 'boardRegDate', 'boardLike', 'boardHits', 'restaurantIdx']
+        });
+
+        if (!board) {
+            throw new Error('Board not found');
+        }
+
+        // 조회수 증가
+        await RestaurantBoard.update(
+            { boardHits: sequelize.literal('boardHits + 1') },
+            { where: { boardIdx: boardIdx } }
+        );
+
+        logger.info(`[getRestaurantBoardDetail] Board detail retrieved. BoardIdx: ${boardIdx}`);
+        return board;
+    } catch (error) {
+        logger.error(`[getRestaurantBoardDetail] Error: ${error.message}`);
+        throw error;
+    }
+};
+
