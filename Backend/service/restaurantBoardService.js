@@ -1,4 +1,4 @@
-const { RestaurantBoard, sequelize, RestaurantComment } = require('../model/index');
+const { RestaurantBoard, RestaurantInfo, sequelize, RestaurantComment } = require('../model/index');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
@@ -279,8 +279,7 @@ exports.getRecentRestaurantBoardsWithRestaurantInfo = async () => {
     try {
         const boards = await RestaurantBoard.findAll({
             include: [{
-                model: require('../model/index').RestaurantInfo,
-                as: 'restaurant',
+                model: RestaurantInfo,
                 where: { restaurantStatus: 1 }, // 활성 상태인 식당만
                 required: true
             }],
