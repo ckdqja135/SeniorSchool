@@ -114,3 +114,23 @@ exports.getRestaurantBoardDetail = async (req, res, next) => {
     }
 };
 
+// 게시판 좋아요 조회
+exports.getRestaurantBoardLike = async (req, res, next) => {
+    try {
+        const { boardIdx } = req.query;
+        
+        if (!boardIdx) {
+            return res.status(400).json({ error: 'boardIdx is required' });
+        }
+
+        const likeInfo = await restaurantService.getRestaurantBoardLike(boardIdx);
+        res.status(200).json(likeInfo);
+    } catch (error) {
+        if (error.message === 'Board not found') {
+            return res.status(404).json({ error: 'Board not found' });
+        }
+        logger.error(`[getRestaurantBoardLike] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+

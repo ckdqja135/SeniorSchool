@@ -20,6 +20,9 @@ router.get('/comments/top', restaurantController.getTopRestaurantComments);
 // 식당 후기 상세 조회
 router.get('/board/:boardIdx', restaurantController.getRestaurantBoardDetail);
 
+// 게시판 좋아요 조회
+router.get('/like', restaurantController.getRestaurantBoardLike);
+
 // 식당 추가 요청 생성 (일반 사용자용)
 router.post('/requests', restaurantController.createRestaurantRequest);
 

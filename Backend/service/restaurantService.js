@@ -335,9 +335,7 @@ exports.getTopRestaurantComments = async () => {
 
 // 식당 후기 상세 조회
 exports.getRestaurantBoardDetail = async (boardIdx) => {
-    try {
-        const { RestaurantBoard, RestaurantInfo, RestaurantComment } = require('../model/index');
-        
+    try {        
         const board = await RestaurantBoard.findOne({
             where: { boardIdx: boardIdx },
             include: [
@@ -368,6 +366,25 @@ exports.getRestaurantBoardDetail = async (boardIdx) => {
         return board;
     } catch (error) {
         logger.error(`[getRestaurantBoardDetail] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+// 게시판 좋아요 조회
+exports.getRestaurantBoardLike = async (boardIdx) => {
+    try {
+        const board = await RestaurantBoard.findByPk(boardIdx, {
+            attributes: ['boardIdx', 'boardLike']
+        });
+
+        if (!board) {
+            throw new Error('Board not found');
+        }
+
+        logger.info(`[getRestaurantBoardLike] Board like count retrieved. BoardIdx: ${boardIdx}, LikeCount: ${board.boardLike}`);
+        return { boardIdx: board.boardIdx, boardLike: board.boardLike };
+    } catch (error) {
+        logger.error(`[getRestaurantBoardLike] Error: ${error.message}`);
         throw error;
     }
 };
