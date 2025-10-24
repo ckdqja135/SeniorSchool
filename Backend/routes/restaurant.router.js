@@ -15,7 +15,7 @@ router.get('/top-viewed', restaurantController.getTopViewedRestaurants);
 router.get('/recent', restaurantController.getRecentRestaurantComments);
 
 // 식당 후기 TOP10 조회 (조회수 기준)
-router.get('/comments/top', restaurantController.getTopRestaurantComments);
+router.get('/board/top-viewed', restaurantController.getTopRestaurantComments);
 
 // 식당 후기 상세 조회
 router.get('/board/:boardIdx', restaurantController.getRestaurantBoardDetail);
