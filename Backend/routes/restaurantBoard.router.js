@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const restaurantBoardController = require('../controller/restaurantBoardController');
 
+// 최근순으로 게시된 식당 게시글 목록 조회 (식당 정보 포함)
+router.get('/recent', restaurantBoardController.getRecentRestaurantBoardsWithRestaurantInfo);
+
 // 식당 게시판 목록
 router.get('/', restaurantBoardController.getRestaurantBoards);
 
@@ -22,9 +25,6 @@ router.post('/like', restaurantBoardController.toggleRestaurantBoardLike);
 
 // 식당 게시판 좋아요 조회
 router.get('/like/:boardId', restaurantBoardController.getRestaurantBoardLike);
-
-// 최근순으로 게시된 식당 게시글 목록 조회 (식당 정보 포함)
-router.get('/recent', restaurantBoardController.getRecentRestaurantBoardsWithRestaurantInfo);
 
 module.exports = router;
 

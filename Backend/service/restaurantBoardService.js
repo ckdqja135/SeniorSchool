@@ -280,11 +280,12 @@ exports.getRecentRestaurantBoardsWithRestaurantInfo = async () => {
         const boards = await RestaurantBoard.findAll({
             include: [{
                 model: RestaurantInfo,
+                as: 'restaurant',
                 where: { restaurantStatus: 1 }, // 활성 상태인 식당만
                 required: true
             }],
             order: [['boardRegDate', 'DESC']],
-            limit: 20 // 최신 20개
+            limit: 5 // 최신 5개
         });
         
         logger.info(`[getRecentRestaurantBoardsWithRestaurantInfo] Found ${boards.length} recent boards with restaurant info`);
