@@ -286,3 +286,50 @@ exports.getTopViewedRestaurants = async () => {
     }
 };
 
+// 식당 최근 후기 5개 조회
+exports.getRecentRestaurantComments = async (restaurantIdx) => {
+    try {
+        const { RestaurantComment, RestaurantBoard } = require('../model/index');
+        
+        const comments = await RestaurantComment.findAll({
+            include: [{
+                model: RestaurantBoard,
+                where: { restaurantIdx: restaurantIdx },
+                attributes: ['boardIdx', 'boardTitle']
+            }],
+            order: [['regDate', 'DESC']], // 최신순
+            limit: 5,
+            attributes: ['commentIdx', 'commentContent', 'writerId', 'regDate', 'commentLike']
+        });
+        
+        logger.info(`[getRecentRestaurantComments] Found ${comments.length} recent comments for restaurantIdx: ${restaurantIdx}`);
+        return comments;
+    } catch (error) {
+        logger.error(`[getRecentRestaurantComments] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+// 식당 후기 TOP10 조회 (조회수 기준)
+exports.getTopRestaurantComments = async () => {
+    try {
+        const { RestaurantBoard, RestaurantInfo } = require('../model/index');
+        
+        const boards = await RestaurantBoard.findAll({
+            include: [{
+                model: RestaurantInfo,
+                attributes: ['restaurantName', 'restaurantAddr']
+            }],
+            order: [['boardHits', 'DESC']], // 조회수 기준 내림차순
+            limit: 10,
+            attributes: ['boardIdx', 'boardTitle', 'boardContent', 'boardID', 'boardRegDate', 'boardLike', 'boardHits', 'restaurantIdx']
+        });
+        
+        logger.info(`[getTopRestaurantComments] Found ${boards.length} top restaurant boards by hits`);
+        return boards;
+    } catch (error) {
+        logger.error(`[getTopRestaurantComments] Error: ${error.message}`);
+        throw error;
+    }
+};
+

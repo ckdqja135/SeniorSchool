@@ -66,3 +66,31 @@ exports.getTopViewedRestaurants = async (req, res, next) => {
     }
 };
 
+// 식당 최근 후기 5개 조회
+exports.getRecentRestaurantComments = async (req, res, next) => {
+    try {
+        const { restaurantIdx } = req.params;
+        
+        if (!restaurantIdx) {
+            return res.status(400).json({ error: 'restaurantIdx is required' });
+        }
+
+        const comments = await restaurantService.getRecentRestaurantComments(restaurantIdx);
+        res.status(200).json(comments);
+    } catch (error) {
+        logger.error(`[getRecentRestaurantComments] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// 식당 후기 TOP10 조회 (조회수 기준)
+exports.getTopRestaurantComments = async (req, res, next) => {
+    try {
+        const boards = await restaurantService.getTopRestaurantComments();
+        res.status(200).json(boards);
+    } catch (error) {
+        logger.error(`[getTopRestaurantComments] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+

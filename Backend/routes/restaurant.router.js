@@ -11,6 +11,12 @@ router.get('/restaurant', restaurantController.getRestaurantDetail);
 // 식당 조회수 TOP10 조회
 router.get('/top-viewed', restaurantController.getTopViewedRestaurants);
 
+// 식당 최근 후기 5개 조회
+router.get('/recent', restaurantController.getRecentRestaurantComments);
+
+// 식당 후기 TOP10 조회 (조회수 기준)
+router.get('/comments/top', restaurantController.getTopRestaurantComments);
+
 // 식당 추가 요청 생성 (일반 사용자용)
 router.post('/requests', restaurantController.createRestaurantRequest);
 
