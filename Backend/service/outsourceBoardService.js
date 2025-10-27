@@ -1,4 +1,4 @@
-const { OutsourceBoard, sequelize, OutsourceComment } = require('../model/index');
+const { OutsourceBoard, OutsourceInfo, OutsourceComment, sequelize } = require('../model/index');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
@@ -60,9 +60,22 @@ exports.getOutsourceBoards = async (outsourceIdx, searchParams = {}) => {
 
 exports.getOutsourceBoardDetail = async (boardIdx) => {
     try {
-        // 게시글 상세 조회
+        // 게시글 상세 조회 (외주업체 정보와 댓글 포함)
         const board = await OutsourceBoard.findOne({
-            where: { boardIdx: boardIdx }
+            where: { boardIdx: boardIdx },
+            include: [
+                {
+                    model: OutsourceInfo,
+                    as: 'outsource',
+                    attributes: ['outsourceName', 'outsourceAddr', 'outsourceLocation', 'outsourceType', 'outsourceEstablished', 'outsourceCEO', 'outsourceURL']
+                },
+                {
+                    model: OutsourceComment,
+                    attributes: ['commentIdx', 'commentContent', 'writerId', 'regDate', 'commentLike'],
+                    separate: true,
+                    order: [['regDate', 'ASC']]
+                }
+            ]
         });
 
         if (!board) {
@@ -75,7 +88,7 @@ exports.getOutsourceBoardDetail = async (boardIdx) => {
             { where: { boardIdx: boardIdx } }
         );
 
-        logger.info(`[getOutsourceBoardDetail] Board detail retrieved and view count updated. BoardIdx: ${boardIdx}`);
+        logger.info(`[getOutsourceBoardDetail] Board detail retrieved with outsource info and view count updated. BoardIdx: ${boardIdx}`);
         return board;
     } catch (error) {
         logger.error(`[getOutsourceBoardDetail] Error: ${error.message}`);
