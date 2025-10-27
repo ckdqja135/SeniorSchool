@@ -2,7 +2,7 @@ const { sequelize } = require('../model');
 const logger = require('../utils/logger');
 
 class BestPostsService {
-    // Top 10 베스트 후기 조회
+    // 베스트 후기 조회 (전체)
     async getTop10BestPosts() {
         try {
             const query = `
@@ -91,7 +91,6 @@ class BestPostsService {
                     FROM tb_univboard
                 ) b
                 ORDER BY weighted_score DESC, b.boardRegDate DESC
-                LIMIT 10
             `;
 
             // Sequelize로 Raw Query 실행
