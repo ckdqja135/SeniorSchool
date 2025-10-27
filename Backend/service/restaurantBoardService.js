@@ -60,9 +60,22 @@ exports.getRestaurantBoards = async (restaurantIdx, searchParams = {}) => {
 
 exports.getRestaurantBoardDetail = async (boardIdx) => {
     try {
-        // 게시글 상세 조회
+        // 게시글 상세 조회 (식당 정보와 댓글 포함)
         const board = await RestaurantBoard.findOne({
-            where: { boardIdx: boardIdx }
+            where: { boardIdx: boardIdx },
+            include: [
+                {
+                    model: RestaurantInfo,
+                    as: 'restaurant',
+                    attributes: ['restaurantName', 'restaurantAddr', 'restaurantLocation', 'restaurantType']
+                },
+                {
+                    model: RestaurantComment,
+                    attributes: ['commentIdx', 'commentContent', 'writerId', 'regDate', 'commentLike'],
+                    separate: true,
+                    order: [['regDate', 'ASC']]
+                }
+            ]
         });
 
         if (!board) {
@@ -75,7 +88,7 @@ exports.getRestaurantBoardDetail = async (boardIdx) => {
             { where: { boardIdx: boardIdx } }
         );
 
-        logger.info(`[getRestaurantBoardDetail] Board detail retrieved and view count updated. BoardIdx: ${boardIdx}`);
+        logger.info(`[getRestaurantBoardDetail] Board detail retrieved with restaurant info and view count updated. BoardIdx: ${boardIdx}`);
         return board;
     } catch (error) {
         logger.error(`[getRestaurantBoardDetail] Error: ${error.message}`);
