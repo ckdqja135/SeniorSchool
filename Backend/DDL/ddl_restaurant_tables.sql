@@ -12,7 +12,7 @@ CREATE TABLE tb_restaurant_info (
     restaurantLatX DOUBLE NOT NULL COMMENT '식당 위도',
     restaurantLatY DOUBLE NOT NULL COMMENT '식당 경도',
     restaurantURL VARCHAR(200) NOT NULL COMMENT '식당 홈페이지/SNS URL',
-    restaurantLotAddr VARCHAR(20) NOT NULL COMMENT '식당 지번주소',
+    restaurantLotAddr VARCHAR(100) NOT NULL COMMENT '식당 지번주소',
     restaurantAddr VARCHAR(200) NOT NULL COMMENT '식당 도로명주소',
     restaurantMapIMG VARCHAR(200) NULL COMMENT '식당 지도 이미지',
     restaurantStatus TINYINT NOT NULL DEFAULT 1 COMMENT '식당 상태 (1: 활성, 0: 비활성)',

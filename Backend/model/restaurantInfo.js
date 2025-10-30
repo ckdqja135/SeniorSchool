@@ -43,7 +43,7 @@ module.exports = class RestaurantInfo extends Sequelize.Model {
                     allowNull: false,
                 },
                 restaurantLotAddr: {
-                    type: Sequelize.STRING(20),
+                    type: Sequelize.STRING(100),
                     allowNull: false,
                 },
                 restaurantAddr: {
