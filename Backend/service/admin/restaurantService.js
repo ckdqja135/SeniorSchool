@@ -9,27 +9,27 @@ exports.createRestaurant = async (restaurantData) => {
             // 배열인 경우 여러 식당을 일괄 생성
             const results = [];
             for (const restaurant of restaurantData) {
-                const { restaurantName, restaurantLocation, restaurantType, restaurantOwner } = restaurant;
+                const { restaurantName, restaurantLocation, restaurantType } = restaurant;
 
-                // 필수값 체크
-                if (!restaurantName || !restaurantLocation || !restaurantType || !restaurantOwner) {
+                // 필수값 체크 (owner는 선택값으로 완화)
+                if (!restaurantName || !restaurantLocation || !restaurantType) {
                     logger.warn(`[createRestaurant] Missing required fields: ${JSON.stringify(restaurant)}`);
-                    throw new Error('필수값이 누락되었습니다. (restaurantName, restaurantLocation, restaurantType, restaurantOwner)');
+                    throw new Error('필수값이 누락되었습니다. (restaurantName, restaurantLocation, restaurantType)');
                 }
 
-                // DB에 데이터 생성
+                // DB에 데이터 생성 (null/undefined 기본값 처리)
                 const created = await RestaurantInfo.create({
                     restaurantName: restaurant.restaurantName,
                     restaurantLocation: restaurant.restaurantLocation,
                     restaurantType: restaurant.restaurantType,
-                    restaurantEstablished: restaurant.restaurantEstablished || '',
-                    restaurantOwner: restaurant.restaurantOwner,
-                    restaurantLatX: restaurant.restaurantLatX || 0,
-                    restaurantLatY: restaurant.restaurantLatY || 0,
-                    restaurantURL: restaurant.restaurantURL || '',
-                    restaurantLotAddr: restaurant.restaurantLotAddr || '',
-                    restaurantAddr: restaurant.restaurantAddr || '',
-                    restaurantMapIMG: restaurant.restaurantMapIMG || null,
+                    restaurantEstablished: restaurant.restaurantEstablished ?? '',
+                    restaurantOwner: restaurant.restaurantOwner ?? '',
+                    restaurantLatX: restaurant.restaurantLatX ?? 0,
+                    restaurantLatY: restaurant.restaurantLatY ?? 0,
+                    restaurantURL: restaurant.restaurantURL ?? '',
+                    restaurantLotAddr: restaurant.restaurantLotAddr ?? '',
+                    restaurantAddr: restaurant.restaurantAddr ?? '',
+                    restaurantMapIMG: restaurant.restaurantMapIMG ?? null,
                     restaurantStatus: 1,
                     restaurantViewCount: 0
                 });
@@ -42,26 +42,26 @@ exports.createRestaurant = async (restaurantData) => {
             };
         } else {
             // 단일 객체인 경우
-            const { restaurantName, restaurantLocation, restaurantType, restaurantOwner } = restaurantData;
+            const { restaurantName, restaurantLocation, restaurantType } = restaurantData;
 
-            // 필수값 체크
-            if (!restaurantName || !restaurantLocation || !restaurantType || !restaurantOwner) {
+            // 필수값 체크 (owner는 선택값으로 완화)
+            if (!restaurantName || !restaurantLocation || !restaurantType) {
                 logger.warn(`[createRestaurant] Missing required fields: ${JSON.stringify(restaurantData)}`);
-                throw new Error('필수값이 누락되었습니다. (restaurantName, restaurantLocation, restaurantType, restaurantOwner)');
+                throw new Error('필수값이 누락되었습니다. (restaurantName, restaurantLocation, restaurantType)');
             }
 
             const created = await RestaurantInfo.create({
                 restaurantName: restaurantData.restaurantName,
                 restaurantLocation: restaurantData.restaurantLocation,
                 restaurantType: restaurantData.restaurantType,
-                restaurantEstablished: restaurantData.restaurantEstablished || '',
-                restaurantOwner: restaurantData.restaurantOwner,
-                restaurantLatX: restaurantData.restaurantLatX || 0,
-                restaurantLatY: restaurantData.restaurantLatY || 0,
-                restaurantURL: restaurantData.restaurantURL || '',
-                restaurantLotAddr: restaurantData.restaurantLotAddr || '',
-                restaurantAddr: restaurantData.restaurantAddr || '',
-                restaurantMapIMG: restaurantData.restaurantMapIMG || null,
+                restaurantEstablished: restaurantData.restaurantEstablished ?? '',
+                restaurantOwner: restaurantData.restaurantOwner ?? '',
+                restaurantLatX: restaurantData.restaurantLatX ?? 0,
+                restaurantLatY: restaurantData.restaurantLatY ?? 0,
+                restaurantURL: restaurantData.restaurantURL ?? '',
+                restaurantLotAddr: restaurantData.restaurantLotAddr ?? '',
+                restaurantAddr: restaurantData.restaurantAddr ?? '',
+                restaurantMapIMG: restaurantData.restaurantMapIMG ?? null,
                 restaurantStatus: 1,
                 restaurantViewCount: 0
             });
