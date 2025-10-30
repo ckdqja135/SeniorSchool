@@ -1,6 +1,36 @@
 const { FreeBoard } = require('../../model/index');
 const logger = require('../../utils/logger');
 
+exports.listPosts = async (query) => {
+    try {
+        const page = parseInt(query.page ?? 1);
+        const limit = parseInt(query.limit ?? 10);
+        const includeDeleted = query.includeDeleted === '1' || query.includeDeleted === 1;
+
+        const where = {};
+        if (!includeDeleted) where.isDeleted = false;
+
+        const offset = (page - 1) * limit;
+        const result = await FreeBoard.findAndCountAll({
+            where,
+            order: [["boardRegDate", "DESC"], ["boardIdx", "DESC"]],
+            limit: limit,
+            offset: offset
+        });
+
+        return {
+            status: 200,
+            totalCount: result.count,
+            totalPages: Math.ceil(result.count / limit),
+            currentPage: page,
+            posts: result.rows
+        };
+    } catch (error) {
+        logger.error(`[admin.freeboard.list] Error: ${error.message}`);
+        throw error;
+    }
+};
+
 exports.createPost = async (postData) => {
     try {
         const required = ['boardTitle', 'boardContent', 'boardID', 'boardPW', 'category'];

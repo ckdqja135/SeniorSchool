@@ -1,6 +1,16 @@
 const freeBoardService = require('../../service/admin/freeBoardService');
 const logger = require('../../utils/logger');
 
+exports.getPosts = async (req, res) => {
+    try {
+        const result = await freeBoardService.listPosts(req.query);
+        return res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[admin.freeboard.controller.list] ${error.message}`);
+        return res.status(500).json({ status: 500, message: '서버 오류가 발생했습니다.' });
+    }
+};
+
 exports.createPost = async (req, res) => {
     try {
         const result = await freeBoardService.createPost(req.body);

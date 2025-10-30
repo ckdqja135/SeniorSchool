@@ -7,6 +7,9 @@ const { authenticateToken, isAdmin } = require('../../middlewares/authMiddleware
  * Admin - 자유게시판 관리 API (삽입, 수정, 삭제)
  */
 
+// 게시글 목록 조회 (페이지네이션)
+router.get('/', authenticateToken, isAdmin, controller.getPosts);
+
 // 게시글 생성
 router.post('/', authenticateToken, isAdmin, controller.createPost);
 
