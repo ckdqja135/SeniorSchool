@@ -25,10 +25,6 @@ router.delete('/:restaurantIdx', authenticateToken, isAdmin, restaurantControlle
 // 식당 통계 조회
 router.get('/stats/overview', authenticateToken, isAdmin, restaurantController.getRestaurantStats);
 
-/**
- * Admin - 식당 추가 요청 관리 API
- */
-
 // 식당 추가 요청 목록 조회 (관리자만)
 router.get('/request', authenticateToken, isAdmin, restaurantController.getRestaurantRequests);
 

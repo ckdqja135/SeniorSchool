@@ -10,6 +10,7 @@ const reportRouter = require('./report.router');
 const churchRouter = require('./church.router');
 const outsourceRouter = require('./outsource.router');
 const restaurantRouter = require('./restaurant.router');
+const freeBoardRouter = require('./freeBoard.router');
 
 // "/admin/univ" 경로 → univRouter
 router.use('/univ', univRouter);
@@ -20,4 +21,5 @@ router.use('/report', reportRouter);
 router.use('/church', churchRouter);
 router.use('/outsource', outsourceRouter);
 router.use('/restaurant', restaurantRouter);
+router.use('/freeboard', freeBoardRouter);
 module.exports = router;
