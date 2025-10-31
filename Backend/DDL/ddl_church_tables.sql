@@ -16,7 +16,9 @@ CREATE TABLE tb_church_info (
     churchAddr VARCHAR(200) NOT NULL COMMENT '교회 도로명주소',
     churchMapIMG VARCHAR(200) NULL COMMENT '교회 지도 이미지',
     churchStatus TINYINT NOT NULL DEFAULT 1 COMMENT '교회 상태 (1: 활성, 0: 비활성)',
-    churchViewCount INT NOT NULL DEFAULT 0 COMMENT '교회 조회수'
+    churchViewCount INT NOT NULL DEFAULT 0 COMMENT '교회 조회수',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '등록일',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='교회 정보 테이블';
 
 -- 2. 교회 게시판 테이블

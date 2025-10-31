@@ -68,6 +68,20 @@ module.exports = class UniversityInfo extends Sequelize.Model {
                     allowNull: false,
                     defaultValue: 0,
                 },
+                createdAt: {
+                    type: Sequelize.DATE,
+                    allowNull: false,
+                    defaultValue: Sequelize.NOW,
+                    field: 'created_at',
+                    comment: '등록일'
+                },
+                updatedAt: {
+                    type: Sequelize.DATE,
+                    allowNull: false,
+                    defaultValue: Sequelize.NOW,
+                    field: 'updated_at',
+                    comment: '수정일'
+                },
             },
             {
                 sequelize,
@@ -75,6 +89,7 @@ module.exports = class UniversityInfo extends Sequelize.Model {
                 tableName: "tb_universityinfo",
                 charset: "utf8",
                 timestamps: false,
+                underscored: true,
             }
         );
     }

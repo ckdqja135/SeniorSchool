@@ -16,7 +16,9 @@ CREATE TABLE tb_restaurant_info (
     restaurantAddr VARCHAR(200) NOT NULL COMMENT '식당 도로명주소',
     restaurantMapIMG VARCHAR(200) NULL COMMENT '식당 지도 이미지',
     restaurantStatus TINYINT NOT NULL DEFAULT 1 COMMENT '식당 상태 (1: 활성, 0: 비활성)',
-    restaurantViewCount INT NOT NULL DEFAULT 0 COMMENT '식당 조회수'
+    restaurantViewCount INT NOT NULL DEFAULT 0 COMMENT '식당 조회수',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '등록일',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='식당 정보 테이블';
 
 -- 2. 식당 후기 게시판 테이블

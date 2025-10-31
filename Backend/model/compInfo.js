@@ -111,6 +111,20 @@ module.exports = class CompInfo extends Sequelize.Model {
                     type: Sequelize.INTEGER,
                     allowNull: true,
                     comment: '퇴사자 수'
+                },
+                createdAt: {
+                    type: Sequelize.DATE,
+                    allowNull: false,
+                    defaultValue: Sequelize.NOW,
+                    field: 'created_at',
+                    comment: '등록일'
+                },
+                updatedAt: {
+                    type: Sequelize.DATE,
+                    allowNull: false,
+                    defaultValue: Sequelize.NOW,
+                    field: 'updated_at',
+                    comment: '수정일'
                 }
             },
             {
@@ -119,6 +133,7 @@ module.exports = class CompInfo extends Sequelize.Model {
                 tableName: "tb_comp_info",
                 charset: "utf8mb4",
                 timestamps: false,
+                underscored: true,
             }
         );
     }

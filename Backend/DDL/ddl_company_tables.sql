@@ -24,6 +24,8 @@ CREATE TABLE `tb_comp_info` (
   `totalEmployees` int DEFAULT NULL COMMENT '총 직원 수',
   `newHires` int DEFAULT NULL COMMENT '신규 입사자 수',
   `resignations` int DEFAULT NULL COMMENT '퇴사자 수',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '등록일',
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일',
   PRIMARY KEY (`compIdx`),
   KEY `idx_comp_name` (`compName`),
   KEY `idx_comp_locate` (`compLocate`),
