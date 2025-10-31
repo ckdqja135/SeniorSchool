@@ -181,9 +181,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 업체 추가 (Church)
                 SELECT 
                     churchIdx AS id,
-                    'church' AS type,
-                    'add' AS action,
-                    churchName AS name,
+                    CONVERT('church' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('add' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(churchName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     created_at AS timestamp
                 FROM tb_church_info
                 WHERE created_at IS NOT NULL
@@ -193,9 +193,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 업체 업데이트 (Church)
                 SELECT 
                     churchIdx AS id,
-                    'church' AS type,
-                    'update' AS action,
-                    churchName AS name,
+                    CONVERT('church' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('update' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(churchName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     updated_at AS timestamp
                 FROM tb_church_info
                 WHERE updated_at IS NOT NULL 
@@ -206,9 +206,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 업체 추가 (Company)
                 SELECT 
                     compIdx AS id,
-                    'company' AS type,
-                    'add' AS action,
-                    compName AS name,
+                    CONVERT('company' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('add' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(compName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     created_at AS timestamp
                 FROM tb_comp_info
                 WHERE created_at IS NOT NULL
@@ -218,9 +218,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 업체 업데이트 (Company)
                 SELECT 
                     compIdx AS id,
-                    'company' AS type,
-                    'update' AS action,
-                    compName AS name,
+                    CONVERT('company' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('update' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(compName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     updated_at AS timestamp
                 FROM tb_comp_info
                 WHERE updated_at IS NOT NULL 
@@ -231,9 +231,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 업체 추가 (Outsource)
                 SELECT 
                     outsourceIdx AS id,
-                    'outsource' AS type,
-                    'add' AS action,
-                    outsourceName AS name,
+                    CONVERT('outsource' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('add' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(outsourceName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     created_at AS timestamp
                 FROM tb_outsource_info
                 WHERE created_at IS NOT NULL
@@ -243,9 +243,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 업체 업데이트 (Outsource)
                 SELECT 
                     outsourceIdx AS id,
-                    'outsource' AS type,
-                    'update' AS action,
-                    outsourceName AS name,
+                    CONVERT('outsource' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('update' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(outsourceName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     updated_at AS timestamp
                 FROM tb_outsource_info
                 WHERE updated_at IS NOT NULL 
@@ -256,9 +256,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 업체 추가 (Restaurant)
                 SELECT 
                     restaurantIdx AS id,
-                    'restaurant' AS type,
-                    'add' AS action,
-                    restaurantName AS name,
+                    CONVERT('restaurant' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('add' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(restaurantName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     created_at AS timestamp
                 FROM tb_restaurant_info
                 WHERE created_at IS NOT NULL
@@ -268,9 +268,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 업체 업데이트 (Restaurant)
                 SELECT 
                     restaurantIdx AS id,
-                    'restaurant' AS type,
-                    'update' AS action,
-                    restaurantName AS name,
+                    CONVERT('restaurant' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('update' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(restaurantName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     updated_at AS timestamp
                 FROM tb_restaurant_info
                 WHERE updated_at IS NOT NULL 
@@ -281,9 +281,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 업체 추가 (University)
                 SELECT 
                     univIdx AS id,
-                    'university' AS type,
-                    'add' AS action,
-                    univName AS name,
+                    CONVERT('university' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('add' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(univName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     created_at AS timestamp
                 FROM tb_universityinfo
                 WHERE created_at IS NOT NULL
@@ -293,9 +293,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 업체 업데이트 (University)
                 SELECT 
                     univIdx AS id,
-                    'university' AS type,
-                    'update' AS action,
-                    univName AS name,
+                    CONVERT('university' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('update' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(univName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     updated_at AS timestamp
                 FROM tb_universityinfo
                 WHERE updated_at IS NOT NULL 
@@ -306,9 +306,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 게시글 작성 (FreeBoard)
                 SELECT 
                     boardIdx AS id,
-                    'freeboard_post' AS type,
-                    'create' AS action,
-                    boardTitle AS name,
+                    CONVERT('freeboard_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('create' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     boardRegDate AS timestamp
                 FROM tb_freeboard
                 WHERE boardRegDate IS NOT NULL 
@@ -319,9 +319,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 게시글 수정 (FreeBoard)
                 SELECT 
                     boardIdx AS id,
-                    'freeboard_post' AS type,
-                    'update' AS action,
-                    boardTitle AS name,
+                    CONVERT('freeboard_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('update' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     boardModDate AS timestamp
                 FROM tb_freeboard
                 WHERE boardModDate IS NOT NULL 
@@ -332,9 +332,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 게시글 작성 (Church Board)
                 SELECT 
                     boardIdx AS id,
-                    'church_post' AS type,
-                    'create' AS action,
-                    boardTitle AS name,
+                    CONVERT('church_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('create' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     STR_TO_DATE(boardRegDate, '%Y-%m-%d') AS timestamp
                 FROM tb_church_board
                 WHERE boardRegDate IS NOT NULL
@@ -344,9 +344,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 게시글 작성 (Company Board)
                 SELECT 
                     boardIdx AS id,
-                    'company_post' AS type,
-                    'create' AS action,
-                    boardTitle AS name,
+                    CONVERT('company_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('create' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     STR_TO_DATE(boardRegDate, '%Y-%m-%d') AS timestamp
                 FROM tb_comp_board
                 WHERE boardRegDate IS NOT NULL 
@@ -357,9 +357,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 게시글 작성 (Outsource Board)
                 SELECT 
                     boardIdx AS id,
-                    'outsource_post' AS type,
-                    'create' AS action,
-                    boardTitle AS name,
+                    CONVERT('outsource_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('create' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     STR_TO_DATE(boardRegDate, '%Y-%m-%d') AS timestamp
                 FROM tb_outsource_board
                 WHERE boardRegDate IS NOT NULL
@@ -369,9 +369,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 게시글 작성 (Restaurant Board)
                 SELECT 
                     boardIdx AS id,
-                    'restaurant_post' AS type,
-                    'create' AS action,
-                    boardTitle AS name,
+                    CONVERT('restaurant_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('create' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     STR_TO_DATE(boardRegDate, '%Y-%m-%d') AS timestamp
                 FROM tb_restaurant_board
                 WHERE boardRegDate IS NOT NULL
@@ -381,9 +381,9 @@ exports.getRecentActivities = async (limit = 20) => {
                 -- 게시글 작성 (University Board)
                 SELECT 
                     boardIdx AS id,
-                    'university_post' AS type,
-                    'create' AS action,
-                    boardTitle AS name,
+                    CONVERT('university_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
+                    CONVERT('create' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
+                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
                     STR_TO_DATE(boardRegDate, '%Y-%m-%d') AS timestamp
                 FROM tb_univboard
                 WHERE boardRegDate IS NOT NULL
