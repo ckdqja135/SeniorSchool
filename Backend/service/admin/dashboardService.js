@@ -102,7 +102,7 @@ exports.getMonthlyStats = async () => {
     try {
         const query = `
             SELECT 
-                DATE_FORMAT(month_date, '%Y-%m') AS month,
+                DATE_FORMAT(months.month_date, '%Y-%m') AS month,
                 COALESCE(posts.post_count, 0) AS postCount,
                 COALESCE(companies.company_count, 0) AS companyCount
             FROM (
