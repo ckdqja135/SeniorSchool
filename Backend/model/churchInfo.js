@@ -85,7 +85,6 @@ module.exports = class ChurchInfo extends Sequelize.Model {
                 tableName: "tb_church_info",
                 charset: "utf8",
                 timestamps: false,
-                underscored: true,
             }
         );
     }

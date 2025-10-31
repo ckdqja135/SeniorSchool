@@ -89,7 +89,6 @@ module.exports = class UniversityInfo extends Sequelize.Model {
                 tableName: "tb_universityinfo",
                 charset: "utf8",
                 timestamps: false,
-                underscored: true,
             }
         );
     }

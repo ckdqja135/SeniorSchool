@@ -85,7 +85,6 @@ module.exports = class OutsourceInfo extends Sequelize.Model {
                 tableName: "tb_outsource_info",
                 charset: "utf8",
                 timestamps: false,
-                underscored: true,
             }
         );
     }

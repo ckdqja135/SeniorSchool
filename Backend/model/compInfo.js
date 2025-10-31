@@ -133,7 +133,6 @@ module.exports = class CompInfo extends Sequelize.Model {
                 tableName: "tb_comp_info",
                 charset: "utf8mb4",
                 timestamps: false,
-                underscored: true,
             }
         );
     }
