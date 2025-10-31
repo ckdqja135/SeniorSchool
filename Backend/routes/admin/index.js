@@ -11,8 +11,9 @@ const churchRouter = require('./church.router');
 const outsourceRouter = require('./outsource.router');
 const restaurantRouter = require('./restaurant.router');
 const freeBoardRouter = require('./freeBoard.router');
+const dashboardRouter = require('./dashboard.router');
 
-// "/admin/univ" 경로 → univRouter
+// 라우터 등록
 router.use('/univ', univRouter);
 router.use('/comp', compRouter);
 router.use('/user', userRouter);
@@ -22,4 +23,6 @@ router.use('/church', churchRouter);
 router.use('/outsource', outsourceRouter);
 router.use('/restaurant', restaurantRouter);
 router.use('/freeboard', freeBoardRouter);
+router.use('/dashboard', dashboardRouter);
+
 module.exports = router;
