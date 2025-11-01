@@ -1,4 +1,4 @@
-const { CompInfo, CompRequest } = require('../model/index');
+const { CompInfo, CompRequest, CompInterview, CompSalary } = require('../model/index');
 const logger = require('../utils/logger');
 
 /**
@@ -109,6 +109,367 @@ exports.createCompRequest = async (requestData) => {
         };
     } catch (error) {
         logger.error(`[createCompRequest] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+// ========== 면접 후기 관련 서비스 ==========
+
+/**
+ * 면접 후기 생성
+ * @param {Object} interviewData - 면접 후기 데이터
+ * @returns {Object} 생성 결과
+ */
+exports.createInterview = async (interviewData) => {
+    try {
+        const { compIdx, writerId, writerPw, interviewTitle, interviewContent, interviewDate, interviewResult, interviewDifficulty, position } = interviewData;
+
+        // 필수값 체크
+        if (!compIdx || !writerId || !writerPw || !interviewTitle) {
+            throw new Error('필수값이 누락되었습니다. (compIdx, writerId, writerPw, interviewTitle)');
+        }
+
+        // 회사 존재 확인
+        const company = await CompInfo.findByPk(compIdx);
+        if (!company) {
+            return {
+                status: 404,
+                message: '회사를 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        const interview = await CompInterview.create({
+            compIdx,
+            writerId,
+            writerPw,
+            interviewTitle,
+            interviewContent: interviewContent || null,
+            interviewDate: interviewDate || null,
+            interviewResult: interviewResult || null,
+            interviewDifficulty: interviewDifficulty || null,
+            position: position || null
+        });
+
+        logger.info(`[createInterview] 면접 후기 생성 완료: ${interview.interviewIdx}`);
+        
+        return {
+            status: 201,
+            message: '면접 후기가 작성되었습니다.',
+            data: interview
+        };
+    } catch (error) {
+        logger.error(`[createInterview] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 면접 후기 조회 (목록)
+ * @param {number} compIdx - 회사 인덱스 (선택)
+ * @param {Object} pagination - 페이지네이션 정보 (page, rowsPerPage)
+ * @returns {Object} 면접 후기 목록
+ */
+exports.getInterviews = async (compIdx = null, pagination = {}) => {
+    try {
+        const { page = 1, rowsPerPage = 20 } = pagination;
+        const pageNum = parseInt(page, 10) || 1;
+        const rowsPerPageNum = parseInt(rowsPerPage, 10) || 20;
+        const offset = (pageNum - 1) * rowsPerPageNum;
+
+        const whereClause = {
+            isDeleted: false
+        };
+
+        if (compIdx) {
+            whereClause.compIdx = compIdx;
+        }
+
+        const { count, rows } = await CompInterview.findAndCountAll({
+            where: whereClause,
+            include: [{
+                model: CompInfo,
+                as: 'company',
+                attributes: ['compIdx', 'compName']
+            }],
+            order: [['regDate', 'DESC']],
+            limit: rowsPerPageNum,
+            offset
+        });
+
+        logger.info(`[getInterviews] 면접 후기 조회 완료: ${rows.length}개 / 총 ${count}개`);
+
+        return {
+            status: 200,
+            message: '면접 후기 조회가 완료되었습니다.',
+            data: rows,
+            pagination: {
+                totalCount: count,
+                totalPages: Math.ceil(count / rowsPerPageNum),
+                currentPage: pageNum,
+                rowsPerPage: rowsPerPageNum,
+                hasNextPage: pageNum < Math.ceil(count / rowsPerPageNum),
+                hasPrevPage: pageNum > 1
+            }
+        };
+    } catch (error) {
+        logger.error(`[getInterviews] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 면접 후기 상세 조회
+ * @param {number} interviewIdx - 면접 후기 인덱스
+ * @returns {Object} 면접 후기 상세 정보
+ */
+exports.getInterviewDetail = async (interviewIdx) => {
+    try {
+        const interview = await CompInterview.findOne({
+            where: {
+                interviewIdx,
+                isDeleted: false
+            },
+            include: [{
+                model: CompInfo,
+                as: 'company',
+                attributes: ['compIdx', 'compName', 'compLocate', 'compIndustry']
+            }]
+        });
+
+        if (!interview) {
+            return {
+                status: 404,
+                message: '면접 후기를 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        logger.info(`[getInterviewDetail] 면접 후기 상세 조회: ${interviewIdx}`);
+
+        return {
+            status: 200,
+            message: '면접 후기 상세 조회가 완료되었습니다.',
+            data: interview
+        };
+    } catch (error) {
+        logger.error(`[getInterviewDetail] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 면접 후기 수정
+ * @param {number} interviewIdx - 면접 후기 인덱스
+ * @param {Object} updateData - 수정할 데이터
+ * @param {string} writerPw - 작성자 비밀번호 (검증용)
+ * @returns {Object} 수정 결과
+ */
+exports.updateInterview = async (interviewIdx, updateData, writerPw) => {
+    try {
+        const interview = await CompInterview.findOne({
+            where: {
+                interviewIdx,
+                isDeleted: false
+            }
+        });
+
+        if (!interview) {
+            return {
+                status: 404,
+                message: '면접 후기를 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        // 비밀번호 확인
+        if (interview.writerPw !== writerPw) {
+            return {
+                status: 403,
+                message: '비밀번호가 일치하지 않습니다.',
+                data: null
+            };
+        }
+
+        // 수정 가능한 필드만 업데이트
+        const allowedFields = ['interviewTitle', 'interviewContent', 'interviewDate', 'interviewResult', 'interviewDifficulty', 'position'];
+        const updateFields = {};
+        
+        allowedFields.forEach(field => {
+            if (updateData[field] !== undefined) {
+                updateFields[field] = updateData[field];
+            }
+        });
+
+        await interview.update({
+            ...updateFields,
+            modDate: new Date()
+        });
+
+        logger.info(`[updateInterview] 면접 후기 수정 완료: ${interviewIdx}`);
+
+        return {
+            status: 200,
+            message: '면접 후기가 수정되었습니다.',
+            data: interview
+        };
+    } catch (error) {
+        logger.error(`[updateInterview] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 면접 후기 삭제 (소프트 삭제)
+ * @param {number} interviewIdx - 면접 후기 인덱스
+ * @param {string} writerPw - 작성자 비밀번호 (검증용)
+ * @returns {Object} 삭제 결과
+ */
+exports.deleteInterview = async (interviewIdx, writerPw) => {
+    try {
+        const interview = await CompInterview.findOne({
+            where: {
+                interviewIdx,
+                isDeleted: false
+            }
+        });
+
+        if (!interview) {
+            return {
+                status: 404,
+                message: '면접 후기를 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        // 비밀번호 확인
+        if (interview.writerPw !== writerPw) {
+            return {
+                status: 403,
+                message: '비밀번호가 일치하지 않습니다.',
+                data: null
+            };
+        }
+
+        // 소프트 삭제
+        await interview.update({
+            isDeleted: true,
+            modDate: new Date()
+        });
+
+        logger.info(`[deleteInterview] 면접 후기 삭제 완료: ${interviewIdx}`);
+
+        return {
+            status: 200,
+            message: '면접 후기가 삭제되었습니다.',
+            data: null
+        };
+    } catch (error) {
+        logger.error(`[deleteInterview] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+// ========== 연봉 후기 관련 서비스 ==========
+
+/**
+ * 연봉 후기 생성
+ * @param {Object} salaryData - 연봉 후기 데이터
+ * @returns {Object} 생성 결과
+ */
+exports.createSalary = async (salaryData) => {
+    try {
+        const { compIdx, writerId, writerPw, salary, position, career, workYear, bonus } = salaryData;
+
+        // 필수값 체크
+        if (!compIdx || !writerId || !writerPw || !salary) {
+            throw new Error('필수값이 누락되었습니다. (compIdx, writerId, writerPw, salary)');
+        }
+
+        // 회사 존재 확인
+        const company = await CompInfo.findByPk(compIdx);
+        if (!company) {
+            return {
+                status: 404,
+                message: '회사를 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        const salaryReview = await CompSalary.create({
+            compIdx,
+            writerId,
+            writerPw,
+            salary,
+            position: position || null,
+            career: career || null,
+            workYear: workYear || null,
+            bonus: bonus || null
+        });
+
+        logger.info(`[createSalary] 연봉 후기 생성 완료: ${salaryReview.salaryIdx}`);
+        
+        return {
+            status: 201,
+            message: '연봉 후기가 작성되었습니다.',
+            data: salaryReview
+        };
+    } catch (error) {
+        logger.error(`[createSalary] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 연봉 후기 조회 (목록)
+ * @param {number} compIdx - 회사 인덱스 (선택)
+ * @param {Object} pagination - 페이지네이션 정보 (page, rowsPerPage)
+ * @returns {Object} 연봉 후기 목록
+ */
+exports.getSalaries = async (compIdx = null, pagination = {}) => {
+    try {
+        const { page = 1, rowsPerPage = 20 } = pagination;
+        const pageNum = parseInt(page, 10) || 1;
+        const rowsPerPageNum = parseInt(rowsPerPage, 10) || 20;
+        const offset = (pageNum - 1) * rowsPerPageNum;
+
+        const whereClause = {
+            isDeleted: false
+        };
+
+        if (compIdx) {
+            whereClause.compIdx = compIdx;
+        }
+
+        const { count, rows } = await CompSalary.findAndCountAll({
+            where: whereClause,
+            include: [{
+                model: CompInfo,
+                as: 'company',
+                attributes: ['compIdx', 'compName']
+            }],
+            order: [['regDate', 'DESC']],
+            limit: rowsPerPageNum,
+            offset
+        });
+
+        logger.info(`[getSalaries] 연봉 후기 조회 완료: ${rows.length}개 / 총 ${count}개`);
+
+        return {
+            status: 200,
+            message: '연봉 후기 조회가 완료되었습니다.',
+            data: rows,
+            pagination: {
+                totalCount: count,
+                totalPages: Math.ceil(count / rowsPerPageNum),
+                currentPage: pageNum,
+                rowsPerPage: rowsPerPageNum,
+                hasNextPage: pageNum < Math.ceil(count / rowsPerPageNum),
+                hasPrevPage: pageNum > 1
+            }
+        };
+    } catch (error) {
+        logger.error(`[getSalaries] Error: ${error.message}`);
         throw error;
     }
 };

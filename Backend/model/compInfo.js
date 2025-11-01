@@ -149,5 +149,17 @@ module.exports = class CompInfo extends Sequelize.Model {
             foreignKey: "compIdx", 
             sourceKey: "compIdx" 
         });
+        
+        // CompInfo와 CompInterview 간의 관계 설정
+        db.CompInfo.hasMany(db.CompInterview, { 
+            foreignKey: "compIdx", 
+            sourceKey: "compIdx" 
+        });
+        
+        // CompInfo와 CompSalary 간의 관계 설정
+        db.CompInfo.hasMany(db.CompSalary, { 
+            foreignKey: "compIdx", 
+            sourceKey: "compIdx" 
+        });
     }
 };
