@@ -289,7 +289,8 @@ exports.updateInterview = async (interviewIdx, updateData, writerPw) => {
         }
 
         // 비밀번호 확인
-        if (interview.writerPw !== writerPw) {
+        const hashedPassword = hashPassword(writerPw);
+        if (interview.writerPw !== hashedPassword) {
             return {
                 status: 403,
                 message: '비밀번호가 일치하지 않습니다.',
@@ -349,7 +350,8 @@ exports.deleteInterview = async (interviewIdx, writerPw) => {
         }
 
         // 비밀번호 확인
-        if (interview.writerPw !== writerPw) {
+        const hashedPassword = hashPassword(writerPw);
+        if (interview.writerPw !== hashedPassword) {
             return {
                 status: 403,
                 message: '비밀번호가 일치하지 않습니다.',
