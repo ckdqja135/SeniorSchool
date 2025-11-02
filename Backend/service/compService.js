@@ -429,9 +429,7 @@ exports.getSalaries = async (compIdx = null, pagination = {}) => {
         const rowsPerPageNum = parseInt(rowsPerPage, 10) || 20;
         const offset = (pageNum - 1) * rowsPerPageNum;
 
-        const whereClause = {
-            isDeleted: false
-        };
+        const whereClause = {};
 
         if (compIdx) {
             whereClause.compIdx = compIdx;

@@ -14,16 +14,6 @@ module.exports = class CompSalary extends Sequelize.Model {
                 allowNull: false,
                 comment: '회사 인덱스 (외래키)'
             },
-            writerId: {
-                type: Sequelize.STRING(45),
-                allowNull: false,
-                comment: '작성자 ID'
-            },
-            writerPw: {
-                type: Sequelize.STRING(100),
-                allowNull: false,
-                comment: '작성자 비밀번호'
-            },
             salary: {
                 type: Sequelize.BIGINT,
                 allowNull: false,
@@ -50,12 +40,6 @@ module.exports = class CompSalary extends Sequelize.Model {
                 allowNull: false,
                 defaultValue: Sequelize.NOW,
                 comment: '수정일'
-            },
-            isDeleted: {
-                type: Sequelize.BOOLEAN,
-                allowNull: false,
-                defaultValue: false,
-                comment: '삭제 여부'
             }
         }, {
             sequelize,

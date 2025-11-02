@@ -156,17 +156,13 @@ CREATE TABLE `tb_comp_interview` (
 CREATE TABLE `tb_comp_salary` (
   `salaryIdx` bigint NOT NULL AUTO_INCREMENT COMMENT '연봉 후기 인덱스',
   `compIdx` bigint NOT NULL COMMENT '회사 인덱스 (외래키)',
-  `writerId` varchar(45) NOT NULL COMMENT '작성자 ID',
-  `writerPw` varchar(100) NOT NULL COMMENT '작성자 비밀번호',
   `salary` bigint NOT NULL COMMENT '연봉 (만원 단위)',
   `workYear` int NOT NULL COMMENT '근무 연차',
   `department` varchar(50) NOT NULL COMMENT '직군',
   `regDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '등록일',
   `modDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일',
-  `isDeleted` tinyint NOT NULL DEFAULT '0' COMMENT '삭제 여부',
   PRIMARY KEY (`salaryIdx`),
   KEY `idx_comp_salary_comp` (`compIdx`),
-  KEY `idx_comp_salary_deleted` (`isDeleted`),
   KEY `idx_comp_salary_regDate` (`regDate`),
   KEY `idx_comp_salary_salary` (`salary`),
   CONSTRAINT `fk_comp_salary_comp` FOREIGN KEY (`compIdx`) REFERENCES `tb_comp_info` (`compIdx`) ON DELETE CASCADE
@@ -177,4 +173,4 @@ CREATE INDEX `idx_comp_info_composite` ON `tb_comp_info` (`compStatus`, `compTyp
 CREATE INDEX `idx_comp_board_composite` ON `tb_comp_board` (`compIdx`, `isDeleted`, `boardRegDate`);
 CREATE INDEX `idx_comp_comment_composite` ON `tb_comp_comment` (`boardIdx`, `isDeleted`, `regDate`);
 CREATE INDEX `idx_comp_interview_composite` ON `tb_comp_interview` (`compIdx`, `isDeleted`, `regDate`);
-CREATE INDEX `idx_comp_salary_composite` ON `tb_comp_salary` (`compIdx`, `isDeleted`, `regDate`);
+CREATE INDEX `idx_comp_salary_composite` ON `tb_comp_salary` (`compIdx`, `regDate`);
