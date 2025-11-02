@@ -379,11 +379,11 @@ exports.deleteInterview = async (interviewIdx, writerPw) => {
  */
 exports.createSalary = async (salaryData) => {
     try {
-        const { compIdx, writerId, writerPw, salary, position, career, workYear, bonus } = salaryData;
+        const { compIdx, salary, workYear, department } = salaryData;
 
         // 필수값 체크
-        if (!compIdx || !writerId || !writerPw || !salary) {
-            throw new Error('필수값이 누락되었습니다. (compIdx, writerId, writerPw, salary)');
+        if (!compIdx || !salary || !workYear || !department) {
+            throw new Error('필수값이 누락되었습니다. (compIdx, salary, workYear, department)');
         }
 
         // 회사 존재 확인
@@ -398,13 +398,9 @@ exports.createSalary = async (salaryData) => {
 
         const salaryReview = await CompSalary.create({
             compIdx,
-            writerId,
-            writerPw,
             salary,
-            position: position || null,
-            career: career || null,
-            workYear: workYear || null,
-            bonus: bonus || null
+            workYear,
+            department
         });
 
         logger.info(`[createSalary] 연봉 후기 생성 완료: ${salaryReview.salaryIdx}`);

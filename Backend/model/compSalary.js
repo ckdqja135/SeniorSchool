@@ -29,25 +29,15 @@ module.exports = class CompSalary extends Sequelize.Model {
                 allowNull: false,
                 comment: '연봉 (만원 단위)'
             },
-            position: {
-                type: Sequelize.STRING(50),
-                allowNull: true,
-                comment: '직책'
-            },
-            career: {
-                type: Sequelize.INTEGER,
-                allowNull: true,
-                comment: '경력 (년)'
-            },
             workYear: {
                 type: Sequelize.INTEGER,
-                allowNull: true,
+                allowNull: false,
                 comment: '근무 연차'
             },
-            bonus: {
-                type: Sequelize.BIGINT,
-                allowNull: true,
-                comment: '보너스 (만원 단위)'
+            department: {
+                type: Sequelize.STRING(50),
+                allowNull: false,
+                comment: '직군'
             },
             regDate: {
                 type: Sequelize.DATE,
