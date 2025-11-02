@@ -316,7 +316,7 @@ exports.updateInterview = async (interviewIdx, updateData, writerPw) => {
         logger.info(`[updateInterview] 면접 후기 수정 완료: ${interviewIdx}`);
 
         return {
-            status: 200,
+            success: true,
             message: '면접 후기가 수정되었습니다.',
             data: interview
         };
@@ -368,7 +368,7 @@ exports.deleteInterview = async (interviewIdx, writerPw) => {
         logger.info(`[deleteInterview] 면접 후기 삭제 완료: ${interviewIdx}`);
 
         return {
-            status: 200,
+            success: true,
             message: '면접 후기가 삭제되었습니다.',
             data: null
         };
@@ -414,7 +414,7 @@ exports.createSalary = async (salaryData) => {
         logger.info(`[createSalary] 연봉 후기 생성 완료: ${salaryReview.salaryIdx}`);
         
         return {
-            status: 201,
+            success: true,
             message: '연봉 후기가 작성되었습니다.',
             data: salaryReview
         };
@@ -458,7 +458,7 @@ exports.getSalaries = async (compIdx = null, pagination = {}) => {
         logger.info(`[getSalaries] 연봉 후기 조회 완료: ${rows.length}개 / 총 ${count}개`);
 
         return {
-            status: 200,
+            success: true,
             message: '연봉 후기 조회가 완료되었습니다.',
             data: rows,
             pagination: {
