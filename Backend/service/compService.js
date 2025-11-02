@@ -148,7 +148,7 @@ exports.createInterview = async (interviewData) => {
         const interview = await CompInterview.create({
             compIdx,
             writerId,
-            writerPw,
+            writerPw: hashPassword(writerPw),
             interviewTitle,
             interviewContent: interviewContent || null,
             interviewDate: interviewDate || null,
