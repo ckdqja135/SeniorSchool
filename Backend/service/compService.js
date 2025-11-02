@@ -1,5 +1,11 @@
 const { CompInfo, CompRequest, CompInterview, CompSalary } = require('../model/index');
 const logger = require('../utils/logger');
+const crypto = require('crypto');
+
+// SHA256 암호화 함수
+const hashPassword = (password) => {
+    return crypto.createHash('sha256').update(password).digest('hex');
+};
 
 /**
  * 회사 조회수 기준 인기 회사 TOP10 조회
