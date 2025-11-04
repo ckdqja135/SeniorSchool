@@ -176,16 +176,28 @@ describe('ExternalApiService', () => {
                 }
             };
 
-            // 첫 번째 호출 (회사 정보), 두 번째는 없을 수도 있음
+            const mockReportResponse = {
+                data: {
+                    list: [{
+                        account_nm: '종업원수',
+                        thstrm_amount: '50000'
+                    }]
+                }
+            };
+
+            // 첫 번째 호출 (회사 정보), 두 번째 호출 (직원 수)
             axios.get
                 .mockResolvedValueOnce(mockResponse)
-                .mockResolvedValueOnce({ data: { list: [] } }); // 직원 수 조회 실패
+                .mockResolvedValueOnce(mockReportResponse);
 
             const result = await externalApiService.getCompanyDataFromOpenDart('삼성전자', '1234567890');
 
             expect(result).not.toBeNull();
             expect(result.companyName).toBe('삼성전자');
             expect(result.businessNumber).toBe('1234567890');
+            expect(result.employeeCount).toBe(50000);
+            
+            // 첫 번째 호출이 사업자등록번호를 사용했는지 확인
             expect(axios.get).toHaveBeenCalledWith(
                 expect.any(String),
                 expect.objectContaining({
