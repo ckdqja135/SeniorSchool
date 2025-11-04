@@ -408,8 +408,23 @@ class ExternalApiService {
                     return null;
                 }
 
-                const corpCode = corpListResponse.data.list[0].corp_code;
-                logger.info(`[getCompanyDataFromOpenDart] Found corp_code: ${corpCode} for ${compName}`);
+                // 정확히 일치하는 회사명 찾기 (부분 일치가 아닌)
+                let targetCompany = corpListResponse.data.list.find(corp => 
+                    corp.corp_name === compName || 
+                    corp.corp_name === `${compName}주식회사` ||
+                    corp.corp_name === `주식회사${compName}` ||
+                    corp.corp_name === `(주)${compName}` ||
+                    corp.corp_name.includes(compName)
+                );
+
+                // 일치하는 회사가 없으면 첫 번째 결과 사용
+                if (!targetCompany) {
+                    targetCompany = corpListResponse.data.list[0];
+                    logger.warn(`[getCompanyDataFromOpenDart] No exact match, using first result: ${targetCompany.corp_name}`);
+                }
+
+                const corpCode = targetCompany.corp_code;
+                logger.info(`[getCompanyDataFromOpenDart] Found corp_code: ${corpCode} for ${compName} (matched: ${targetCompany.corp_name})`);
 
                 // 2단계: 회사 개황 정보 조회
                 const companyResponse = await axios.get(`${this.apis.openDart.baseUrl}/company.json`, {

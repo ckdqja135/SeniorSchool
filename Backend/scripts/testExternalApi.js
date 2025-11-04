@@ -14,17 +14,17 @@ const logger = require('../utils/logger');
 const testCompanies = [
     {
         compIdx: 1,
-        compName: '삼성전자',
+        compName: '삼성전자주식회사',  // OpenDart 정식 등록명
         businessNumber: '1248100998'
     },
     {
         compIdx: 2,
-        compName: '네이버',
+        compName: '네이버주식회사',  // OpenDart 정식 등록명
         businessNumber: '2208100997'
     },
     {
         compIdx: 3,
-        compName: '카카오',
+        compName: '카카오주식회사',  // OpenDart 정식 등록명
         businessNumber: '1208800767'
     }
 ];
