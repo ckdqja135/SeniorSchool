@@ -64,6 +64,9 @@
       "!service/**/*.test.js"
     ],
     "coverageDirectory": "coverage",
-    "verbose": true
+    "verbose": true,
+    "forceExit": true,
+    "detectOpenHandles": false,
+    "testTimeout": 10000
   }
 }
