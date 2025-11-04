@@ -388,66 +388,105 @@ class ExternalApiService {
 
             // 재시도 로직 적용
             const data = await this.requestWithRetry('openDart', async () => {
-                // 회사 기본정보 조회 (사업자등록번호가 있으면 우선 사용)
-                const params = {
-                    crtfc_key: this.apis.openDart.apiKey
-                };
-
-                // 사업자등록번호가 있으면 더 정확한 검색
-                if (businessNumber) {
-                    params.bizr_no = businessNumber;
-                } else {
-                    params.corp_name = compName;
-                }
-
-                const companyResponse = await axios.get(`${this.apis.openDart.baseUrl}/company.json`, {
-                    params: params,
+                // 1단계: 회사 목록에서 고유번호 조회 (list.json 사용)
+                const corpListResponse = await axios.get(`${this.apis.openDart.baseUrl}/list.json`, {
+                    params: {
+                        crtfc_key: this.apis.openDart.apiKey,
+                        corp_name: compName
+                    },
                     timeout: this.apis.openDart.timeout
                 });
 
-                if (!companyResponse.data || !companyResponse.data.list || companyResponse.data.list.length === 0) {
-                    logger.warn(`[getCompanyDataFromOpenDart] No data found for: ${compName}`);
+                // 응답 확인
+                if (corpListResponse.data.status !== '000') {
+                    logger.warn(`[getCompanyDataFromOpenDart] API Error: ${corpListResponse.data.message}`);
                     return null;
                 }
 
-                const company = companyResponse.data.list[0];
+                if (!corpListResponse.data.list || corpListResponse.data.list.length === 0) {
+                    logger.warn(`[getCompanyDataFromOpenDart] No company found for: ${compName}`);
+                    return null;
+                }
+
+                const corpCode = corpListResponse.data.list[0].corp_code;
+                logger.info(`[getCompanyDataFromOpenDart] Found corp_code: ${corpCode} for ${compName}`);
+
+                // 2단계: 회사 개황 정보 조회
+                const companyResponse = await axios.get(`${this.apis.openDart.baseUrl}/company.json`, {
+                    params: {
+                        crtfc_key: this.apis.openDart.apiKey,
+                        corp_code: corpCode
+                    },
+                    timeout: this.apis.openDart.timeout
+                });
+
+                if (companyResponse.data.status !== '000') {
+                    logger.warn(`[getCompanyDataFromOpenDart] API Error: ${companyResponse.data.message}`);
+                    return null;
+                }
+
+                const company = companyResponse.data;
                 
-                // 사업보고서에서 직원 수 조회
+                // 3단계: 재무제표에서 직원 수 및 재무정보 조회
                 let employeeCount = null;
+                let revenue = null;
+                let profit = null;
+                
                 try {
+                    const currentYear = new Date().getFullYear() - 1; // 전년도 데이터
                     const reportResponse = await axios.get(`${this.apis.openDart.baseUrl}/fnlttSinglAcnt.json`, {
                         params: {
                             crtfc_key: this.apis.openDart.apiKey,
-                            corp_code: company.corp_code,
-                            bsns_year: new Date().getFullYear().toString(),
+                            corp_code: corpCode,
+                            bsns_year: currentYear.toString(),
                             reprt_code: '11011' // 사업보고서
                         },
                         timeout: this.apis.openDart.timeout
                     });
 
-                    if (reportResponse.data && reportResponse.data.list) {
+                    if (reportResponse.data.status === '000' && reportResponse.data.list) {
+                        // 종업원수
                         const employeeData = reportResponse.data.list.find(item => 
-                            item.account_nm === '종업원수' || item.account_nm === '직원수'
+                            item.account_nm && (item.account_nm.includes('종업원수') || item.account_nm.includes('직원수'))
                         );
-                        if (employeeData) {
-                            employeeCount = parseInt(employeeData.thstrm_amount) || null;
+                        if (employeeData && employeeData.thstrm_amount) {
+                            employeeCount = parseInt(employeeData.thstrm_amount.replace(/[^0-9]/g, '')) || null;
+                        }
+
+                        // 매출액
+                        const revenueData = reportResponse.data.list.find(item => 
+                            item.account_nm && item.account_nm.includes('매출액')
+                        );
+                        if (revenueData && revenueData.thstrm_amount) {
+                            revenue = parseInt(revenueData.thstrm_amount.replace(/[^0-9]/g, '')) || null;
+                        }
+
+                        // 당기순이익
+                        const profitData = reportResponse.data.list.find(item => 
+                            item.account_nm && item.account_nm.includes('당기순이익')
+                        );
+                        if (profitData && profitData.thstrm_amount) {
+                            profit = parseInt(profitData.thstrm_amount.replace(/[^0-9]/g, '')) || null;
                         }
                     }
                 } catch (reportError) {
-                    logger.warn(`[getCompanyDataFromOpenDart] Failed to fetch report: ${reportError.message}`);
+                    logger.warn(`[getCompanyDataFromOpenDart] Failed to fetch financial report: ${reportError.message}`);
                 }
 
                 return {
-                    companyName: company.corp_name,
-                    businessNumber: company.bizr_no,
-                    industry: company.corp_cls,
-                    listingDate: company.listing_date,
-                    marketCap: company.capital_stock,
+                    companyName: company.corp_name || compName,
+                    businessNumber: company.jurir_no || businessNumber,
+                    industry: company.induty_code || '정보없음',
+                    listingDate: company.est_dt || null,
+                    marketCap: null,
                     employeeCount: employeeCount,
-                    revenue: null,
-                    profit: null,
+                    revenue: revenue,
+                    profit: profit,
                     assets: null,
                     liabilities: null,
+                    address: company.adres || null,
+                    ceoName: company.ceo_nm || null,
+                    homepage: company.hm_url || null,
                     rawData: company // 원본 데이터 보존
                 };
             });
@@ -484,39 +523,44 @@ class ExternalApiService {
 
             // 재시도 로직 적용
             const data = await this.requestWithRetry('kosis', async () => {
+                // KOSIS 전국사업체조사 통계표 (산업별 고용정보)
+                // 실제 통계표 ID는 KOSIS 사이트에서 확인 필요
                 const params = {
-                    apiKey: this.apis.kosis.apiKey,
                     method: 'getList',
+                    apiKey: this.apis.kosis.apiKey,
+                    itmId: 'T1+',  // 항목 ID (종사자수 등)
+                    objL1: 'ALL',  // 대분류
+                    objL2: '',
                     format: 'json',
-                    jsonVD: 'JSON',
-                    prdSe: 'M',
-                    startPrdDe: '202401',
-                    endPrdDe: '202412',
-                    objL1: '10',
-                    objL2: '10',
-                    objL3: '10'
+                    jsonVD: 'Y',
+                    prdSe: 'Y',  // 년도
+                    startPrdDe: (new Date().getFullYear() - 2).toString(),  // 최근 3년
+                    endPrdDe: (new Date().getFullYear() - 1).toString(),
+                    orgId: '101',  // 통계청
+                    tblId: 'DT_1K52B01'  // 전국사업체조사 테이블 ID (예시)
                 };
 
-                // 사업자등록번호가 있으면 파라미터에 추가
-                if (businessNumber) {
-                    params.businessNumber = businessNumber;
-                }
-
-                const response = await axios.get(`${this.apis.kosis.baseUrl}/statistics`, {
+                const response = await axios.get(`${this.apis.kosis.baseUrl}/statisticsData.do`, {
                     params: params,
                     timeout: this.apis.kosis.timeout
                 });
 
-                if (response.data && response.data.RESULT) {
+                // KOSIS API 응답 형식 처리
+                if (response.data && Array.isArray(response.data)) {
+                    // 실제 데이터 파싱 로직
+                    // KOSIS는 통계표마다 구조가 다르므로 실제 응답에 맞춰 파싱 필요
+                    
                     return {
-                        industryTurnoverRate: "12.5%",
-                        industryAvgSalary: "4500만원",
-                        industryEmployeeCount: "150명",
-                        regionTurnoverRate: "10.8%",
+                        industryTurnoverRate: "산업 평균 이직률 정보 (KOSIS 통계표 필요)",
+                        industryAvgSalary: "산업 평균 연봉 정보 (KOSIS 통계표 필요)",
+                        industryEmployeeCount: "산업 평균 직원 수 (KOSIS 통계표 필요)",
+                        regionTurnoverRate: "지역 이직률 정보 (KOSIS 통계표 필요)",
+                        note: "실제 데이터를 위해서는 KOSIS에서 적절한 통계표 ID를 설정해야 합니다",
                         rawData: response.data
                     };
                 }
 
+                logger.warn(`[getIndustryDataFromKosis] No valid data structure from KOSIS`);
                 return null;
             });
 
@@ -552,33 +596,36 @@ class ExternalApiService {
 
             // 재시도 로직 적용
             const data = await this.requestWithRetry('publicData', async () => {
-                const params = {
-                    serviceKey: this.apis.publicData.apiKey,
-                    type: 'json',
-                    numOfRows: 100,
-                    pageNo: 1
+                // 공공데이터포털의 특정 API를 사용해야 합니다
+                // 예: 고용노동통계, 기업정보조회 등
+                // 실제 사용할 데이터셋의 엔드포인트로 변경 필요
+                
+                // 참고: 공공데이터는 서비스마다 엔드포인트가 다릅니다
+                // 예시 1) 고용행정통계: /B552015/empStatService/getEmpStat
+                // 예시 2) 사업자상태조회: /B552015/status/service
+                
+                logger.info(`[getPublicDataFromAPI] Public Data API requires specific service endpoint`);
+                logger.info(`[getPublicDataFromAPI] Current configuration is for framework testing only`);
+                
+                // 실제 구현 시 아래와 같이 사용:
+                // const response = await axios.get(`${this.apis.publicData.baseUrl}/특정서비스/엔드포인트`, {
+                //     params: {
+                //         serviceKey: decodeURIComponent(this.apis.publicData.apiKey),
+                //         numOfRows: 10,
+                //         pageNo: 1,
+                //         dataType: 'json'
+                //         // 기타 필요한 파라미터
+                //     },
+                //     timeout: this.apis.publicData.timeout
+                // });
+
+                return {
+                    regionEmploymentStats: "지역별 고용통계 (실제 API 엔드포인트 설정 필요)",
+                    industryGrowthRate: "산업별 성장률 (실제 API 엔드포인트 설정 필요)",
+                    economicIndicators: "경제 지표 (실제 API 엔드포인트 설정 필요)",
+                    note: "공공데이터포털은 사용할 데이터셋의 실제 엔드포인트 URL이 필요합니다",
+                    guide: "https://www.data.go.kr 에서 필요한 데이터를 찾고 해당 API 엔드포인트를 확인하세요"
                 };
-
-                // 사업자등록번호가 있으면 파라미터에 추가
-                if (businessNumber) {
-                    params.businessNumber = businessNumber;
-                }
-
-                const response = await axios.get(`${this.apis.publicData.baseUrl}/statistics`, {
-                    params: params,
-                    timeout: this.apis.publicData.timeout
-                });
-
-                if (response.data && response.data.response) {
-                    return {
-                        regionEmploymentStats: "서울특별시 고용률 60.2%",
-                        industryGrowthRate: "IT서비스업 성장률 8.5%",
-                        economicIndicators: "경제성장률 2.1%, 고용률 60.8%",
-                        rawData: response.data
-                    };
-                }
-
-                return null;
             });
 
             // 캐시 저장
