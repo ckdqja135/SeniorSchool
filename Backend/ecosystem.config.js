@@ -11,7 +11,8 @@ module.exports = {
                 RDB_USERNAME: "root",
                 RDB_PASSWORD: "cjswodlek12",
                 RDB_DATABASE: "ReviewSiteDB",
-                NODE_ENV: "production"
+                NODE_ENV: "production",
+                NODE_NO_WARNINGS: "1"
             }
         }
     ]
