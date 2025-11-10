@@ -112,6 +112,51 @@ module.exports = class CompInfo extends Sequelize.Model {
                     allowNull: true,
                     comment: '퇴사자 수'
                 },
+                compAvgSalary: {
+                    type: Sequelize.BIGINT,
+                    allowNull: true,
+                    comment: '평균 연봉 (원)'
+                },
+                compAvgTenure: {
+                    type: Sequelize.DECIMAL(4, 1),
+                    allowNull: true,
+                    comment: '평균 근속 연수 (년)'
+                },
+                compOperatingProfit: {
+                    type: Sequelize.BIGINT,
+                    allowNull: true,
+                    comment: '영업이익 (원)'
+                },
+                compNetIncome: {
+                    type: Sequelize.BIGINT,
+                    allowNull: true,
+                    comment: '당기순이익 (원)'
+                },
+                compTotalAssets: {
+                    type: Sequelize.BIGINT,
+                    allowNull: true,
+                    comment: '자산총계 (원)'
+                },
+                compTotalLiabilities: {
+                    type: Sequelize.BIGINT,
+                    allowNull: true,
+                    comment: '부채총계 (원)'
+                },
+                compTotalEquity: {
+                    type: Sequelize.BIGINT,
+                    allowNull: true,
+                    comment: '자본총계 (원)'
+                },
+                compCorpCode: {
+                    type: Sequelize.STRING(8),
+                    allowNull: true,
+                    comment: 'OpenDart corp_code'
+                },
+                compDataUpdatedAt: {
+                    type: Sequelize.DATE,
+                    allowNull: true,
+                    comment: 'OpenDart 데이터 업데이트 일시'
+                },
                 createdAt: {
                     type: Sequelize.DATE,
                     allowNull: false,

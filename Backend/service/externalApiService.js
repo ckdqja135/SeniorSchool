@@ -1,6 +1,7 @@
 const axios = require('axios');
 const { CompStatistics } = require('../model/index');
 const logger = require('../utils/logger');
+const AdmZip = require('adm-zip');
 
 /**
  * 외부 API 연동 서비스 (고도화 버전)
@@ -374,7 +375,81 @@ class ExternalApiService {
      * @param {string} businessNumber - 사업자등록번호 (선택)
      * @returns {Object} 상장회사 정보
      */
-    async getCompanyDataFromOpenDart(compName, businessNumber = null) {
+    async getCorpCode(compName) {
+        if (!compName || typeof compName !== 'string') {
+            throw new Error('compName은 문자열이어야 합니다.');
+        }
+
+        if (!this.apis.openDart.apiKey) {
+            logger.warn('[getCorpCode] OPENDART_API_KEY 미설정');
+            return null;
+        }
+
+        const normalizedName = compName.trim();
+        const cacheKey = `corpcode_${normalizedName}`;
+        const cached = this.getFromCache(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        try {
+            const corpCode = await this.requestWithRetry('openDart', async () => {
+                const corpListResponse = await axios.get(`${this.apis.openDart.baseUrl}/list.json`, {
+                    params: {
+                        crtfc_key: this.apis.openDart.apiKey,
+                        corp_name: normalizedName
+                    },
+                    timeout: this.apis.openDart.timeout,
+                    validateStatus: () => true
+                });
+
+                if (corpListResponse.status !== 200) {
+                    throw new Error(`OpenDart 응답 상태 코드: ${corpListResponse.status}`);
+                }
+
+                const { status, list, message } = corpListResponse.data || {};
+                if (status !== '000' || !Array.isArray(list) || list.length === 0) {
+                    logger.warn(`[getCorpCode] 회사명을 찾지 못했습니다: ${normalizedName} (${message || 'no message'})`);
+                    return null;
+                }
+
+                const exactMatch = list.find(corp =>
+                    corp.corp_name === normalizedName ||
+                    corp.corp_name === `${normalizedName}주식회사` ||
+                    corp.corp_name === `주식회사${normalizedName}` ||
+                    corp.corp_name === `(주)${normalizedName}`
+                );
+
+                const partialMatch = !exactMatch ? list.find(corp => corp.corp_name.includes(normalizedName)) : null;
+                const target = exactMatch || partialMatch || list[0];
+
+                if (!target?.corp_code) {
+                    logger.warn(`[getCorpCode] corp_code가 없는 결과입니다: ${normalizedName}`);
+                    return null;
+                }
+
+                logger.info(`[getCorpCode] corp_code ${target.corp_code} (matched: ${target.corp_name})`);
+                return target.corp_code;
+            });
+
+            if (corpCode) {
+                this.setCache(cacheKey, corpCode);
+            }
+
+            return corpCode;
+        } catch (error) {
+            logger.error(`[getCorpCode] Error: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * OpenDart API에서 상장회사 정보 조회
+     * @param {string} compName - 회사명
+     * @param {string} businessNumber - 사업자등록번호 (선택)
+     * @returns {Object} 상장회사 정보
+     */
+    async getCompanyDataFromOpenDart(compName, businessNumber = null, year = null) {
         if (!this.apis.openDart.apiKey) {
             logger.warn(`[getCompanyDataFromOpenDart] API Key not configured`);
             return null;
@@ -382,49 +457,21 @@ class ExternalApiService {
 
         try {
             // 캐시 확인 (사업자등록번호 포함)
-            const cacheKey = `opendart_${compName}_${businessNumber || 'no_biz'}`;
+            const cacheKey = `opendart_${compName}_${businessNumber || 'no_biz'}_${year || 'current'}`;
             const cached = this.getFromCache(cacheKey);
             if (cached) return cached;
 
+            // 1단계: corpCode.xml에서 corp_code 조회
+            const corpCode = await this.getCorpCode(compName);
+            if (!corpCode) {
+                logger.warn(`[getCompanyDataFromOpenDart] No corp_code found for: ${compName}`);
+                return null;
+            }
+
+            logger.info(`[getCompanyDataFromOpenDart] Using corp_code: ${corpCode} for ${compName}`);
+
             // 재시도 로직 적용
             const data = await this.requestWithRetry('openDart', async () => {
-                // 1단계: 회사 목록에서 고유번호 조회 (list.json 사용)
-                const corpListResponse = await axios.get(`${this.apis.openDart.baseUrl}/list.json`, {
-                    params: {
-                        crtfc_key: this.apis.openDart.apiKey,
-                        corp_name: compName
-                    },
-                    timeout: this.apis.openDart.timeout
-                });
-
-                // 응답 확인
-                if (corpListResponse.data.status !== '000') {
-                    logger.warn(`[getCompanyDataFromOpenDart] API Error: ${corpListResponse.data.message}`);
-                    return null;
-                }
-
-                if (!corpListResponse.data.list || corpListResponse.data.list.length === 0) {
-                    logger.warn(`[getCompanyDataFromOpenDart] No company found for: ${compName}`);
-                    return null;
-                }
-
-                // 정확히 일치하는 회사명 찾기 (부분 일치가 아닌)
-                let targetCompany = corpListResponse.data.list.find(corp => 
-                    corp.corp_name === compName || 
-                    corp.corp_name === `${compName}주식회사` ||
-                    corp.corp_name === `주식회사${compName}` ||
-                    corp.corp_name === `(주)${compName}` ||
-                    corp.corp_name.includes(compName)
-                );
-
-                // 일치하는 회사가 없으면 첫 번째 결과 사용
-                if (!targetCompany) {
-                    targetCompany = corpListResponse.data.list[0];
-                    logger.warn(`[getCompanyDataFromOpenDart] No exact match, using first result: ${targetCompany.corp_name}`);
-                }
-
-                const corpCode = targetCompany.corp_code;
-                logger.info(`[getCompanyDataFromOpenDart] Found corp_code: ${corpCode} for ${compName} (matched: ${targetCompany.corp_name})`);
 
                 // 2단계: 회사 개황 정보 조회
                 const companyResponse = await axios.get(`${this.apis.openDart.baseUrl}/company.json`, {
@@ -442,66 +489,53 @@ class ExternalApiService {
 
                 const company = companyResponse.data;
                 
-                // 3단계: 재무제표에서 직원 수 및 재무정보 조회
-                let employeeCount = null;
-                let revenue = null;
-                let profit = null;
+                // 3단계: 새로운 API 메서드로 직원 및 재무정보 조회
+                const targetYear = year || (new Date().getFullYear() - 1);
+                let employeeData = null;
+                let financialData = null;
+                let avgSalary = null;
+                let avgTenure = null;
                 
                 try {
-                    const currentYear = new Date().getFullYear() - 1; // 전년도 데이터
-                    const reportResponse = await axios.get(`${this.apis.openDart.baseUrl}/fnlttSinglAcnt.json`, {
-                        params: {
-                            crtfc_key: this.apis.openDart.apiKey,
-                            corp_code: corpCode,
-                            bsns_year: currentYear.toString(),
-                            reprt_code: '11011' // 사업보고서
-                        },
-                        timeout: this.apis.openDart.timeout
-                    });
-
-                    if (reportResponse.data.status === '000' && reportResponse.data.list) {
-                        // 종업원수
-                        const employeeData = reportResponse.data.list.find(item => 
-                            item.account_nm && (item.account_nm.includes('종업원수') || item.account_nm.includes('직원수'))
-                        );
-                        if (employeeData && employeeData.thstrm_amount) {
-                            employeeCount = parseInt(employeeData.thstrm_amount.replace(/[^0-9]/g, '')) || null;
-                        }
-
-                        // 매출액
-                        const revenueData = reportResponse.data.list.find(item => 
-                            item.account_nm && item.account_nm.includes('매출액')
-                        );
-                        if (revenueData && revenueData.thstrm_amount) {
-                            revenue = parseInt(revenueData.thstrm_amount.replace(/[^0-9]/g, '')) || null;
-                        }
-
-                        // 당기순이익
-                        const profitData = reportResponse.data.list.find(item => 
-                            item.account_nm && item.account_nm.includes('당기순이익')
-                        );
-                        if (profitData && profitData.thstrm_amount) {
-                            profit = parseInt(profitData.thstrm_amount.replace(/[^0-9]/g, '')) || null;
-                        }
+                    // 직원 현황 조회
+                    employeeData = await this.getEmployeeStatus(corpCode, targetYear, '11011');
+                    if (employeeData) {
+                        avgSalary = employeeData.avgSalary;
+                        avgTenure = employeeData.avgTenure;
                     }
-                } catch (reportError) {
-                    logger.warn(`[getCompanyDataFromOpenDart] Failed to fetch financial report: ${reportError.message}`);
+                } catch (empError) {
+                    logger.warn(`[getCompanyDataFromOpenDart] Failed to fetch employee status: ${empError.message}`);
+                }
+                
+                try {
+                    // 재무제표 조회
+                    financialData = await this.getFinancialStatement(corpCode, targetYear, '11011', 'CFS');
+                } catch (finError) {
+                    logger.warn(`[getCompanyDataFromOpenDart] Failed to fetch financial statement: ${finError.message}`);
                 }
 
                 return {
                     companyName: company.corp_name || compName,
+                    corpCode: corpCode,
                     businessNumber: company.jurir_no || businessNumber,
                     industry: company.induty_code || '정보없음',
                     listingDate: company.est_dt || null,
-                    marketCap: null,
-                    employeeCount: employeeCount,
-                    revenue: revenue,
-                    profit: profit,
-                    assets: null,
-                    liabilities: null,
-                    address: company.adres || null,
                     ceoName: company.ceo_nm || null,
                     homepage: company.hm_url || null,
+                    address: company.adres || null,
+                    // 직원 정보
+                    employeeCount: employeeData?.totalCount || null,
+                    avgSalary: avgSalary,
+                    avgTenure: avgTenure,
+                    // 재무 정보
+                    revenue: financialData?.revenue || null,
+                    operatingProfit: financialData?.operatingProfit || null,
+                    profit: financialData?.netIncome || null,
+                    assets: financialData?.totalAssets || null,
+                    liabilities: financialData?.totalLiabilities || null,
+                    equity: financialData?.totalEquity || null,
+                    // 기타
+                    dataSource: 'OpenDart API (corpCode.xml + company.json + empSttus.json + fnlttSinglAcntAll.json)',
                     rawData: company // 원본 데이터 보존
                 };
             });
@@ -807,6 +841,385 @@ class ExternalApiService {
 
         logger.info(`[batchUpdateCompanyStatistics] Completed: ${results.success} success, ${results.failed} failed`);
         return results;
+    }
+
+    /**
+     * OpenDart corpCode.xml 다운로드 및 파싱
+     * 전체 상장회사 목록을 다운로드하여 Map으로 반환
+     * @returns {Map} corp_name -> {corp_code, stock_code}
+     */
+    async downloadAndParseCorpCode() {
+        try {
+            logger.info('[downloadAndParseCorpCode] Starting corp_code download...');
+
+            // 캐시 확인
+            const cacheKey = 'corpcode_xml_map';
+            const cached = this.getFromCache(cacheKey);
+            if (cached) {
+                logger.info('[downloadAndParseCorpCode] Using cached corp_code map');
+                return cached;
+            }
+
+            if (!this.apis.openDart.apiKey) {
+                throw new Error('OpenDart API Key not configured');
+            }
+
+            // corpCode.xml 다운로드
+            const response = await axios.get(`${this.apis.openDart.baseUrl}/corpCode.xml`, {
+                params: {
+                    crtfc_key: this.apis.openDart.apiKey
+                },
+                timeout: 30000, // 30초 (파일이 큼)
+                responseType: 'arraybuffer'
+            });
+
+            if (!response.data) {
+                throw new Error('Empty response from corpCode.xml');
+            }
+
+            const buffer = Buffer.from(response.data);
+            logger.info(`[downloadAndParseCorpCode] Response size: ${buffer.length} bytes`);
+
+            let xmlText;
+            
+            // ZIP 파일인지 확인 (PK 시그니처: 50 4B 03 04)
+            if (buffer[0] === 0x50 && buffer[1] === 0x4B) {
+                logger.info('[downloadAndParseCorpCode] Detected ZIP format, extracting with adm-zip...');
+                try {
+                    // adm-zip으로 압축 해제
+                    const zip = new AdmZip(buffer);
+                    const zipEntries = zip.getEntries();
+                    
+                    logger.info(`[downloadAndParseCorpCode] ZIP contains ${zipEntries.length} file(s)`);
+                    
+                    if (zipEntries.length === 0) {
+                        throw new Error('ZIP file is empty');
+                    }
+                    
+                    // 첫 번째 파일 (CORPCODE.xml) 추출
+                    const entry = zipEntries[0];
+                    logger.info(`[downloadAndParseCorpCode] Extracting: ${entry.entryName} (${entry.header.size} bytes)`);
+                    
+                    xmlText = zip.readAsText(entry);
+                    logger.info(`[downloadAndParseCorpCode] Successfully extracted ${xmlText.length} characters`);
+                    
+                } catch (zipError) {
+                    logger.error(`[downloadAndParseCorpCode] ZIP extraction failed: ${zipError.message}`);
+                    throw zipError;
+                }
+            } else {
+                // ZIP이 아니면 일반 텍스트로 처리
+                logger.info('[downloadAndParseCorpCode] Not ZIP format, treating as plain text');
+                xmlText = buffer.toString('utf-8');
+            }
+
+            logger.info(`[downloadAndParseCorpCode] XML text size: ${xmlText.length} bytes`);
+
+            // XML 파싱 (간단한 정규식 사용)
+            const corpCodeMap = new Map();
+            const corpPattern = /<list>[\s\S]*?<corp_code>(.*?)<\/corp_code>[\s\S]*?<corp_name>(.*?)<\/corp_name>[\s\S]*?<stock_code>(.*?)<\/stock_code>[\s\S]*?<\/list>/g;
+            
+            let match;
+            while ((match = corpPattern.exec(xmlText)) !== null) {
+                const corpCode = match[1].trim();
+                const corpName = match[2].trim();
+                const stockCode = match[3].trim();
+                
+                corpCodeMap.set(corpName, {
+                    corp_code: corpCode,
+                    stock_code: stockCode || null
+                });
+            }
+
+            logger.info(`[downloadAndParseCorpCode] Downloaded ${corpCodeMap.size} companies`);
+
+            if (corpCodeMap.size === 0) {
+                // 파싱 실패시 샘플 출력
+                logger.warn('[downloadAndParseCorpCode] XML parsing failed, showing first 500 chars:');
+                logger.warn(xmlText.substring(0, 500));
+            }
+
+            // 캐시 저장 (1시간)
+            this.setCache(cacheKey, corpCodeMap);
+
+            return corpCodeMap;
+
+        } catch (error) {
+            logger.error(`[downloadAndParseCorpCode] Error: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * OpenDart API에서 회사명으로 corp_code 조회
+     * corpCode.xml을 사용하여 정확한 매칭
+     * @param {string} compName - 회사명
+     * @returns {string} corp_code
+     */
+    async getCorpCode(compName) {
+        if (!compName) {
+            throw new Error('compName is required');
+        }
+
+        if (!this.apis.openDart.apiKey) {
+            logger.warn('[getCorpCode] API Key not configured');
+            return null;
+        }
+
+        try {
+            // 캐시 확인
+            const cacheKey = `corpcode_${compName}`;
+            const cached = this.getFromCache(cacheKey);
+            if (cached) return cached;
+
+            // corpCode.xml 다운로드 (캐시됨)
+            const corpCodeMap = await this.downloadAndParseCorpCode();
+
+            // 정확히 일치하는 회사명 찾기
+            let corpCode = null;
+            let matchedName = null;
+            
+            // 1. 정확한 매칭
+            if (corpCodeMap.has(compName)) {
+                corpCode = corpCodeMap.get(compName).corp_code;
+                matchedName = compName;
+                logger.info(`[getCorpCode] Exact match found: ${compName} -> ${corpCode}`);
+            }
+            // 2. 주식회사 변형 검색
+            else {
+                const variations = [
+                    `${compName}주식회사`,
+                    `주식회사${compName}`,
+                    `(주)${compName}`,
+                    `${compName}(주)`,
+                    `주식회사 ${compName}`,
+                    `(주) ${compName}`
+                ];
+
+                for (const variation of variations) {
+                    if (corpCodeMap.has(variation)) {
+                        corpCode = corpCodeMap.get(variation).corp_code;
+                        matchedName = variation;
+                        logger.info(`[getCorpCode] Variation match found: ${variation} -> ${corpCode}`);
+                        break;
+                    }
+                }
+            }
+
+            // 3. 부분 일치 검색 (정확도 우선)
+            if (!corpCode) {
+                const candidates = [];
+                for (const [name, info] of corpCodeMap.entries()) {
+                    if (name.includes(compName)) {
+                        candidates.push({ name, info, score: name.length });
+                    }
+                }
+                
+                // 짧은 이름일수록 더 정확한 매칭
+                if (candidates.length > 0) {
+                    candidates.sort((a, b) => a.score - b.score);
+                    corpCode = candidates[0].info.corp_code;
+                    matchedName = candidates[0].name;
+                    logger.info(`[getCorpCode] Partial match found: ${matchedName} -> ${corpCode} (from ${candidates.length} candidates)`);
+                }
+            }
+
+            if (!corpCode) {
+                logger.warn(`[getCorpCode] No match found for: ${compName}`);
+                return null;
+            }
+
+            // 캐시 저장
+            this.setCache(cacheKey, corpCode);
+            return corpCode;
+
+        } catch (error) {
+            logger.error(`[getCorpCode] Error: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * OpenDart API에서 직원 현황 조회 (empSttus.json)
+     * @param {string} corpCode - 회사 고유번호
+     * @param {number} year - 조회 연도
+     * @param {string} reprtCode - 보고서 코드 (11011: 사업보고서)
+     * @returns {Object} 직원 현황 데이터
+     */
+    async getEmployeeStatus(corpCode, year, reprtCode = '11011') {
+        if (!this.apis.openDart.apiKey) {
+            logger.warn('[getEmployeeStatus] API Key not configured');
+            return null;
+        }
+
+        try {
+            // 캐시 확인
+            const cacheKey = `employee_${corpCode}_${year}_${reprtCode}`;
+            const cached = this.getFromCache(cacheKey);
+            if (cached) return cached;
+
+            // 재시도 로직 적용
+            const data = await this.requestWithRetry('openDart', async () => {
+                const response = await axios.get(`${this.apis.openDart.baseUrl}/empSttus.json`, {
+                    params: {
+                        crtfc_key: this.apis.openDart.apiKey,
+                        corp_code: corpCode,
+                        bsns_year: year.toString(),
+                        reprt_code: reprtCode
+                    },
+                    timeout: this.apis.openDart.timeout
+                });
+
+                if (response.data.status !== '000') {
+                    logger.warn(`[getEmployeeStatus] API Error: ${response.data.message}`);
+                    return null;
+                }
+
+                if (!response.data.list || response.data.list.length === 0) {
+                    logger.warn(`[getEmployeeStatus] No employee data found`);
+                    return null;
+                }
+
+                // 직원 데이터 파싱
+                const employees = response.data.list.map(item => ({
+                    employmentType: item.fo_bbm || null,
+                    sexDivision: item.sexdstn || null,
+                    employeeCount: parseInt((item.sm || '').replace(/,/g, '')) || 0,
+                    avgSalary: parseInt((item.avrg_cnwk_sdytrn || '').replace(/,/g, '')) * 1000000 || 0, // 백만원 단위
+                    avgTenure: parseFloat((item.fyer_avr_cnwk_sdytrn || '').replace(/,/g, '')) || 0
+                }));
+
+                // 총계 계산
+                let totalCount = 0;
+                let totalSalary = 0;
+                let totalTenure = 0;
+                let count = 0;
+
+                employees.forEach(emp => {
+                    if (emp.employeeCount > 0) {
+                        totalCount += emp.employeeCount;
+                        totalSalary += emp.avgSalary * emp.employeeCount;
+                        totalTenure += emp.avgTenure * emp.employeeCount;
+                        count++;
+                    }
+                });
+
+                const result = {
+                    corpCode,
+                    year,
+                    reprtCode,
+                    totalCount,
+                    avgSalary: totalCount > 0 ? Math.round(totalSalary / totalCount) : 0,
+                    avgTenure: totalCount > 0 ? Math.round((totalTenure / totalCount) * 10) / 10 : 0,
+                    employees,
+                    rawData: response.data.list
+                };
+
+                logger.info(`[getEmployeeStatus] Found ${employees.length} employee records for ${corpCode}`);
+                return result;
+            });
+
+            // 캐시 저장
+            if (data) {
+                this.setCache(cacheKey, data);
+            }
+
+            return data;
+
+        } catch (error) {
+            logger.error(`[getEmployeeStatus] Error: ${error.message}`);
+            return null;
+        }
+    }
+
+    /**
+     * OpenDart API에서 재무제표 조회 (fnlttSinglAcntAll.json)
+     * @param {string} corpCode - 회사 고유번호
+     * @param {number} year - 조회 연도
+     * @param {string} reprtCode - 보고서 코드 (11011: 사업보고서)
+     * @param {string} fsDiv - 재무제표 구분 (CFS: 연결, OFS: 별도)
+     * @returns {Object} 재무제표 데이터
+     */
+    async getFinancialStatement(corpCode, year, reprtCode = '11011', fsDiv = 'CFS') {
+        if (!this.apis.openDart.apiKey) {
+            logger.warn('[getFinancialStatement] API Key not configured');
+            return null;
+        }
+
+        try {
+            // 캐시 확인
+            const cacheKey = `financial_${corpCode}_${year}_${reprtCode}_${fsDiv}`;
+            const cached = this.getFromCache(cacheKey);
+            if (cached) return cached;
+
+            // 재시도 로직 적용
+            const data = await this.requestWithRetry('openDart', async () => {
+                const response = await axios.get(`${this.apis.openDart.baseUrl}/fnlttSinglAcntAll.json`, {
+                    params: {
+                        crtfc_key: this.apis.openDart.apiKey,
+                        corp_code: corpCode,
+                        bsns_year: year.toString(),
+                        reprt_code: reprtCode,
+                        fs_div: fsDiv
+                    },
+                    timeout: this.apis.openDart.timeout
+                });
+
+                if (response.data.status !== '000') {
+                    logger.warn(`[getFinancialStatement] API Error: ${response.data.message}`);
+                    return null;
+                }
+
+                if (!response.data.list || response.data.list.length === 0) {
+                    logger.warn(`[getFinancialStatement] No financial data found`);
+                    return null;
+                }
+
+                // 재무 항목 추출 함수
+                const findAmount = (accountNames, sjDiv = 'IS') => {
+                    const names = Array.isArray(accountNames) ? accountNames : [accountNames];
+                    for (const accountName of names) {
+                        const item = response.data.list.find(i => 
+                            i.account_nm && i.account_nm.includes(accountName) && i.sj_div === sjDiv
+                        );
+                        if (item && item.thstrm_amount) {
+                            const value = parseInt(item.thstrm_amount.replace(/[^0-9-]/g, ''));
+                            if (value !== 0) return value;
+                        }
+                    }
+                    return null;
+                };
+
+                const result = {
+                    corpCode,
+                    year,
+                    reprtCode,
+                    fsDiv,
+                    // 다양한 계정과목명 시도
+                    revenue: findAmount(['매출액', '수익(매출액)', '매출', '영업수익'], 'IS'),
+                    operatingProfit: findAmount(['영업이익', '영업이익(손실)'], 'IS'),
+                    netIncome: findAmount(['당기순이익', '당기순이익(손실)', '분기순이익'], 'IS'),
+                    totalAssets: findAmount(['자산총계', '자산총액'], 'BS'),
+                    totalLiabilities: findAmount(['부채총계', '부채총액'], 'BS'),
+                    totalEquity: findAmount(['자본총계', '자본총액'], 'BS'),
+                    rawData: response.data.list
+                };
+
+                logger.info(`[getFinancialStatement] Found financial data for ${corpCode}`);
+                return result;
+            });
+
+            // 캐시 저장
+            if (data) {
+                this.setCache(cacheKey, data);
+            }
+
+            return data;
+
+        } catch (error) {
+            logger.error(`[getFinancialStatement] Error: ${error.message}`);
+            return null;
+        }
     }
 }
 
