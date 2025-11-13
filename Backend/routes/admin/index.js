@@ -12,6 +12,7 @@ const outsourceRouter = require('./outsource.router');
 const restaurantRouter = require('./restaurant.router');
 const freeBoardRouter = require('./freeBoard.router');
 const dashboardRouter = require('./dashboard.router');
+const schedulerRouter = require('./companyDataScheduler.router');
 
 // 라우터 등록
 router.use('/univ', univRouter);
@@ -24,5 +25,6 @@ router.use('/outsource', outsourceRouter);
 router.use('/restaurant', restaurantRouter);
 router.use('/freeboard', freeBoardRouter);
 router.use('/dashboard', dashboardRouter);
+router.use('/scheduler', schedulerRouter);
 
 module.exports = router;

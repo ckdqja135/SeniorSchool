@@ -66,4 +66,9 @@ app.use(cookieParser());
 // 서버 정보 숨기기
 app.disable('x-powered-by');
 
+// 회사 데이터 스케줄러 시작 (매일 자정에 자동 실행)
+const companyDataScheduler = require('./scheduler/companyDataScheduler');
+companyDataScheduler.start();
+logger.info('✅ Company data scheduler started (runs daily at midnight)');
+
 module.exports = app;
