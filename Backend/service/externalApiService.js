@@ -1080,12 +1080,23 @@ class ExternalApiService {
                     return null;
                 }
 
+                // 🔍 DEBUG: 첫 번째 직원 데이터 원본 확인
+                if (response.data.list.length > 0) {
+                    const firstItem = response.data.list[0];
+                    logger.info(`[getEmployeeStatus] 🔍 API 원본 데이터 샘플:`);
+                    logger.info(`   fo_bbm (직원유형): ${firstItem.fo_bbm}`);
+                    logger.info(`   sm (직원수): ${firstItem.sm}`);
+                    logger.info(`   avrg_cnwk_sdytrn (평균급여액 원본): "${firstItem.avrg_cnwk_sdytrn}"`);
+                    logger.info(`   fyer_avr_cnwk_sdytrn (평균근속연수): ${firstItem.fyer_avr_cnwk_sdytrn}`);
+                }
+
                 // 직원 데이터 파싱
+
                 const employees = response.data.list.map(item => ({
                     employmentType: item.fo_bbm || null,
                     sexDivision: item.sexdstn || null,
                     employeeCount: parseInt((item.sm || '').replace(/,/g, '')) || 0,
-                    avgSalary: parseInt((item.avrg_cnwk_sdytrn || '').replace(/,/g, '')) * 1000000 || 0, // 백만원 단위
+                    avgSalary: Math.round(parseFloat((item.avrg_cnwk_sdytrn || '').replace(/,/g, '')) * 10000000) || 0, // 천만원 단위
                     avgTenure: parseFloat((item.fyer_avr_cnwk_sdytrn || '').replace(/,/g, '')) || 0
                 }));
 

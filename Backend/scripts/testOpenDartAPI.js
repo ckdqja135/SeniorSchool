@@ -112,7 +112,7 @@ async function testEmployeeStatus() {
             console.log(`📊 직원 현황 요약:`);
             console.log(`   - 연도: ${employeeStatus.year}`);
             console.log(`   - 총 직원 수: ${employeeStatus.totalCount?.toLocaleString() || 'N/A'}명`);
-            console.log(`   - 평균 연봉: ${employeeStatus.avgSalary?.toLocaleString() || 'N/A'}원`);
+            console.log(`   - 평균 연봉: ${employeeStatus.avgSalary?.toLocaleString() || 'N/A'}원 (${Math.round(employeeStatus.avgSalary / 10000)}만원)`);
             console.log(`   - 평균 근속: ${employeeStatus.avgTenure?.toLocaleString() || 'N/A'}년`);
             console.log(`   - 세부 데이터 항목: ${employeeStatus.employees?.length || 0}개\n`);
 
@@ -121,7 +121,7 @@ async function testEmployeeStatus() {
                 console.log('📋 세부 데이터 (최대 5개):');
                 employeeStatus.employees.slice(0, 5).forEach((emp, idx) => {
                     console.log(`   ${idx + 1}. ${emp.employmentType || 'N/A'} (${emp.sexDivision || 'N/A'})`);
-                    console.log(`      직원수: ${emp.employeeCount?.toLocaleString() || 'N/A'}명, 평균연봉: ${emp.avgSalary?.toLocaleString() || 'N/A'}원`);
+                    console.log(`      직원수: ${emp.employeeCount?.toLocaleString() || 'N/A'}명, 평균연봉: ${emp.avgSalary?.toLocaleString() || 'N/A'}원 (${Math.round(emp.avgSalary / 10000)}만원)`);
                 });
             }
 
