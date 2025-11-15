@@ -56,6 +56,11 @@ module.exports = class CompBoard extends Sequelize.Model {
                 allowNull: true,
                 comment: '게시글 카테고리 (후기, 질문, 정보공유 등)'
             },
+            boardRating: {
+                type: Sequelize.DECIMAL(2, 1),
+                allowNull: true,
+                comment: '후기 평점 (0.5 ~ 5.0)'
+            },
             isDeleted: {
                 type: Sequelize.BOOLEAN,
                 allowNull: false,

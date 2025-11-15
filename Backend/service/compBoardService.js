@@ -94,6 +94,22 @@ exports.getBoardDetail = async (boardIdx) => {
     }
 };
 
+const normalizeBoardRating = (rating) => {
+    if (rating === undefined || rating === null) {
+        return null;
+    }
+    const numericRating = parseFloat(rating);
+    if (
+        Number.isNaN(numericRating) ||
+        numericRating < 0.5 ||
+        numericRating > 5.0 ||
+        !Number.isInteger(numericRating * 2)
+    ) {
+        throw new Error('Invalid board rating value');
+    }
+    return numericRating;
+};
+
 exports.insertBoard = async (boardData) => {
     const transaction = await sequelize.transaction();
     try {
@@ -108,6 +124,7 @@ exports.insertBoard = async (boardData) => {
             boardHits: 0, // 초기 조회수는 0
             boardLike: 0, // 초기 좋아요는 0
             boardRegDate: now.toISOString().slice(0, 19).replace('T', ' '), // 문자열 형태로 저장
+            boardRating: normalizeBoardRating(boardData.boardRating),
             isDeleted: false
         }, { transaction });
 
@@ -147,7 +164,8 @@ exports.correctBoard = async (boardData) => {
         await CompBoard.update({
             boardTitle: boardData.boardTitle,
             boardContent: boardData.boardContent,
-            boardRegDate: now.toISOString().slice(0, 19).replace('T', ' ')
+            boardRegDate: now.toISOString().slice(0, 19).replace('T', ' '),
+            boardRating: normalizeBoardRating(boardData.boardRating)
         }, {
             where: { boardIdx: boardData.boardIdx },
             transaction

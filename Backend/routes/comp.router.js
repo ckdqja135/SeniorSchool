@@ -26,4 +26,10 @@ router.get('/salaries', compController.getSalaries);
 // 연봉 후기 작성
 router.post('/salaries', compController.createSalary);
 
+// ========== 회사 후기 평점 관련 API ==========
+// 면접 후기 평점 입력/갱신
+router.put('/interviews/:interviewIdx/rating', compController.updateInterviewRating);
+// 회사 평점 평균 조회
+router.get('/companies/:compIdx/rating', compController.getCompanyAverageRating);
+
 module.exports = router;

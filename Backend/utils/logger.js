@@ -3,14 +3,14 @@ require('winston-daily-rotate-file');
 
 const transport = new winston.transports.DailyRotateFile({
     filename: 'logs/backend-%DATE%.log',
-    datePattern: 'YYYY-MM-DD',
+    datePattern: 'YYYYMMDD',
     zippedArchive: false, // 압축 여부, true면 gzip으로 압축
     maxFiles: '90d', // 3개월(약 90일)간 로그 유지
 });
 
 const errorTransport = new winston.transports.DailyRotateFile({
     filename: 'logs/error-%DATE%.log',
-    datePattern: 'YYYY-MM-DD',
+    datePattern: 'YYYYMMDD',
     level: 'error',
     zippedArchive: false,
     maxFiles: '90d',

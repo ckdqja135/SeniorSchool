@@ -40,12 +40,41 @@ exports.getBoardDetail = async (req, res, next) => {
     }
 };
 
+const parseBoardRating = (rating) => {
+    if (rating === undefined || rating === null || rating === '') {
+        return null;
+    }
+
+    const numericRating = parseFloat(rating);
+    if (
+        Number.isNaN(numericRating) ||
+        numericRating < 0.5 ||
+        numericRating > 5.0 ||
+        !Number.isInteger(numericRating * 2)
+    ) {
+        const error = new Error('INVALID_RATING');
+        error.code = 'INVALID_RATING';
+        throw error;
+    }
+
+    return numericRating;
+};
+
 exports.insertBoard = async (req, res, next) => {
     try {
-        const boardData = req.body;
+        const boardData = {
+            ...req.body,
+            boardRating: parseBoardRating(req.body.boardRating)
+        };
         const result = await compBoardService.insertBoard(boardData);
         res.status(200).json({ success: true, message: result });
     } catch (error) {
+        if (error.code === 'INVALID_RATING') {
+            return res.status(400).json({
+                success: false,
+                error: '평점은 0.5부터 5.0 사이의 0.5 단위 값이어야 합니다.'
+            });
+        }
         logger.error(error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
@@ -53,10 +82,19 @@ exports.insertBoard = async (req, res, next) => {
 
 exports.correctBoard = async (req, res, next) => {
     try {
-        const boardData = req.body;
+        const boardData = {
+            ...req.body,
+            boardRating: parseBoardRating(req.body.boardRating)
+        };
         const result = await compBoardService.correctBoard(boardData);
         res.status(200).json({ success: true, message: result });
     } catch (error) {
+        if (error.code === 'INVALID_RATING') {
+            return res.status(400).json({
+                success: false,
+                error: '평점은 0.5부터 5.0 사이의 0.5 단위 값이어야 합니다.'
+            });
+        }
         logger.error(error);
         res.status(500).json({ error: 'Internal Server Error' });
     }

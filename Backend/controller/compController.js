@@ -215,3 +215,94 @@ exports.getSalaries = async (req, res, next) => {
         });
     }
 };
+
+/**
+ * 면접 후기 평점 입력/갱신
+ */
+exports.updateInterviewRating = async (req, res, next) => {
+    try {
+        const interviewIdx = parseInt(req.params.interviewIdx, 10);
+        const { writerPw, rating } = req.body;
+
+        if (!interviewIdx || Number.isNaN(interviewIdx)) {
+            return res.status(400).json({
+                status: 400,
+                error: '유효하지 않은 면접 후기 인덱스입니다.',
+                message: 'interviewIdx는 숫자여야 합니다.'
+            });
+        }
+
+        if (!writerPw) {
+            return res.status(400).json({
+                status: 400,
+                error: '비밀번호는 필수입니다.',
+                message: '작성자 비밀번호를 입력해주세요.'
+            });
+        }
+
+        if (rating === undefined || rating === null) {
+            return res.status(400).json({
+                status: 400,
+                error: '평점은 필수입니다.',
+                message: 'rating 값을 입력해주세요.'
+            });
+        }
+
+        const numericRating = parseFloat(rating);
+        if (
+            Number.isNaN(numericRating) ||
+            numericRating < 0.5 ||
+            numericRating > 5.0 ||
+            !Number.isInteger(numericRating * 2)
+        ) {
+            return res.status(400).json({
+                status: 400,
+                error: '평점 범위 오류',
+                message: '평점은 0.5부터 5.0 사이의 0.5 단위 값이어야 합니다.'
+            });
+        }
+
+        const result = await compService.updateInterviewRating(interviewIdx, writerPw, numericRating);
+
+        logger.info(`[updateInterviewRating] 면접 후기 평점 업데이트 성공: ${interviewIdx}, rating=${numericRating}`);
+
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[updateInterviewRating] Error: ${error.message}`);
+        res.status(500).json({ 
+            status: 500, 
+            error: '서버 오류가 발생했습니다.',
+            message: error.message 
+        });
+    }
+};
+
+/**
+ * 회사 평점 평균 조회
+ */
+exports.getCompanyAverageRating = async (req, res, next) => {
+    try {
+        const compIdx = parseInt(req.params.compIdx, 10);
+
+        if (!compIdx || Number.isNaN(compIdx)) {
+            return res.status(400).json({
+                status: 400,
+                error: '유효하지 않은 회사 인덱스입니다.',
+                message: 'compIdx는 숫자여야 합니다.'
+            });
+        }
+
+        const result = await compService.getCompanyAverageRating(compIdx);
+
+        logger.info(`[getCompanyAverageRating] 회사 평점 평균 조회 성공: ${compIdx}`);
+
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[getCompanyAverageRating] Error: ${error.message}`);
+        res.status(500).json({ 
+            status: 500, 
+            error: '서버 오류가 발생했습니다.',
+            message: error.message 
+        });
+    }
+};

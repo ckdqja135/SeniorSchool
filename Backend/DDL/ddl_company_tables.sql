@@ -86,6 +86,7 @@ CREATE TABLE `tb_comp_board` (
   `boardID` varchar(45) NOT NULL COMMENT '작성자 ID',
   `boardPW` varchar(100) NOT NULL COMMENT '작성자 비밀번호',
   `boardCategory` varchar(20) DEFAULT NULL COMMENT '게시글 카테고리 (후기, 질문, 정보공유 등)',
+  `boardRating` decimal(2,1) DEFAULT NULL COMMENT '후기 평점 (0.5 ~ 5.0)',
   `isDeleted` tinyint NOT NULL DEFAULT '0' COMMENT '삭제 여부',
   PRIMARY KEY (`boardIdx`),
   KEY `idx_comp_board_comp` (`compIdx`),

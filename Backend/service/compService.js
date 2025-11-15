@@ -1,10 +1,31 @@
 const { CompInfo, CompRequest, CompInterview, CompSalary } = require('../model/index');
+const { Op, fn, col } = require('sequelize');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
 
 // SHA256 암호화 함수
 const hashPassword = (password) => {
     return crypto.createHash('sha256').update(password).digest('hex');
+};
+
+// 평점 검증 함수 (0.5 ~ 5.0, 0.5 단위)
+const normalizeRating = (rating) => {
+    if (rating === undefined || rating === null) {
+        return null;
+    }
+
+    const numericRating = parseFloat(rating);
+
+    if (
+        Number.isNaN(numericRating) ||
+        numericRating < 0.5 ||
+        numericRating > 5.0 ||
+        !Number.isInteger(numericRating * 2)
+    ) {
+        throw new Error('평점은 0.5부터 5.0 사이의 0.5 단위 값이어야 합니다.');
+    }
+
+    return numericRating;
 };
 
 /**
@@ -128,7 +149,7 @@ exports.createCompRequest = async (requestData) => {
  */
 exports.createInterview = async (interviewData) => {
     try {
-        const { compIdx, writerId, writerPw, interviewTitle, interviewContent, interviewDate, interviewResult, interviewDifficulty, position } = interviewData;
+        const { compIdx, writerId, writerPw, interviewTitle, interviewContent, interviewDate, interviewResult, interviewDifficulty, position, interviewRating } = interviewData;
 
         // 필수값 체크
         if (!compIdx || !writerId || !writerPw || !interviewTitle) {
@@ -154,7 +175,8 @@ exports.createInterview = async (interviewData) => {
             interviewDate: interviewDate || null,
             interviewResult: interviewResult || null,
             interviewDifficulty: interviewDifficulty || null,
-            position: position || null
+            position: position || null,
+            interviewRating: normalizeRating(interviewRating)
         });
 
         logger.info(`[createInterview] 면접 후기 생성 완료: ${interview.interviewIdx}`);
@@ -299,12 +321,16 @@ exports.updateInterview = async (interviewIdx, updateData, writerPw) => {
         }
 
         // 수정 가능한 필드만 업데이트
-        const allowedFields = ['interviewTitle', 'interviewContent', 'interviewDate', 'interviewResult', 'interviewDifficulty', 'position'];
+        const allowedFields = ['interviewTitle', 'interviewContent', 'interviewDate', 'interviewResult', 'interviewDifficulty', 'position', 'interviewRating'];
         const updateFields = {};
         
         allowedFields.forEach(field => {
             if (updateData[field] !== undefined) {
-                updateFields[field] = updateData[field];
+                if (field === 'interviewRating') {
+                    updateFields[field] = normalizeRating(updateData[field]);
+                } else {
+                    updateFields[field] = updateData[field];
+                }
             }
         });
 
@@ -472,6 +498,100 @@ exports.getSalaries = async (compIdx = null, pagination = {}) => {
         };
     } catch (error) {
         logger.error(`[getSalaries] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 면접 후기 평점 입력/갱신
+ * @param {number} interviewIdx - 면접 후기 인덱스
+ * @param {string} writerPw - 작성자 비밀번호
+ * @param {number} rating - 평점 값
+ * @returns {Object} 업데이트 결과
+ */
+exports.updateInterviewRating = async (interviewIdx, writerPw, rating) => {
+    try {
+        const interview = await CompInterview.findOne({
+            where: {
+                interviewIdx,
+                isDeleted: false
+            }
+        });
+
+        if (!interview) {
+            return {
+                status: 404,
+                message: '면접 후기를 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        const hashedPassword = hashPassword(writerPw);
+        if (interview.writerPw !== hashedPassword) {
+            return {
+                status: 403,
+                message: '비밀번호가 일치하지 않습니다.',
+                data: null
+            };
+        }
+
+        await interview.update({
+            interviewRating: normalizeRating(rating),
+            modDate: new Date()
+        });
+
+        logger.info(`[updateInterviewRating] interviewIdx=${interviewIdx}, rating=${rating}`);
+
+        return {
+            status: 200,
+            message: '면접 후기 평점이 저장되었습니다.',
+            data: {
+                interviewIdx: interview.interviewIdx,
+                interviewRating: interview.interviewRating
+            }
+        };
+    } catch (error) {
+        logger.error(`[updateInterviewRating] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * 회사 평점 평균 조회
+ * @param {number} compIdx - 회사 인덱스
+ * @returns {Object} 평균 평점 결과
+ */
+exports.getCompanyAverageRating = async (compIdx) => {
+    try {
+        const result = await CompInterview.findOne({
+            attributes: [
+                [fn('AVG', col('interviewRating')), 'averageRating'],
+                [fn('COUNT', col('interviewRating')), 'ratingCount']
+            ],
+            where: {
+                compIdx,
+                isDeleted: false,
+                interviewRating: {
+                    [Op.not]: null
+                }
+            },
+            raw: true
+        });
+
+        const average = result?.averageRating ? Number(result.averageRating).toFixed(1) : null;
+        const count = result?.ratingCount ? parseInt(result.ratingCount, 10) : 0;
+
+        return {
+            status: 200,
+            message: '회사 평점 평균을 조회했습니다.',
+            data: {
+                compIdx,
+                averageRating: average ? parseFloat(average) : null,
+                ratingCount: count
+            }
+        };
+    } catch (error) {
+        logger.error(`[getCompanyAverageRating] Error: ${error.message}`);
         throw error;
     }
 };
