@@ -33,6 +33,9 @@ app.use(xssMiddleware);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// 쿠키 파서
+app.use(cookieParser());
+
 // 보안 미들웨어 (helmet 등)
 securityMiddleware(app);
 
@@ -59,9 +62,6 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500);
     res.json({ message: err.message });
 });
-
-// 쿠키 파서
-app.use(cookieParser());
 
 // 서버 정보 숨기기
 app.disable('x-powered-by');
