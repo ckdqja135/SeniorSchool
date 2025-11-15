@@ -11,19 +11,20 @@ const securityMiddleware = (app) => {
     // 기본 Helmet 설정
     app.use(helmet());
 
-    // CSP 설정
+    // CSP 설정 (API 서버이므로 완화)
     app.use(helmet.contentSecurityPolicy({
         directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "http://localhost:3000", "http://localhost:3001", "http://192.168.45.242:3000", "http://192.168.45.242:3001"],
+            connectSrc: ["'self'", "*"],  // API 요청 허용
             fontSrc: ["'self'"],
             objectSrc: ["'none'"],
             mediaSrc: ["'self'"],
             frameSrc: ["'none'"]
-        }
+        },
+        useDefaults: false
     }));
 
     // Cross-Origin 설정
@@ -33,9 +34,6 @@ const securityMiddleware = (app) => {
 
     // DNS Prefetching 제어
     app.use(helmet.dnsPrefetchControl());
-
-    // Certificate Transparency
-    app.use(helmet.expectCt());
 
     // X-Frame-Options 설정
     app.use(helmet.frameguard({ action: 'deny' }));
