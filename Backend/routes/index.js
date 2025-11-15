@@ -1,6 +1,15 @@
 const express = require('express');
 const router = express.Router();
 
+// 헬스체크 엔드포인트
+router.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        message: 'Server is running',
+        timestamp: new Date().toISOString()
+    });
+});
+
 // 기존 라우터들 (학교 오빠 - 호환성 유지)
 const boardRouter = require('./board.router');
 const commentRouter = require('./comment.router');
