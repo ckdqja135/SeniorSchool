@@ -54,6 +54,18 @@ module.exports = class RestaurantInfo extends Sequelize.Model {
                     type: Sequelize.STRING(200),
                     allowNull: true,
                 },
+                restaurantImage: {
+                    type: Sequelize.STRING(200),
+                    allowNull: true,
+                },
+                restaurantRating: {
+                    type: Sequelize.DECIMAL(2, 1),
+                    allowNull: true,
+                    validate: {
+                        min: 0.0,
+                        max: 5.0,
+                    },
+                },
                 restaurantStatus: {
                     type: Sequelize.TINYINT,
                     allowNull: false,

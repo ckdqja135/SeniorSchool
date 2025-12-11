@@ -101,6 +101,17 @@ exports.createRestaurant = async (restaurantData) => {
                     throw new Error('필수값이 누락되었습니다. (restaurantName, restaurantLocation, restaurantType, restaurantOwner)');
                 }
 
+                // 별점 검증 (0.5 단위)
+                let restaurantRating = null;
+                if (restaurant.restaurantRating !== undefined && restaurant.restaurantRating !== null) {
+                    const rating = parseFloat(restaurant.restaurantRating);
+                    if (isNaN(rating) || rating < 0 || rating > 5) {
+                        throw new Error('별점은 0.0 ~ 5.0 사이의 값이어야 합니다.');
+                    }
+                    // 0.5 단위로 반올림
+                    restaurantRating = Math.round(rating * 2) / 2;
+                }
+
                 // DB에 데이터 생성
                 const created = await RestaurantInfo.create({
                     restaurantName: restaurant.restaurantName,
@@ -114,6 +125,8 @@ exports.createRestaurant = async (restaurantData) => {
                     restaurantLotAddr: restaurant.restaurantLotAddr || '',
                     restaurantAddr: restaurant.restaurantAddr || '',
                     restaurantMapIMG: restaurant.restaurantMapIMG || null,
+                    restaurantImage: restaurant.restaurantImage || null,
+                    restaurantRating: restaurantRating,
                     restaurantStatus: 1,
                     restaurantViewCount: 0
                 });
@@ -132,6 +145,17 @@ exports.createRestaurant = async (restaurantData) => {
                 throw new Error('필수값이 누락되었습니다. (restaurantName, restaurantLocation, restaurantType, restaurantOwner)');
             }
 
+            // 별점 검증 (0.5 단위)
+            let restaurantRating = null;
+            if (restaurantData.restaurantRating !== undefined && restaurantData.restaurantRating !== null) {
+                const rating = parseFloat(restaurantData.restaurantRating);
+                if (isNaN(rating) || rating < 0 || rating > 5) {
+                    throw new Error('별점은 0.0 ~ 5.0 사이의 값이어야 합니다.');
+                }
+                // 0.5 단위로 반올림
+                restaurantRating = Math.round(rating * 2) / 2;
+            }
+
             const created = await RestaurantInfo.create({
                 restaurantName: restaurantData.restaurantName,
                 restaurantLocation: restaurantData.restaurantLocation,
@@ -144,6 +168,8 @@ exports.createRestaurant = async (restaurantData) => {
                 restaurantLotAddr: restaurantData.restaurantLotAddr || '',
                 restaurantAddr: restaurantData.restaurantAddr || '',
                 restaurantMapIMG: restaurantData.restaurantMapIMG || null,
+                restaurantImage: restaurantData.restaurantImage || null,
+                restaurantRating: restaurantRating,
                 restaurantStatus: 1,
                 restaurantViewCount: 0
             });
@@ -164,6 +190,16 @@ exports.updateRestaurant = async (restaurantIdx, restaurantData) => {
         
         if (!restaurant) {
             throw new Error('Restaurant not found');
+        }
+
+        // 별점 검증 및 처리
+        if (restaurantData.restaurantRating !== undefined && restaurantData.restaurantRating !== null) {
+            const rating = parseFloat(restaurantData.restaurantRating);
+            if (isNaN(rating) || rating < 0 || rating > 5) {
+                throw new Error('별점은 0.0 ~ 5.0 사이의 값이어야 합니다.');
+            }
+            // 0.5 단위로 반올림
+            restaurantData.restaurantRating = Math.round(rating * 2) / 2;
         }
 
         await RestaurantInfo.update(restaurantData, {

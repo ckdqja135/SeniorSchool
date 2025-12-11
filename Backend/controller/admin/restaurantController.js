@@ -1,11 +1,26 @@
 const restaurantService = require('../../service/admin/restaurantService');
 const logger = require('../../utils/logger');
+const { handleImageUpload } = require('../../middlewares/uploadMiddleware');
+const path = require('path');
 
 exports.createRestaurant = async (req, res, next) => {
     try {
+        // 이미지 파일이 업로드된 경우 경로 추가
+        if (req.file) {
+            req.body.restaurantImage = `/uploads/restaurants/${req.file.filename}`;
+        }
+
         const result = await restaurantService.createRestaurant(req.body);
         res.status(201).json(result);
     } catch (e) {
+        // 업로드된 파일이 있으면 삭제
+        if (req.file) {
+            const fs = require('fs');
+            const filePath = path.join(__dirname, '../../public/uploads/restaurants', req.file.filename);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
         next(e);
     }
 };
@@ -45,9 +60,33 @@ exports.updateRestaurant = async (req, res) => {
     const { restaurantIdx } = req.params;
 
     try {
+        // 이미지 파일이 업로드된 경우 경로 추가
+        if (req.file) {
+            req.body.restaurantImage = `/uploads/restaurants/${req.file.filename}`;
+            
+            // 기존 이미지 파일 삭제 (있는 경우)
+            const { RestaurantInfo } = require('../../model/index');
+            const restaurant = await RestaurantInfo.findByPk(restaurantIdx);
+            if (restaurant && restaurant.restaurantImage) {
+                const fs = require('fs');
+                const oldImagePath = path.join(__dirname, '../../public', restaurant.restaurantImage);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                }
+            }
+        }
+
         const result = await restaurantService.updateRestaurant(restaurantIdx, req.body);
         res.status(result.status).json(result);
     } catch (error) {
+        // 업로드된 파일이 있으면 삭제
+        if (req.file) {
+            const fs = require('fs');
+            const filePath = path.join(__dirname, '../../public/uploads/restaurants', req.file.filename);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
         logger.error(`[updateRestaurant] Error: ${error.message}`);
         res.status(500).json({ status: 500, message: '서버 오류가 발생했습니다.' });
     }

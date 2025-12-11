@@ -15,6 +15,8 @@ CREATE TABLE tb_restaurant_info (
     restaurantLotAddr VARCHAR(100) NOT NULL COMMENT '식당 지번주소',
     restaurantAddr VARCHAR(200) NOT NULL COMMENT '식당 도로명주소',
     restaurantMapIMG VARCHAR(200) NULL COMMENT '식당 지도 이미지',
+    restaurantImage VARCHAR(200) NULL COMMENT '식당 이미지',
+    restaurantRating DECIMAL(2,1) NULL COMMENT '식당 별점 (0.0 ~ 5.0, 0.5 단위)',
     restaurantStatus TINYINT NOT NULL DEFAULT 1 COMMENT '식당 상태 (1: 활성, 0: 비활성)',
     restaurantViewCount INT NOT NULL DEFAULT 0 COMMENT '식당 조회수',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '등록일',

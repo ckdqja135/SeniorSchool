@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const logger = require('./utils/logger');
 const { httpLogger } = logger;
 const routes = require('./routes');
@@ -44,6 +45,9 @@ securityMiddleware(app);
 
 // 로깅
 app.use(httpLogger);
+
+// 정적 파일 서빙 (이미지 파일 등)
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // API 라우터 연결
 app.use('/', routes);
