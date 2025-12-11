@@ -164,32 +164,32 @@ exports.deleteAdmin = async (deleteParams) => {
  */
 exports.createAdmin = async (adminData) => {
     try {
-        const { username, password } = adminData;
+        const { userId, userPw, userRole, userStatus } = adminData;
 
         // 필수 입력값 체크하였음.
-        if (!username || !password) {
+        if (!userId || !userPw) {
             logger.warn(`[createAdmin] Missing required fields: ${JSON.stringify(adminData)}`);
             throw new Error('필수 입력값이 누락되었습니다.');
         }
 
         // 중복된 userId 체크하였음.
-        const existingUser = await User.findOne({ where: { userId: username } });
+        const existingUser = await User.findOne({ where: { userId: userId } });
         if (existingUser) {
-            logger.warn(`[createAdmin] User already exists: ${username}`);
+            logger.warn(`[createAdmin] User already exists: ${userId}`);
             throw new Error('이미 존재하는 사용자입니다.');
         }
 
         // salt 생성 및 비밀번호 해시 처리하였음.
         const salt = crypto.randomBytes(16).toString('hex');
-        const hashedPassword = hashPassword(password, salt);
+        const hashedPassword = hashPassword(userPw);
 
-        // 새 어드민 생성하였음. userRole은 'admin'으로 강제 설정하였음.
+        // 새 어드민 생성하였음. userRole은 전달받은 값이 있으면 사용하고, 없으면 'admin'으로 기본 설정함.
         const newUser = await User.create({
-            userId: username,
+            userId: userId,
             userPw: hashedPassword,
-            userRole: 'admin',
+            userRole: userRole || 'admin',
             salt,
-            userStatus: 1
+            userStatus: userStatus !== undefined ? userStatus : 1
         });
 
         return { success: true, message: '어드민 추가 완료.' };
