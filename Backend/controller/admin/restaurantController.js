@@ -110,10 +110,21 @@ exports.createRestaurant = async (req, res, next) => {
 // 식당 검색
 exports.searchRestaurant = async (req, res) => {
     try {
-        const data = req.query;
-        logger.info(`[searchRestaurant] Request query: ${JSON.stringify(data)}`);
+        const query = req.query;
+        logger.info(`[searchRestaurant] Request query: ${JSON.stringify(query)}`);
         
-        const result = await restaurantService.searchRestaurant(data);
+        // 프론트엔드 쿼리 파라미터를 서비스에서 기대하는 형식으로 매핑
+        const searchParams = {
+            name: query.restaurantName || query.name, // restaurantName 또는 name 지원
+            type: query.restaurantType || query.type, // restaurantType 또는 type 지원
+            location: query.restaurantLocation || query.location, // restaurantLocation 또는 location 지원
+            page: query.page || 1,
+            limit: query.rowsPerPage || query.limit || 10 // rowsPerPage 또는 limit 지원
+        };
+        
+        logger.info(`[searchRestaurant] Mapped search params: ${JSON.stringify(searchParams)}`);
+        
+        const result = await restaurantService.searchRestaurant(searchParams);
         logger.info(`[searchRestaurant] Success: ${result.totalCount} results found`);
 
         res.status(result.status).json(result);
