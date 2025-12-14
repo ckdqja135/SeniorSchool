@@ -503,75 +503,23 @@ exports.getSalaries = async (compIdx = null, pagination = {}) => {
 };
 
 /**
- * 면접 후기 평점 입력/갱신
- * @param {number} interviewIdx - 면접 후기 인덱스
- * @param {string} writerPw - 작성자 비밀번호
- * @param {number} rating - 평점 값
- * @returns {Object} 업데이트 결과
- */
-exports.updateInterviewRating = async (interviewIdx, writerPw, rating) => {
-    try {
-        const interview = await CompInterview.findOne({
-            where: {
-                interviewIdx,
-                isDeleted: false
-            }
-        });
-
-        if (!interview) {
-            return {
-                status: 404,
-                message: '면접 후기를 찾을 수 없습니다.',
-                data: null
-            };
-        }
-
-        const hashedPassword = hashPassword(writerPw);
-        if (interview.writerPw !== hashedPassword) {
-            return {
-                status: 403,
-                message: '비밀번호가 일치하지 않습니다.',
-                data: null
-            };
-        }
-
-        await interview.update({
-            interviewRating: normalizeRating(rating),
-            modDate: new Date()
-        });
-
-        logger.info(`[updateInterviewRating] interviewIdx=${interviewIdx}, rating=${rating}`);
-
-        return {
-            status: 200,
-            message: '면접 후기 평점이 저장되었습니다.',
-            data: {
-                interviewIdx: interview.interviewIdx,
-                interviewRating: interview.interviewRating
-            }
-        };
-    } catch (error) {
-        logger.error(`[updateInterviewRating] Error: ${error.message}`);
-        throw error;
-    }
-};
-
-/**
  * 회사 평점 평균 조회
  * @param {number} compIdx - 회사 인덱스
  * @returns {Object} 평균 평점 결과
  */
 exports.getCompanyAverageRating = async (compIdx) => {
     try {
-        const result = await CompInterview.findOne({
+        const { CompBoard } = require('../model/index');
+        
+        const result = await CompBoard.findOne({
             attributes: [
-                [fn('AVG', col('interviewRating')), 'averageRating'],
-                [fn('COUNT', col('interviewRating')), 'ratingCount']
+                [fn('AVG', col('boardRating')), 'averageRating'],
+                [fn('COUNT', col('boardRating')), 'ratingCount']
             ],
             where: {
                 compIdx,
                 isDeleted: false,
-                interviewRating: {
+                boardRating: {
                     [Op.not]: null
                 }
             },
