@@ -35,6 +35,11 @@ module.exports = class RestaurantBoard extends Sequelize.Model {
                 allowNull: false,
                 defaultValue: 0,
             },
+            boardRating: {
+                type: Sequelize.DECIMAL(2, 1),
+                allowNull: true,
+                comment: '후기 평점 (0.5 ~ 5.0)'
+            },
             boardID: {
                 type: Sequelize.STRING(45),
                 allowNull: false,

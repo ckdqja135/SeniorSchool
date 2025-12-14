@@ -118,6 +118,17 @@ exports.insertRestaurantBoard = async (boardData) => {
         // 현재 날짜/시간 생성
         const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
         
+        // 평점 검증 (0.5 ~ 5.0, 0.5 단위)
+        let boardRating = null;
+        if (boardData.boardRating !== undefined && boardData.boardRating !== null) {
+            const rating = parseFloat(boardData.boardRating);
+            if (isNaN(rating) || rating < 0.5 || rating > 5.0) {
+                throw new Error('평점은 0.5 ~ 5.0 사이의 값이어야 합니다.');
+            }
+            // 0.5 단위로 반올림
+            boardRating = Math.round(rating * 2) / 2;
+        }
+
         // 게시글 생성
         const newBoard = await RestaurantBoard.create({
             boardTitle: boardTitle,
@@ -126,6 +137,7 @@ exports.insertRestaurantBoard = async (boardData) => {
             boardRegDate: currentDate,
             boardLike: 0,
             boardHits: 0,
+            boardRating: boardRating,
             boardID: boardID,
             boardPW: hashPassword(password) // SHA256 암호화 적용
         }, { transaction });
@@ -173,6 +185,16 @@ exports.correctRestaurantBoard = async (boardData) => {
         const updateData = {};
         if (boardTitle) updateData.boardTitle = boardTitle;
         if (boardContent) updateData.boardContent = boardContent;
+        
+        // 평점 검증 및 처리 (0.5 ~ 5.0, 0.5 단위)
+        if (boardData.boardRating !== undefined && boardData.boardRating !== null) {
+            const rating = parseFloat(boardData.boardRating);
+            if (isNaN(rating) || rating < 0.5 || rating > 5.0) {
+                throw new Error('평점은 0.5 ~ 5.0 사이의 값이어야 합니다.');
+            }
+            // 0.5 단위로 반올림
+            updateData.boardRating = Math.round(rating * 2) / 2;
+        }
 
         await RestaurantBoard.update(updateData, {
             where: { boardIdx: boardIdx }
