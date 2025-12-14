@@ -4,7 +4,7 @@ const logger = require('../utils/logger');
 
 exports.autoComplete = async (keyword) => {
     return await University.findAll({
-        attributes: ['univName', 'univLocate'],
+        attributes: ['univName', 'univLocate', 'univType', 'univPresident'],
         where: {
             univName: {
                 [Op.not]: '',
