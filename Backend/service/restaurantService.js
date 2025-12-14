@@ -77,8 +77,32 @@ exports.getRestaurantDetail = async (restaurantIdx, restaurantName, restaurantAd
             { where: { restaurantIdx: restaurant.restaurantIdx } }
         );
 
-        logger.info(`[getRestaurantDetail] Restaurant detail retrieved. RestaurantIdx: ${restaurant.restaurantIdx}, RestaurantName: ${restaurant.restaurantName}`);
-        return restaurant;
+        // 식당 후기 평점 평균 계산
+        const { fn, col } = require('sequelize');
+        const ratingResult = await RestaurantBoard.findOne({
+            attributes: [
+                [fn('AVG', col('boardRating')), 'averageRating'],
+                [fn('COUNT', col('boardRating')), 'ratingCount']
+            ],
+            where: {
+                restaurantIdx: restaurant.restaurantIdx,
+                boardRating: {
+                    [Op.not]: null
+                }
+            },
+            raw: true
+        });
+
+        const averageRating = ratingResult?.averageRating ? parseFloat(Number(ratingResult.averageRating).toFixed(1)) : null;
+        const ratingCount = ratingResult?.ratingCount ? parseInt(ratingResult.ratingCount, 10) : 0;
+
+        // 평균 평점 정보를 식당 객체에 추가
+        const restaurantData = restaurant.toJSON();
+        restaurantData.averageRating = averageRating;
+        restaurantData.ratingCount = ratingCount;
+
+        logger.info(`[getRestaurantDetail] Restaurant detail retrieved. RestaurantIdx: ${restaurant.restaurantIdx}, RestaurantName: ${restaurant.restaurantName}, AverageRating: ${averageRating}, RatingCount: ${ratingCount}`);
+        return restaurantData;
     } catch (error) {
         logger.error(`[getRestaurantDetail] Error: ${error.message}`);
         throw error;

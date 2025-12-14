@@ -155,6 +155,9 @@ exports.searchRestaurant = async (searchParams) => {
 
 exports.getRestaurantDetail = async (restaurantIdx) => {
     try {
+        const { RestaurantBoard } = require('../../model/index');
+        const { Op, fn, col } = require('sequelize');
+        
         const restaurant = await RestaurantInfo.findByPk(restaurantIdx);
         
         if (!restaurant) {
@@ -164,11 +167,34 @@ exports.getRestaurantDetail = async (restaurantIdx) => {
             };
         }
 
-        logger.info(`[getRestaurantDetail] Restaurant detail retrieved: ${restaurantIdx}`);
+        // 식당 후기 평점 평균 계산
+        const ratingResult = await RestaurantBoard.findOne({
+            attributes: [
+                [fn('AVG', col('boardRating')), 'averageRating'],
+                [fn('COUNT', col('boardRating')), 'ratingCount']
+            ],
+            where: {
+                restaurantIdx: restaurantIdx,
+                boardRating: {
+                    [Op.not]: null
+                }
+            },
+            raw: true
+        });
+
+        const averageRating = ratingResult?.averageRating ? parseFloat(Number(ratingResult.averageRating).toFixed(1)) : null;
+        const ratingCount = ratingResult?.ratingCount ? parseInt(ratingResult.ratingCount, 10) : 0;
+
+        // 평균 평점 정보를 식당 객체에 추가
+        const restaurantData = restaurant.toJSON();
+        restaurantData.averageRating = averageRating;
+        restaurantData.ratingCount = ratingCount;
+
+        logger.info(`[getRestaurantDetail] Restaurant detail retrieved: ${restaurantIdx}, AverageRating: ${averageRating}, RatingCount: ${ratingCount}`);
         
         return {
             status: 200,
-            restaurant: restaurant
+            restaurant: restaurantData
         };
     } catch (error) {
         logger.error(`[getRestaurantDetail] Error: ${error.message}`);
