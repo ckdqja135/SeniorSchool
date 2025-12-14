@@ -53,6 +53,12 @@ const uploadSingleImage = upload.single('restaurantImage');
 
 // 이미지 업로드 미들웨어 래퍼 (에러 처리 포함)
 const handleImageUpload = (req, res, next) => {
+    // JSON 요청인 경우 (base64 이미지 처리) 미들웨어 건너뛰기
+    if (req.is('application/json') || req.headers['content-type']?.includes('application/json')) {
+        return next();
+    }
+    
+    // multipart/form-data 요청인 경우에만 multer 처리
     uploadSingleImage(req, res, (err) => {
         if (err) {
             if (err instanceof multer.MulterError) {

@@ -2,8 +2,46 @@ const restaurantService = require('../../service/admin/restaurantService');
 const logger = require('../../utils/logger');
 const { handleImageUpload } = require('../../middlewares/uploadMiddleware');
 const path = require('path');
+const fs = require('fs');
+
+// base64 이미지를 파일로 저장하는 헬퍼 함수
+const saveBase64Image = (base64String, uploadDir) => {
+    try {
+        // base64 데이터 URL 형식 확인 (data:image/jpeg;base64,...)
+        const base64Pattern = /^data:image\/(jpeg|jpg|png|gif|webp);base64,/;
+        const matches = base64String.match(base64Pattern);
+        
+        if (!matches) {
+            throw new Error('유효하지 않은 base64 이미지 형식입니다.');
+        }
+        
+        const imageType = matches[1]; // jpeg, png, gif, webp
+        const base64Data = base64String.replace(base64Pattern, '');
+        
+        // base64 디코딩
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        
+        // 파일명 생성
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = imageType === 'jpeg' ? 'jpg' : imageType;
+        const filename = `restaurant_${uniqueSuffix}.${ext}`;
+        const filePath = path.join(uploadDir, filename);
+        
+        // 파일 저장
+        fs.writeFileSync(filePath, imageBuffer);
+        
+        logger.info(`[saveBase64Image] Base64 image saved: ${filename}`);
+        return `/uploads/restaurants/${filename}`;
+    } catch (error) {
+        logger.error(`[saveBase64Image] Error: ${error.message}`);
+        throw error;
+    }
+};
 
 exports.createRestaurant = async (req, res, next) => {
+    let savedImagePath = null;
+    const uploadDir = path.join(__dirname, '../../public/uploads/restaurants');
+    
     try {
         logger.info(`[createRestaurant] Request received - Body: ${JSON.stringify(req.body)}, File: ${req.file ? req.file.filename : 'none'}`);
         
@@ -11,10 +49,24 @@ exports.createRestaurant = async (req, res, next) => {
         // 1. 파일 업로드가 있는 경우 (multipart/form-data)
         if (req.file) {
             req.body.restaurantImage = `/uploads/restaurants/${req.file.filename}`;
+            savedImagePath = req.body.restaurantImage;
             logger.info(`[createRestaurant] Image file uploaded: ${req.body.restaurantImage}`);
         }
-        // 2. 이미지 URL이 직접 전달된 경우 (JSON 요청)
-        // req.body.restaurantImage가 이미 있으면 그대로 사용 (이미지 URL 또는 null)
+        // 2. base64 이미지가 전달된 경우 (JSON 요청)
+        else if (req.body.restaurantImage && typeof req.body.restaurantImage === 'string' && req.body.restaurantImage.startsWith('data:image/')) {
+            try {
+                req.body.restaurantImage = saveBase64Image(req.body.restaurantImage, uploadDir);
+                savedImagePath = req.body.restaurantImage;
+                logger.info(`[createRestaurant] Base64 image saved: ${req.body.restaurantImage}`);
+            } catch (base64Error) {
+                logger.error(`[createRestaurant] Base64 image processing failed: ${base64Error.message}`);
+                return res.status(400).json({ 
+                    status: 400, 
+                    message: '이미지 처리 중 오류가 발생했습니다: ' + base64Error.message 
+                });
+            }
+        }
+        // 3. 이미지 URL이 직접 전달된 경우 (JSON 요청)
         else if (req.body.restaurantImage !== undefined) {
             // 이미지 URL이 빈 문자열이면 null로 처리
             if (req.body.restaurantImage === '' || req.body.restaurantImage === null) {
@@ -22,7 +74,7 @@ exports.createRestaurant = async (req, res, next) => {
             }
             logger.info(`[createRestaurant] Image URL provided: ${req.body.restaurantImage || 'null'}`);
         }
-        // 3. 이미지가 없는 경우
+        // 4. 이미지가 없는 경우
         else {
             req.body.restaurantImage = null;
             logger.info(`[createRestaurant] No image provided`);
@@ -37,11 +89,18 @@ exports.createRestaurant = async (req, res, next) => {
         
         // 업로드된 파일이 있으면 삭제
         if (req.file) {
-            const fs = require('fs');
             const filePath = path.join(__dirname, '../../public/uploads/restaurants', req.file.filename);
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
                 logger.info(`[createRestaurant] Uploaded file deleted due to error: ${req.file.filename}`);
+            }
+        }
+        // base64로 저장된 이미지가 있으면 삭제
+        if (savedImagePath) {
+            const filePath = path.join(__dirname, '../../public', savedImagePath);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                logger.info(`[createRestaurant] Base64 image file deleted due to error: ${savedImagePath}`);
             }
         }
         next(e);
@@ -81,9 +140,10 @@ exports.getRestaurantDetail = async (req, res) => {
 // 식당 수정
 exports.updateRestaurant = async (req, res) => {
     const { restaurantIdx } = req.params;
+    let savedImagePath = null;
+    const uploadDir = path.join(__dirname, '../../public/uploads/restaurants');
 
     try {
-        const fs = require('fs');
         const { RestaurantInfo } = require('../../model/index');
         const restaurant = await RestaurantInfo.findByPk(restaurantIdx);
         
@@ -95,6 +155,7 @@ exports.updateRestaurant = async (req, res) => {
         // 1. 파일 업로드가 있는 경우 (multipart/form-data)
         if (req.file) {
             req.body.restaurantImage = `/uploads/restaurants/${req.file.filename}`;
+            savedImagePath = req.body.restaurantImage;
             logger.info(`[updateRestaurant] Image file uploaded: ${req.body.restaurantImage}`);
             
             // 기존 이미지 파일 삭제 (있는 경우)
@@ -106,7 +167,30 @@ exports.updateRestaurant = async (req, res) => {
                 }
             }
         }
-        // 2. 이미지 URL이 직접 전달된 경우 (JSON 요청)
+        // 2. base64 이미지가 전달된 경우 (JSON 요청)
+        else if (req.body.restaurantImage && typeof req.body.restaurantImage === 'string' && req.body.restaurantImage.startsWith('data:image/')) {
+            try {
+                req.body.restaurantImage = saveBase64Image(req.body.restaurantImage, uploadDir);
+                savedImagePath = req.body.restaurantImage;
+                logger.info(`[updateRestaurant] Base64 image saved: ${req.body.restaurantImage}`);
+                
+                // 기존 이미지 파일 삭제 (있는 경우)
+                if (restaurant.restaurantImage) {
+                    const oldImagePath = path.join(__dirname, '../../public', restaurant.restaurantImage);
+                    if (fs.existsSync(oldImagePath)) {
+                        fs.unlinkSync(oldImagePath);
+                        logger.info(`[updateRestaurant] Old image deleted: ${restaurant.restaurantImage}`);
+                    }
+                }
+            } catch (base64Error) {
+                logger.error(`[updateRestaurant] Base64 image processing failed: ${base64Error.message}`);
+                return res.status(400).json({ 
+                    status: 400, 
+                    message: '이미지 처리 중 오류가 발생했습니다: ' + base64Error.message 
+                });
+            }
+        }
+        // 3. 이미지 URL이 직접 전달된 경우 (JSON 요청)
         else if (req.body.restaurantImage !== undefined) {
             // 이미지가 변경되었고, 기존 이미지가 있으면 삭제
             if (req.body.restaurantImage !== restaurant.restaurantImage && restaurant.restaurantImage) {
@@ -123,7 +207,7 @@ exports.updateRestaurant = async (req, res) => {
             }
             logger.info(`[updateRestaurant] Image URL provided: ${req.body.restaurantImage || 'null'}`);
         }
-        // 3. 이미지 필드가 없는 경우 (기존 이미지 유지)
+        // 4. 이미지 필드가 없는 경우 (기존 이미지 유지)
         // req.body.restaurantImage를 undefined로 두면 서비스에서 업데이트하지 않음
 
         const result = await restaurantService.updateRestaurant(restaurantIdx, req.body);
@@ -134,11 +218,18 @@ exports.updateRestaurant = async (req, res) => {
         
         // 업로드된 파일이 있으면 삭제
         if (req.file) {
-            const fs = require('fs');
             const filePath = path.join(__dirname, '../../public/uploads/restaurants', req.file.filename);
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
                 logger.info(`[updateRestaurant] Uploaded file deleted due to error: ${req.file.filename}`);
+            }
+        }
+        // base64로 저장된 이미지가 있으면 삭제
+        if (savedImagePath) {
+            const filePath = path.join(__dirname, '../../public', savedImagePath);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                logger.info(`[updateRestaurant] Base64 image file deleted due to error: ${savedImagePath}`);
             }
         }
         res.status(500).json({ status: 500, message: '서버 오류가 발생했습니다.' });
