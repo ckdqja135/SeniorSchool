@@ -338,8 +338,37 @@ exports.getTopViewedRestaurants = async () => {
             limit: 10 // TOP 10
         });
         
-        logger.info(`[getTopViewedRestaurants] Found ${restaurants.length} top viewed restaurants`);
-        return restaurants;
+        // 각 식당에 평균 평점 추가
+        const { fn, col } = require('sequelize');
+        const restaurantsWithRating = await Promise.all(
+            restaurants.map(async (restaurant) => {
+                const ratingResult = await RestaurantBoard.findOne({
+                    attributes: [
+                        [fn('AVG', col('boardRating')), 'averageRating'],
+                        [fn('COUNT', col('boardRating')), 'ratingCount']
+                    ],
+                    where: {
+                        restaurantIdx: restaurant.restaurantIdx,
+                        boardRating: {
+                            [Op.not]: null
+                        }
+                    },
+                    raw: true
+                });
+
+                const averageRating = ratingResult?.averageRating ? parseFloat(Number(ratingResult.averageRating).toFixed(1)) : null;
+                const ratingCount = ratingResult?.ratingCount ? parseInt(ratingResult.ratingCount, 10) : 0;
+
+                const restaurantData = restaurant.toJSON();
+                restaurantData.averageRating = averageRating;
+                restaurantData.ratingCount = ratingCount;
+
+                return restaurantData;
+            })
+        );
+        
+        logger.info(`[getTopViewedRestaurants] Found ${restaurantsWithRating.length} top viewed restaurants with ratings`);
+        return restaurantsWithRating;
     } catch (error) {
         logger.error(`[getTopViewedRestaurants] Error: ${error.message}`);
         throw error;
