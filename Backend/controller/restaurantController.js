@@ -134,3 +134,23 @@ exports.getRestaurantBoardLike = async (req, res, next) => {
     }
 };
 
+// 식당 자동 완성 검색
+exports.autoComplete = async (req, res, next) => {
+    try {
+        const { keyword } = req.query;
+
+        if (!keyword) {
+            logger.warn("[autoComplete] Missing keyword in request");
+            return res.status(400).json({ error: 'Keyword is required' });
+        }
+
+        const decodedKeyword = decodeURIComponent(keyword);
+        const restaurants = await restaurantService.autoComplete(decodedKeyword);
+
+        return res.status(200).json(restaurants);
+    } catch (error) {
+        logger.error(`[autoComplete] Error: ${error.message}`);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+

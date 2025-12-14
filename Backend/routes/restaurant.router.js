@@ -26,5 +26,8 @@ router.get('/like', restaurantController.getRestaurantBoardLike);
 // 식당 추가 요청 생성 (일반 사용자용)
 router.post('/requests', restaurantController.createRestaurantRequest);
 
+// 식당 자동 완성 검색
+router.get('/auto', restaurantController.autoComplete);
+
 module.exports = router;
 
