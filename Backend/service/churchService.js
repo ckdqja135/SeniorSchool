@@ -634,7 +634,7 @@ exports.toggleChurchBoardLike = async (boardIdx, isLiked) => {
 exports.getChurchBoardLike = async (boardId) => {
     try {
         const board = await ChurchBoard.findOne({
-            where: { boardID: boardId }
+            where: { boardIdx: boardId }
         });
 
         if (!board) {
