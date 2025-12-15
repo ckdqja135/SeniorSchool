@@ -609,7 +609,8 @@ exports.toggleChurchBoardLike = async (boardIdx, isLiked) => {
             throw new Error('Board not found');
         }
 
-        const currentLikes = board.boardLike || 0;
+        // 현재 좋아요 수를 숫자로 변환 (문자열 연결 방지)
+        const currentLikes = Number(board.boardLike) || 0;
         const newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
 
         await ChurchBoard.update(
@@ -617,7 +618,7 @@ exports.toggleChurchBoardLike = async (boardIdx, isLiked) => {
             { where: { boardIdx: boardIdx } }
         );
 
-        logger.info(`[toggleChurchBoardLike] Board like toggled. BoardIdx: ${boardIdx}, isLiked: ${isLiked}, newLikes: ${newLikes}`);
+        logger.info(`[toggleChurchBoardLike] Board like toggled. BoardIdx: ${boardIdx}, isLiked: ${isLiked}, Current: ${currentLikes}, New: ${newLikes}`);
 
         return {
             boardIdx: boardIdx,
