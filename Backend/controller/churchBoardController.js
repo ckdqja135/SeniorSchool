@@ -89,9 +89,9 @@ exports.toggleChurchBoardLike = async (req, res, next) => {
         const result = await churchBoardService.toggleChurchBoardLike(boardIdx, isLiked);
         res.status(200).json({ 
             success: true, 
-            boardIdx: boardIdx,
+            boardIdx: String(boardIdx),
             isLiked: isLiked,
-            likeCount: result.likeCount
+            likeCount: String(result.likeCount)
         });
     } catch (error) {
         logger.error(error);

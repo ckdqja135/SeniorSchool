@@ -218,38 +218,39 @@ exports.deleteChurchBoard = async (boardData) => {
 // 교회 게시판 좋아요 토글
 exports.toggleChurchBoardLike = async (boardIdx, isLiked) => {
     try {
-        // 게시글 존재 확인
+        // 게시글 존재 확인 및 현재 좋아요 수 조회
         const board = await ChurchBoard.findByPk(boardIdx);
         
         if (!board) {
             throw new Error('Board not found');
         }
 
-        let updateQuery;
+        // 현재 좋아요 수를 숫자로 변환
+        const currentLikeCount = Number(board.boardLike) || 0;
+        let newLikeCount;
         let message;
         
         if (isLiked) {
             // 좋아요 증가
-            updateQuery = { boardLike: sequelize.literal('boardLike + 1') };
+            newLikeCount = currentLikeCount + 1;
             message = '좋아요가 추가되었습니다.';
         } else {
             // 좋아요 감소 (0 미만으로 내려가지 않도록 처리)
-            updateQuery = { boardLike: sequelize.literal('GREATEST(boardLike - 1, 0)') };
+            newLikeCount = Math.max(0, currentLikeCount - 1);
             message = '좋아요가 취소되었습니다.';
         }
 
-        await ChurchBoard.update(updateQuery, {
-            where: { boardIdx: boardIdx }
-        });
+        // 업데이트
+        await ChurchBoard.update(
+            { boardLike: newLikeCount },
+            { where: { boardIdx: boardIdx } }
+        );
 
-        // 업데이트된 좋아요 수 조회
-        const updatedBoard = await ChurchBoard.findByPk(boardIdx);
-        
-        logger.info(`[toggleChurchBoardLike] Board like toggled. BoardIdx: ${boardIdx}, IsLiked: ${isLiked}, NewLikeCount: ${updatedBoard.boardLike}`);
+        logger.info(`[toggleChurchBoardLike] Board like toggled. BoardIdx: ${boardIdx}, IsLiked: ${isLiked}, Current: ${currentLikeCount}, New: ${newLikeCount}`);
         
         return {
             message: message,
-            likeCount: updatedBoard.boardLike
+            likeCount: newLikeCount
         };
     } catch (error) {
         logger.error(`[toggleChurchBoardLike] Error: ${error.message}`);
