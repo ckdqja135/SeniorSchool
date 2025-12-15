@@ -21,9 +21,35 @@ exports.getRestaurantComments = async (req, res, next) => {
 // 식당 댓글 추가
 exports.insertRestaurantComment = async (req, res, next) => {
     try {
-        const commentData = req.body;
+        const {
+            writerId,
+            writerPw,
+            commentContent,
+            boardIdx,
+            parentIdx,
+            commentParent,  // 프론트엔드에서 보내는 필드명
+            commentDepth
+        } = req.body;
         
-        // 필수 필드 검증 (프론트엔드 필드명에 맞춰 수정)
+        // 입력값 파싱 및 유효성 검사
+        // commentParent: 대댓글인 경우 부모 댓글 인덱스, 일반 댓글인 경우 null (서비스에서 최근 댓글 인덱스 + 1로 설정됨)
+        let parsedCommentParent = null;
+        if (commentParent !== undefined && commentParent !== null && commentParent !== '') {
+            parsedCommentParent = parseInt(commentParent);
+        } else if (parentIdx !== undefined && parentIdx !== null && parentIdx !== '') {
+            parsedCommentParent = parseInt(parentIdx);
+        }
+        
+        const commentData = {
+            writerId,
+            writerPw,
+            commentContent,
+            boardIdx: parseInt(boardIdx),
+            commentParent: parsedCommentParent,
+            commentDepth: commentDepth !== undefined ? parseInt(commentDepth) : 0
+        };
+        
+        // 필수 필드 검증
         if (!commentData.boardIdx || !commentData.writerId || !commentData.writerPw || !commentData.commentContent) {
             return res.status(400).json({ error: 'Required fields missing: boardIdx, writerId, writerPw, commentContent' });
         }

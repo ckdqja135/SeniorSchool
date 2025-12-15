@@ -36,13 +36,34 @@ exports.insertRestaurantComment = async (commentData) => {
     const transaction = await sequelize.transaction();
     try {
         const now = new Date();
-        // 댓글 생성 (프론트엔드 필드명에 맞춰 수정)
+        
+        // commentParent 처리
+        let commentParent = commentData.commentParent;
+        
+        // 일반 댓글인 경우 (commentParent가 없으면) 해당 게시글의 최근 댓글 인덱스 + 1 설정
+        if (commentParent === null || commentParent === undefined) {
+            const latestComment = await RestaurantComment.findOne({
+                where: { boardIdx: commentData.boardIdx },
+                order: [['commentIdx', 'DESC']],
+                attributes: ['commentIdx'],
+                transaction: transaction
+            });
+            
+            if (latestComment && latestComment.commentIdx) {
+                commentParent = latestComment.commentIdx + 1;
+            } else {
+                // 댓글이 하나도 없는 경우 1로 설정
+                commentParent = 1;
+            }
+        }
+        
+        // 댓글 생성
         const comment = await RestaurantComment.create({
             boardIdx: commentData.boardIdx,
             commentDepth: commentData.commentDepth || 0,
             writerId: commentData.writerId,
             writerPw: hashPassword(commentData.writerPw), // SHA256 암호화 적용
-            commentParent: commentData.commentPerent || 0,
+            commentParent: commentParent,
             commentContent: commentData.commentContent,
             commentLike: 0,
             regDate: now,
@@ -50,7 +71,7 @@ exports.insertRestaurantComment = async (commentData) => {
         }, { transaction });
 
         await transaction.commit();
-        logger.info(`[insertRestaurantComment] Comment created successfully. CommentIdx: ${comment.commentIdx}, BoardIdx: ${commentData.boardIdx}`);
+        logger.info(`[insertRestaurantComment] Comment created successfully. CommentIdx: ${comment.commentIdx}, BoardIdx: ${commentData.boardIdx}, CommentParent: ${commentParent}`);
         return '식당 댓글이 성공적으로 작성되었습니다.';
     } catch (error) {
         await transaction.rollback();
