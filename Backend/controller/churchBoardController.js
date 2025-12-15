@@ -78,6 +78,8 @@ exports.toggleChurchBoardLike = async (req, res, next) => {
     try {
         const { boardIdx, isLiked } = req.body;
         
+        logger.info(`[toggleChurchBoardLike Controller] Request received - boardIdx: ${boardIdx}, isLiked: ${isLiked}, IP: ${req.ip}`);
+        
         if (!boardIdx) {
             return res.status(400).json({ error: 'boardIdx is required' });
         }
@@ -94,7 +96,7 @@ exports.toggleChurchBoardLike = async (req, res, next) => {
             likeCount: String(result.likeCount)
         });
     } catch (error) {
-        logger.error(error);
+        logger.error(`[toggleChurchBoardLike Controller] Error: ${error.message}`);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
