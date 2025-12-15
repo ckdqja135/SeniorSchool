@@ -218,34 +218,39 @@ exports.deleteChurchBoard = async (boardData) => {
 // 교회 게시판 좋아요 토글
 exports.toggleChurchBoardLike = async (boardIdx, isLiked) => {
     try {
-        // 현재 좋아요 수 조회
-        const board = await ChurchBoard.findOne({
-            where: { boardIdx: boardIdx }
-        });
-
+        // 게시글 존재 확인
+        const board = await ChurchBoard.findByPk(boardIdx);
+        
         if (!board) {
             throw new Error('Board not found');
         }
 
-        // isLiked 상태에 따라 좋아요 수 조정
+        let updateQuery;
+        let message;
+        
         if (isLiked) {
-            // 좋아요 추가 (+1)
-            const [affectedCount] = await ChurchBoard.update(
-                { boardLike: sequelize.literal('boardLike + 1') },
-                { where: { boardIdx: boardIdx } }
-            );
-            logger.info(`[toggleChurchBoardLike] Board like added (+1). BoardIdx: ${boardIdx}`);
-            return { action: 'liked', message: '좋아요가 추가되었습니다.' };
+            // 좋아요 증가
+            updateQuery = { boardLike: sequelize.literal('boardLike + 1') };
+            message = '좋아요가 추가되었습니다.';
         } else {
-            // 좋아요 취소 (-1)
-            const [affectedCount] = await ChurchBoard.update(
-                { boardLike: sequelize.literal('boardLike - 1') },
-                { where: { boardIdx: boardIdx } }
-            );
-            logger.info(`[toggleChurchBoardLike] Board like removed (-1). BoardIdx: ${boardIdx}`);
-            return { action: 'unliked', message: '좋아요가 취소되었습니다.' };
+            // 좋아요 감소 (0 미만으로 내려가지 않도록 처리)
+            updateQuery = { boardLike: sequelize.literal('GREATEST(boardLike - 1, 0)') };
+            message = '좋아요가 취소되었습니다.';
         }
 
+        await ChurchBoard.update(updateQuery, {
+            where: { boardIdx: boardIdx }
+        });
+
+        // 업데이트된 좋아요 수 조회
+        const updatedBoard = await ChurchBoard.findByPk(boardIdx);
+        
+        logger.info(`[toggleChurchBoardLike] Board like toggled. BoardIdx: ${boardIdx}, IsLiked: ${isLiked}, NewLikeCount: ${updatedBoard.boardLike}`);
+        
+        return {
+            message: message,
+            likeCount: updatedBoard.boardLike
+        };
     } catch (error) {
         logger.error(`[toggleChurchBoardLike] Error: ${error.message}`);
         throw error;

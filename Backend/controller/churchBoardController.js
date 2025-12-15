@@ -87,7 +87,12 @@ exports.toggleChurchBoardLike = async (req, res, next) => {
         }
 
         const result = await churchBoardService.toggleChurchBoardLike(boardIdx, isLiked);
-        res.status(200).json({ success: true, ...result });
+        res.status(200).json({ 
+            success: true, 
+            boardIdx: boardIdx,
+            isLiked: isLiked,
+            likeCount: result.likeCount
+        });
     } catch (error) {
         logger.error(error);
         res.status(500).json({ error: 'Internal Server Error' });
