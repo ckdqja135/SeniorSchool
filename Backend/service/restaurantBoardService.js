@@ -253,38 +253,38 @@ exports.deleteRestaurantBoard = async (boardData) => {
 
 exports.toggleRestaurantBoardLike = async (boardIdx, isLiked) => {
     try {
-        // 게시글 존재 확인
+        // 게시글 존재 확인 및 현재 좋아요 수 조회
         const board = await RestaurantBoard.findByPk(boardIdx);
         
         if (!board) {
             throw new Error('게시글을 찾을 수 없습니다.');
         }
 
-        let updateQuery;
+        // 현재 좋아요 수를 숫자로 변환 (문자열 연결 방지)
+        const currentLikes = Number(board.boardLike) || 0;
+        let newLikes;
         let message;
         
         if (isLiked) {
             // 좋아요 증가
-            updateQuery = { boardLike: sequelize.literal('boardLike + 1') };
+            newLikes = currentLikes + 1;
             message = '좋아요가 추가되었습니다.';
         } else {
             // 좋아요 감소 (0 미만으로 내려가지 않도록 처리)
-            updateQuery = { boardLike: sequelize.literal('GREATEST(boardLike - 1, 0)') };
+            newLikes = Math.max(0, currentLikes - 1);
             message = '좋아요가 취소되었습니다.';
         }
 
-        await RestaurantBoard.update(updateQuery, {
-            where: { boardIdx: boardIdx }
-        });
-
-        // 업데이트된 좋아요 수 조회
-        const updatedBoard = await RestaurantBoard.findByPk(boardIdx);
+        await RestaurantBoard.update(
+            { boardLike: newLikes },
+            { where: { boardIdx: boardIdx } }
+        );
         
-        logger.info(`[toggleRestaurantBoardLike] Board like toggled. BoardIdx: ${boardIdx}, IsLiked: ${isLiked}, NewLikeCount: ${updatedBoard.boardLike}`);
+        logger.info(`[toggleRestaurantBoardLike] Board like toggled. BoardIdx: ${boardIdx}, IsLiked: ${isLiked}, Current: ${currentLikes}, New: ${newLikes}`);
         
         return {
             message: message,
-            likeCount: updatedBoard.boardLike
+            likeCount: newLikes
         };
     } catch (error) {
         logger.error(`[toggleRestaurantBoardLike] Error: ${error.message}`);

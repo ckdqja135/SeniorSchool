@@ -226,34 +226,39 @@ exports.deleteBoard = async (boardData) => {
 exports.toggleBoardLike = async (boardIdx, isLiked) => {
     const transaction = await sequelize.transaction();
     try {
-        const increment = isLiked ? 1 : -1;
+        // 현재 게시글 조회
+        const board = await CompBoard.findOne({
+            where: { boardIdx: boardIdx },
+            attributes: ['boardLike'],
+            transaction
+        });
+
+        if (!board) {
+            await transaction.rollback();
+            throw new Error('Board not found');
+        }
+
+        // 현재 좋아요 수를 숫자로 변환 (문자열 연결 방지)
+        const currentLikes = Number(board.boardLike) || 0;
+        const newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
         
         // 좋아요 수 업데이트
         await CompBoard.update(
-            { 
-                boardLike: sequelize.literal(`GREATEST(0, boardLike + ${increment})`)
-            },
+            { boardLike: newLikes },
             { 
                 where: { boardIdx: boardIdx },
                 transaction 
             }
         );
 
-        // 업데이트된 좋아요 수 조회
-        const updatedBoard = await CompBoard.findOne({
-            where: { boardIdx: boardIdx },
-            attributes: ['boardLike'],
-            transaction
-        });
-
         await transaction.commit();
         
         const action = isLiked ? 'increased' : 'decreased';
-        logger.info(`[toggleBoardLike] Board like ${action} for boardIdx: ${boardIdx}, current likes: ${updatedBoard.boardLike}`);
+        logger.info(`[toggleBoardLike] Board like ${action} for boardIdx: ${boardIdx}, Current: ${currentLikes}, New: ${newLikes}`);
         
         return {
             message: `Board like ${action} successfully`,
-            currentLikes: updatedBoard.boardLike
+            currentLikes: newLikes
         };
     } catch (error) {
         await transaction.rollback();

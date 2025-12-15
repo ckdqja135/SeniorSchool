@@ -359,12 +359,15 @@ class FreeBoardService {
                 return { status: 404, data: { message: '게시글을 찾을 수 없습니다.' } };
             }
 
+            // 현재 좋아요 수를 숫자로 변환 (문자열 연결 방지)
+            const currentLikes = Number(board.boardLike) || 0;
             const delta = isLiked ? 1 : -1;
-            const nextLikes = Math.max(0, Number(board.boardLike || 0) + delta);
+            const nextLikes = Math.max(0, currentLikes + delta);
+            
             await board.update({ boardLike: nextLikes });
 
             const action = isLiked ? 'increased' : 'decreased';
-            logger.info(`게시글 좋아요 ${action} - boardIdx: ${boardIdx}, 현재 좋아요: ${nextLikes}`);
+            logger.info(`게시글 좋아요 ${action} - boardIdx: ${boardIdx}, Current: ${currentLikes}, New: ${nextLikes}`);
 
             return {
                 status: 200,
