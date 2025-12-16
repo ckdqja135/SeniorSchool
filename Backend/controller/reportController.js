@@ -19,11 +19,11 @@ exports.createReport = async (req, res) => {
         }
 
         // 서비스 타입 검증
-        const validServiceTypes = ['univ', 'company', 'church'];
+        const validServiceTypes = ['univ', 'company', 'church', 'restaurant', 'outsource', 'interview', 'freeboard'];
         if (!validServiceTypes.includes(serviceType)) {
             return res.status(400).json({
                 success: false,
-                message: '유효하지 않은 서비스 타입입니다. (univ, company, church 중 하나)'
+                message: '유효하지 않은 서비스 타입입니다.'
             });
         }
 
@@ -75,11 +75,11 @@ exports.getReports = async (req, res) => {
 
         // 서비스 타입 검증
         if (serviceType) {
-            const validServiceTypes = ['univ', 'company', 'church'];
+            const validServiceTypes = ['univ', 'company', 'church', 'restaurant', 'outsource', 'interview', 'freeboard'];
             if (!validServiceTypes.includes(serviceType)) {
                 return res.status(400).json({
                     success: false,
-                    message: '유효하지 않은 서비스 타입입니다. (univ, company, church 중 하나)'
+                    message: '유효하지 않은 서비스 타입입니다. (univ, company, church, restaurant, outsource, interview, freeboard 중 하나)'
                 });
             }
         }
