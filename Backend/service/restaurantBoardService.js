@@ -115,8 +115,12 @@ exports.insertRestaurantBoard = async (boardData) => {
             throw new Error('필수 입력값이 누락되었습니다.');
         }
 
-        // 현재 날짜/시간 생성
-        const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        // boardRegDate 처리: 프론트엔드에서 보낸 값을 사용, 없으면 현재 시간 사용
+        let boardRegDate = boardData.boardRegDate;
+        if (!boardRegDate) {
+            // 프론트엔드에서 보내지 않으면 서버에서 현재 시간 생성
+            boardRegDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        }
         
         // 평점 검증 (0.5 ~ 5.0, 0.5 단위)
         let boardRating = null;
@@ -134,7 +138,7 @@ exports.insertRestaurantBoard = async (boardData) => {
             boardTitle: boardTitle,
             boardContent: boardContent,
             restaurantIdx: restaurantIdx,
-            boardRegDate: currentDate,
+            boardRegDate: boardRegDate,
             boardLike: 0,
             boardHits: 0,
             boardRating: boardRating,
