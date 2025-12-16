@@ -41,9 +41,26 @@ exports.authenticateToken = async (req, res, next) => {
         req.user = user; // 사용자 정보 추가
         next();
     } catch (error) {
-        return res.status(403).json({
+        // 토큰 만료 에러 구분
+        if (error.name === 'TokenExpiredError') {
+            // 만료된 토큰인 경우 쿠키 삭제
+            res.clearCookie('accessToken', {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'strict'
+            });
+            
+            return res.status(401).json({
+                success: false,
+                message: "토큰이 만료되었습니다. 다시 로그인해주세요.",
+                expired: true
+            });
+        }
+        
+        // 기타 토큰 에러 (유효하지 않은 토큰)
+        return res.status(401).json({
             success: false,
-            message: "유효하지 않은 토큰입니다.",
+            message: "유효하지 않은 토큰입니다. 다시 로그인해주세요.",
             error: error.message
         });
     }

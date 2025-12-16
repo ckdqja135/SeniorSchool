@@ -111,8 +111,14 @@ exports.verifyToken = async (token) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         return decoded;
     } catch (error) {
-        logger.error(`[verifyToken] Error: ${error.message}`);
-        throw new Error('Invalid or expired token.');
+        // 토큰 만료 에러 구분
+        if (error.name === 'TokenExpiredError') {
+            logger.warn(`[verifyToken] Token expired: ${error.message}`);
+            throw new Error('Token expired.');
+        }
+        
+        logger.error(`[verifyToken] Invalid token: ${error.message}`);
+        throw new Error('Invalid token.');
     }
 };
 

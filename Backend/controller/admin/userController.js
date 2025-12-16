@@ -4,11 +4,12 @@ const logger = require('../../utils/logger');
 exports.signIn = async (req, res, next) => {
     try {
         const result = await userService.signIn(req.body);
-        // JWT 토큰을 쿠키에 설정 (HttpOnly, secure, sameSite 옵션 적용)
+        // JWT 토큰을 쿠키에 설정 (HttpOnly, secure, sameSite, maxAge 옵션 적용)
         const cookieOptions = {
             httpOnly: true,
             secure: true, // HTTPS 환경이므로 항상 true로 설정
             sameSite: 'strict', // HTTPS 환경에서는 strict 사용 가능
+            maxAge: 60 * 60 * 1000 // 1시간 (밀리초 단위)
         };
         res.cookie('accessToken', result.accessToken, cookieOptions);
         
@@ -48,12 +49,36 @@ exports.verifyToken = async (req, res, next) => {
         const token = tokenFromHeader || tokenFromQuery || tokenFromCookie;
 
         if (!token) {
-            return res.status(400).json({ error: 'Token is required.' });
+            return res.status(401).json({ 
+                valid: false, 
+                message: '토큰이 없습니다. 다시 로그인해주세요.' 
+            });
         }
 
-        await userService.verifyToken(token);
-
-        return res.status(200).json({ valid: true });
+        try {
+            await userService.verifyToken(token);
+            return res.status(200).json({ valid: true });
+        } catch (error) {
+            // 토큰이 만료되었거나 유효하지 않은 경우 쿠키 삭제
+            res.clearCookie('accessToken', {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'strict'
+            });
+            
+            if (error.message.includes('expired') || error.message.includes('Expired')) {
+                return res.status(401).json({ 
+                    valid: false, 
+                    message: '토큰이 만료되었습니다. 다시 로그인해주세요.',
+                    expired: true
+                });
+            }
+            
+            return res.status(401).json({ 
+                valid: false, 
+                message: '유효하지 않은 토큰입니다. 다시 로그인해주세요.' 
+            });
+        }
     } catch (error) {
         next(error);
     }
