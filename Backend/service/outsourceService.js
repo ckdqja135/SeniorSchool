@@ -201,17 +201,87 @@ exports.deleteOutsource = async (outsourceIdx) => {
 // 외주업체 추가 요청 생성
 exports.createOutsourceRequest = async (requestData) => {
     try {
-        const { outsourceName, outsourceCEO, outsourceType, outsourceAddr } = requestData;
+        const { 
+            name, 
+            tagline, 
+            category, 
+            contactEmail, 
+            isPublic,
+            serviceTypes,
+            description,
+            region,
+            websiteUrl,
+            mainPortfolioUrl,
+            contactChannel,
+            // 개발 분야 전용 필드
+            minBudget,
+            avgBudget,
+            maxBudget,
+            avgBudgetRange,
+            team,
+            devInfo,
+            govSupport,
+            // 기타 분야 필드
+            customCategory
+        } = requestData;
 
-        // 필수값 체크
-        if (!outsourceName || outsourceName.trim() === '') {
-            throw new Error('외주업체명은 필수입니다.');
+        // 공통 필수 필드 검증
+        if (!name || name.trim() === '') {
+            throw new Error('업체명(name)은 필수입니다.');
         }
 
-        // 중복 요청 체크 (pending 상태인 동일 외주업체명)
+        if (!tagline || tagline.trim() === '') {
+            throw new Error('한 줄 소개(tagline)는 필수입니다.');
+        }
+
+        if (!category || category.trim() === '') {
+            throw new Error('분야(category)는 필수입니다.');
+        }
+
+        if (!contactEmail || contactEmail.trim() === '') {
+            throw new Error('연락 이메일(contactEmail)은 필수입니다.');
+        }
+
+        if (typeof isPublic !== 'boolean') {
+            throw new Error('공개 여부(isPublic)는 필수이며 boolean 값이어야 합니다.');
+        }
+
+        // 카테고리별 필수 필드 검증
+        if (category === 'DEVELOPMENT') {
+            // 개발 분야 필수 필드
+            if (!devInfo) {
+                throw new Error('개발 분야는 devInfo가 필수입니다.');
+            }
+
+            if (!devInfo.techStackSummary || !Array.isArray(devInfo.techStackSummary) || devInfo.techStackSummary.length === 0) {
+                throw new Error('devInfo.techStackSummary는 1개 이상 필수입니다.');
+            }
+
+            // 정부지원사업 정보 검증
+            if (govSupport && govSupport.hasGovSupportExperience === true) {
+                if (!govSupport.govSupportPrograms || !Array.isArray(govSupport.govSupportPrograms) || govSupport.govSupportPrograms.length === 0) {
+                    throw new Error('정부지원사업 경험이 있으면 govSupportPrograms는 필수입니다.');
+                }
+            }
+        } else {
+            // 개발 분야가 아닐 때
+            const validCategories = ['DESIGN', 'MARKETING', 'VIDEO', 'CONSULTING', 'OTHER'];
+            if (!validCategories.includes(category)) {
+                throw new Error(`유효하지 않은 카테고리입니다. 허용된 값: ${validCategories.join(', ')}`);
+            }
+
+            // OTHER 카테고리일 때 customCategory 필수
+            if (category === 'OTHER') {
+                if (!customCategory || customCategory.trim() === '') {
+                    throw new Error('기타 분야를 선택한 경우 customCategory는 필수입니다.');
+                }
+            }
+        }
+
+        // 중복 요청 체크 (pending 상태인 동일 업체명)
         const existingRequest = await OutsourceRequest.findOne({
             where: {
-                outsourceName: outsourceName.trim(),
+                outsourceName: name.trim(),
                 requestStatus: 'pending'
             }
         });
@@ -223,16 +293,23 @@ exports.createOutsourceRequest = async (requestData) => {
             };
         }
 
-        // 새 요청 생성
+        // 기존 필드 호환성을 위해 매핑 (하위 호환성 유지)
+        const outsourceName = name.trim();
+        const outsourceCEO = null; // 새 구조에서는 CEO 정보가 없으므로 null
+        const outsourceType = category; // 카테고리를 타입으로 사용
+        const outsourceAddr = region ? region.trim() : null;
+
+        // 새 요청 생성 (모든 데이터를 JSON으로 저장)
         const newRequest = await OutsourceRequest.create({
-            outsourceName: outsourceName.trim(),
-            outsourceCEO: outsourceCEO ? outsourceCEO.trim() : null,
-            outsourceType: outsourceType ? outsourceType.trim() : null,
-            outsourceAddr: outsourceAddr ? outsourceAddr.trim() : null,
-            requestStatus: 'pending'
+            outsourceName: outsourceName,
+            outsourceCEO: outsourceCEO,
+            outsourceType: outsourceType,
+            outsourceAddr: outsourceAddr,
+            requestStatus: 'pending',
+            requestData: requestData // 전체 요청 데이터를 JSON으로 저장
         });
 
-        logger.info(`[createOutsourceRequest] New outsource request created. RequestIdx: ${newRequest.requestIdx}, OutsourceName: ${outsourceName}`);
+        logger.info(`[createOutsourceRequest] New outsource request created. RequestIdx: ${newRequest.requestIdx}, Name: ${name}, Category: ${category}`);
 
         return {
             success: true,

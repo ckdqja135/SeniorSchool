@@ -51,6 +51,11 @@ module.exports = class OutsourceRequest extends Sequelize.Model {
                     type: Sequelize.TEXT,
                     allowNull: true,
                     comment: '관리자 메모'
+                },
+                requestData: {
+                    type: Sequelize.JSON,
+                    allowNull: true,
+                    comment: '요청 데이터 (JSON 형식으로 모든 요청 정보 저장)'
                 }
             },
             {
