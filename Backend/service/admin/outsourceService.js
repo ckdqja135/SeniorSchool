@@ -346,6 +346,61 @@ exports.getOutsourceRequests = async (searchParams) => {
     }
 };
 
+// 외주업체 추가 요청 단일 조회
+exports.getOutsourceRequest = async (requestIdx) => {
+    try {
+        const request = await OutsourceRequest.findByPk(requestIdx);
+        
+        if (!request) {
+            return {
+                status: 404,
+                message: '요청을 찾을 수 없습니다.'
+            };
+        }
+
+        logger.info(`[getOutsourceRequest] Request retrieved: ${requestIdx}`);
+        
+        // requestData가 있으면 파싱해서 모든 정보를 포함
+        let requestData = null;
+        if (request.requestData) {
+            // JSON 필드가 이미 파싱되어 있거나 문자열일 수 있음
+            if (typeof request.requestData === 'string') {
+                try {
+                    requestData = JSON.parse(request.requestData);
+                } catch (e) {
+                    logger.warn(`[getOutsourceRequest] Failed to parse requestData: ${e.message}`);
+                    requestData = request.requestData;
+                }
+            } else {
+                requestData = request.requestData;
+            }
+        }
+
+        // 기존 필드와 requestData를 합쳐서 반환
+        const responseData = {
+            requestIdx: request.requestIdx,
+            outsourceName: request.outsourceName,
+            outsourceCEO: request.outsourceCEO,
+            outsourceType: request.outsourceType,
+            outsourceAddr: request.outsourceAddr,
+            requestStatus: request.requestStatus,
+            requestDate: request.requestDate,
+            processedDate: request.processedDate,
+            adminNote: request.adminNote,
+            // requestData의 모든 정보를 포함
+            ...(requestData || {})
+        };
+        
+        return {
+            status: 200,
+            data: responseData
+        };
+    } catch (error) {
+        logger.error(`[getOutsourceRequest] Error: ${error.message}`);
+        throw error;
+    }
+};
+
 exports.updateOutsourceRequestStatus = async (requestIdx, statusData) => {
     try {
         const { requestStatus, adminNote } = statusData;

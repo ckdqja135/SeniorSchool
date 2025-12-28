@@ -103,6 +103,19 @@ exports.getOutsourceRequests = async (req, res) => {
     }
 };
 
+// 외주업체 추가 요청 단일 조회 (관리자만)
+exports.getOutsourceRequest = async (req, res) => {
+    const { requestIdx } = req.params;
+
+    try {
+        const result = await outsourceService.getOutsourceRequest(requestIdx);
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[getOutsourceRequest] Error: ${error.message}`);
+        res.status(500).json({ status: 500, message: '서버 오류가 발생했습니다.' });
+    }
+};
+
 // 외주업체 추가 요청 상태 업데이트 (관리자만)
 exports.updateOutsourceRequestStatus = async (req, res) => {
     const { requestIdx } = req.params;

@@ -35,6 +35,9 @@ router.post('/request', outsourceController.createOutsourceRequest);
 // 외주업체 추가 요청 목록 조회 (관리자만)
 router.get('/request', authenticateToken, isAdmin, outsourceController.getOutsourceRequests);
 
+// 외주업체 추가 요청 단일 조회 (관리자만)
+router.get('/request/:requestIdx', authenticateToken, isAdmin, outsourceController.getOutsourceRequest);
+
 // 외주업체 추가 요청 상태 업데이트 (관리자만)
 router.put('/request/:requestIdx/status', authenticateToken, isAdmin, outsourceController.updateOutsourceRequestStatus);
 
