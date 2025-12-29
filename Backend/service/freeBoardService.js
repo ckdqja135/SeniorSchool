@@ -1,12 +1,7 @@
 const { FreeBoard, FreeBoardComment, FreeBoardStats, sequelize } = require('../model');
 const { Op } = require('sequelize');
-const crypto = require('crypto');
 const logger = require('../utils/logger');
-
-// SHA256 암호화 함수
-const hashPassword = (password) => {
-    return crypto.createHash('sha256').update(password).digest('hex');
-};
+const hashPassword = require('../utils/hashPassword');
 
 class FreeBoardService {
     // 자유게시판 목록 조회

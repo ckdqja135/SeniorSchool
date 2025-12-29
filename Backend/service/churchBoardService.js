@@ -1,49 +1,34 @@
 const { ChurchBoard, sequelize, ChurchComment } = require('../model/index');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
-const crypto = require('crypto');
-
-// SHA256 암호화 함수
-const hashPassword = (password) => {
-    return crypto.createHash('sha256').update(password).digest('hex');
-};
+const hashPassword = require('../utils/hashPassword');
+const { buildBoardSearchConditions } = require('../utils/searchHelper');
+const { toggleBoardLike: toggleBoardLikeHelper, getBoardLike: getBoardLikeHelper } = require('../utils/boardLikeHelper');
 
 exports.getChurchBoards = async (churchIdx, searchParams = {}) => {
     try {
         let whereClause = { churchIdx: churchIdx };
         
-        // 검색 조건이 있는 경우 추가
-        const { id, title, content } = searchParams;
-        let hasSearchCondition = false;
+        // 검색 조건 적용
+        const { whereClause: updatedWhereClause, hasSearchCondition } = buildBoardSearchConditions(searchParams, whereClause);
         
-        if (id && id.trim() !== '') {
-            // boardID: 정확한 일치 검색
-            whereClause.boardID = id.trim();
-            hasSearchCondition = true;
-            logger.info(`[getChurchBoards] ID search applied: "${id.trim()}" for churchIdx: ${churchIdx}`);
-        }
-        
-        if (title && title.trim() !== '') {
-            // boardTitle: LIKE 검색
-            whereClause.boardTitle = {
-                [Op.like]: `%${title.trim()}%`
-            };
-            hasSearchCondition = true;
-            logger.info(`[getChurchBoards] Title search applied: "${title.trim()}" for churchIdx: ${churchIdx}`);
-        }
-        
-        if (content && content.trim() !== '') {
-            // boardContent: LIKE 검색
-            whereClause.boardContent = {
-                [Op.like]: `%${content.trim()}%`
-            };
-            hasSearchCondition = true;
-            logger.info(`[getChurchBoards] Content search applied: "${content.trim()}" for churchIdx: ${churchIdx}`);
-        }
-        
-        if (!hasSearchCondition) {
+        // 검색 조건 로깅
+        if (hasSearchCondition) {
+            const { id, title, content } = searchParams;
+            if (id && id.trim() !== '') {
+                logger.info(`[getChurchBoards] ID search applied: "${id.trim()}" for churchIdx: ${churchIdx}`);
+            }
+            if (title && title.trim() !== '') {
+                logger.info(`[getChurchBoards] Title search applied: "${title.trim()}" for churchIdx: ${churchIdx}`);
+            }
+            if (content && content.trim() !== '') {
+                logger.info(`[getChurchBoards] Content search applied: "${content.trim()}" for churchIdx: ${churchIdx}`);
+            }
+        } else {
             logger.info(`[getChurchBoards] No search condition, returning all boards for churchIdx: ${churchIdx}`);
         }
+        
+        whereClause = updatedWhereClause;
         
         const boards = await ChurchBoard.findAll({ 
             where: whereClause,
@@ -217,65 +202,22 @@ exports.deleteChurchBoard = async (boardData) => {
 
 // 교회 게시판 좋아요 토글
 exports.toggleChurchBoardLike = async (boardIdx, isLiked) => {
-    try {
-        // 게시글 존재 확인 및 현재 좋아요 수 조회
-        const board = await ChurchBoard.findByPk(boardIdx);
-        
-        if (!board) {
-            throw new Error('Board not found');
-        }
-
-        // 현재 좋아요 수를 숫자로 변환
-        const currentLikeCount = Number(board.boardLike) || 0;
-        let newLikeCount;
-        let message;
-        
-        if (isLiked) {
-            // 좋아요 증가
-            newLikeCount = currentLikeCount + 1;
-            message = '좋아요가 추가되었습니다.';
-        } else {
-            // 좋아요 감소 (0 미만으로 내려가지 않도록 처리)
-            newLikeCount = Math.max(0, currentLikeCount - 1);
-            message = '좋아요가 취소되었습니다.';
-        }
-
-        // 업데이트
-        await ChurchBoard.update(
-            { boardLike: newLikeCount },
-            { where: { boardIdx: boardIdx } }
-        );
-
-        logger.info(`[toggleChurchBoardLike] Board like toggled. BoardIdx: ${boardIdx}, IsLiked: ${isLiked}, Current: ${currentLikeCount}, New: ${newLikeCount}`);
-        
-        return {
-            message: message,
-            likeCount: newLikeCount
-        };
-    } catch (error) {
-        logger.error(`[toggleChurchBoardLike] Error: ${error.message}`);
-        throw error;
-    }
+    const result = await toggleBoardLikeHelper(ChurchBoard, boardIdx, isLiked, {
+        sequelize,
+        logger
+    });
+    return {
+        message: result.message,
+        likeCount: result.currentLikes
+    };
 };
 
 // 교회 게시판 좋아요 수 조회
 exports.getChurchBoardLike = async (boardId) => {
-    try {
-        const board = await ChurchBoard.findOne({
-            where: { boardIdx: boardId },
-            attributes: ['boardLike']
-        });
-
-        if (!board) {
-            throw new Error('Board not found');
-        }
-
-        logger.info(`[getChurchBoardLike] Board like count retrieved. BoardIdx: ${boardId}, LikeCount: ${board.boardLike}`);
-        return board.boardLike;
-    } catch (error) {
-        logger.error(`[getChurchBoardLike] Error: ${error.message}`);
-        throw error;
-    }
+    return await getBoardLikeHelper(ChurchBoard, boardId, {
+        logger,
+        throwOnNotFound: true
+    });
 };
 
 /**

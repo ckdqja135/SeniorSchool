@@ -1,11 +1,6 @@
 const { CompComment, sequelize } = require('../model/index');
 const logger = require('../utils/logger');
-const crypto = require('crypto');
-
-// SHA256 암호화 함수
-const hashPassword = (password) => {
-    return crypto.createHash('sha256').update(password).digest('hex');
-};
+const hashPassword = require('../utils/hashPassword');
 
 /**
  * 회사 댓글 조회

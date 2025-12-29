@@ -1,12 +1,8 @@
 const { User } = require('../../model/index');
 const { Op } = require('sequelize');
 const logger = require('../../utils/logger');
-const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-
-const hashPassword = (password) => {
-    return crypto.createHash('sha256').update(password).digest('hex');
-};
+const hashPassword = require('../../utils/hashPassword');
 
 exports.signIn = async (userData) => {
     try {

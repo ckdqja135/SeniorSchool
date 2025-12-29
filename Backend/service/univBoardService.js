@@ -1,49 +1,34 @@
 const { UnivBoard, sequelize, UnivComment } = require('../model/index');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
-const crypto = require('crypto');
-
-// SHA256 암호화 함수
-const hashPassword = (password) => {
-    return crypto.createHash('sha256').update(password).digest('hex');
-};
+const hashPassword = require('../utils/hashPassword');
+const { buildBoardSearchConditions } = require('../utils/searchHelper');
+const { toggleBoardLike: toggleBoardLikeHelper, getBoardLike: getBoardLikeHelper } = require('../utils/boardLikeHelper');
 
 exports.getBoards = async (univIdx, searchParams = {}) => {
     try {
         let whereClause = { univIdx: univIdx };
         
-        // 검색 조건이 있는 경우 추가
-        const { id, title, content } = searchParams;
-        let hasSearchCondition = false;
+        // 검색 조건 적용
+        const { whereClause: updatedWhereClause, hasSearchCondition } = buildBoardSearchConditions(searchParams, whereClause);
         
-        if (id && id.trim() !== '') {
-            // boardID: 정확한 일치 검색
-            whereClause.boardID = id.trim();
-            hasSearchCondition = true;
-            logger.info(`[getBoards] ID search applied: "${id.trim()}" for univIdx: ${univIdx}`);
-        }
-        
-        if (title && title.trim() !== '') {
-            // boardTitle: LIKE 검색
-            whereClause.boardTitle = {
-                [Op.like]: `%${title.trim()}%`
-            };
-            hasSearchCondition = true;
-            logger.info(`[getBoards] Title search applied: "${title.trim()}" for univIdx: ${univIdx}`);
-        }
-        
-        if (content && content.trim() !== '') {
-            // boardContent: LIKE 검색
-            whereClause.boardContent = {
-                [Op.like]: `%${content.trim()}%`
-            };
-            hasSearchCondition = true;
-            logger.info(`[getBoards] Content search applied: "${content.trim()}" for univIdx: ${univIdx}`);
-        }
-        
-        if (!hasSearchCondition) {
+        // 검색 조건 로깅
+        if (hasSearchCondition) {
+            const { id, title, content } = searchParams;
+            if (id && id.trim() !== '') {
+                logger.info(`[getBoards] ID search applied: "${id.trim()}" for univIdx: ${univIdx}`);
+            }
+            if (title && title.trim() !== '') {
+                logger.info(`[getBoards] Title search applied: "${title.trim()}" for univIdx: ${univIdx}`);
+            }
+            if (content && content.trim() !== '') {
+                logger.info(`[getBoards] Content search applied: "${content.trim()}" for univIdx: ${univIdx}`);
+            }
+        } else {
             logger.info(`[getBoards] No search condition, returning all boards for univIdx: ${univIdx}`);
         }
+        
+        whereClause = updatedWhereClause;
         
         const boards = await UnivBoard.findAll({ 
             where: whereClause,
@@ -208,61 +193,28 @@ exports.deleteBoard = async (boardData) => {
 exports.toggleBoardLike = async (boardIdx, isLiked) => {
     const transaction = await sequelize.transaction();
     try {
-        const increment = isLiked ? 1 : -1;
-        
-        // 좋아요 수 업데이트
-        await UnivBoard.update(
-            { 
-                boardLike: sequelize.literal(`GREATEST(0, boardLike + ${increment})`)
-            },
-            { 
-                where: { boardIdx: boardIdx },
-                transaction 
-            }
-        );
-
-        // 업데이트된 좋아요 수 조회
-        const updatedBoard = await UnivBoard.findOne({
-            where: { boardIdx: boardIdx },
-            attributes: ['boardLike'],
-            transaction
+        const result = await toggleBoardLikeHelper(UnivBoard, boardIdx, isLiked, {
+            sequelize,
+            transaction,
+            logger
         });
-
         await transaction.commit();
-        
-        const action = isLiked ? 'increased' : 'decreased';
-        logger.info(`[toggleBoardLike] Board like ${action} for boardIdx: ${boardIdx}, current likes: ${updatedBoard.boardLike}`);
-        
         return {
-            message: `Board like ${action} successfully`,
-            currentLikes: updatedBoard.boardLike
+            message: `Board like ${result.action} successfully`,
+            currentLikes: result.currentLikes
         };
     } catch (error) {
         await transaction.rollback();
-        logger.error(`[toggleBoardLike] Error: ${error.message}`);
         throw error;
     }
 };
 
 // 게시판 좋아요 수 조회
 exports.getBoardLike = async (boardId) => {
-    try {
-        const board = await UnivBoard.findOne({
-            where: { boardIdx: boardId },
-            attributes: ['boardLike']
-        });
-
-        if (!board) {
-            logger.warn(`[getBoardLike] Board not found for boardId: ${boardId}`);
-            return 0;
-        }
-
-        logger.info(`[getBoardLike] Like count retrieved for boardId: ${boardId}, likes: ${board.boardLike}`);
-        return board.boardLike;
-    } catch (error) {
-        logger.error(`[getBoardLike] Error: ${error.message}`);
-        throw error;
-    }
+    return await getBoardLikeHelper(UnivBoard, boardId, {
+        logger,
+        throwOnNotFound: false
+    });
 };
 
 /**

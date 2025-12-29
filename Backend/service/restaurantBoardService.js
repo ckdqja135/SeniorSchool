@@ -1,49 +1,34 @@
 const { RestaurantBoard, RestaurantInfo, sequelize, RestaurantComment } = require('../model/index');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
-const crypto = require('crypto');
-
-// SHA256 암호화 함수
-const hashPassword = (password) => {
-    return crypto.createHash('sha256').update(password).digest('hex');
-};
+const hashPassword = require('../utils/hashPassword');
+const { buildBoardSearchConditions } = require('../utils/searchHelper');
+const { toggleBoardLike: toggleBoardLikeHelper, getBoardLike: getBoardLikeHelper } = require('../utils/boardLikeHelper');
 
 exports.getRestaurantBoards = async (restaurantIdx, searchParams = {}) => {
     try {
         let whereClause = { restaurantIdx: restaurantIdx };
         
-        // 검색 조건이 있는 경우 추가
-        const { id, title, content } = searchParams;
-        let hasSearchCondition = false;
+        // 검색 조건 적용
+        const { whereClause: updatedWhereClause, hasSearchCondition } = buildBoardSearchConditions(searchParams, whereClause);
         
-        if (id && id.trim() !== '') {
-            // boardID: 정확한 일치 검색
-            whereClause.boardID = id.trim();
-            hasSearchCondition = true;
-            logger.info(`[getRestaurantBoards] ID search applied: "${id.trim()}" for restaurantIdx: ${restaurantIdx}`);
-        }
-        
-        if (title && title.trim() !== '') {
-            // boardTitle: LIKE 검색
-            whereClause.boardTitle = {
-                [Op.like]: `%${title.trim()}%`
-            };
-            hasSearchCondition = true;
-            logger.info(`[getRestaurantBoards] Title search applied: "${title.trim()}" for restaurantIdx: ${restaurantIdx}`);
-        }
-        
-        if (content && content.trim() !== '') {
-            // boardContent: LIKE 검색
-            whereClause.boardContent = {
-                [Op.like]: `%${content.trim()}%`
-            };
-            hasSearchCondition = true;
-            logger.info(`[getRestaurantBoards] Content search applied: "${content.trim()}" for restaurantIdx: ${restaurantIdx}`);
-        }
-        
-        if (!hasSearchCondition) {
+        // 검색 조건 로깅
+        if (hasSearchCondition) {
+            const { id, title, content } = searchParams;
+            if (id && id.trim() !== '') {
+                logger.info(`[getRestaurantBoards] ID search applied: "${id.trim()}" for restaurantIdx: ${restaurantIdx}`);
+            }
+            if (title && title.trim() !== '') {
+                logger.info(`[getRestaurantBoards] Title search applied: "${title.trim()}" for restaurantIdx: ${restaurantIdx}`);
+            }
+            if (content && content.trim() !== '') {
+                logger.info(`[getRestaurantBoards] Content search applied: "${content.trim()}" for restaurantIdx: ${restaurantIdx}`);
+            }
+        } else {
             logger.info(`[getRestaurantBoards] No search condition, returning all boards for restaurantIdx: ${restaurantIdx}`);
         }
+        
+        whereClause = updatedWhereClause;
         
         const boards = await RestaurantBoard.findAll({ 
             where: whereClause,
@@ -256,62 +241,21 @@ exports.deleteRestaurantBoard = async (boardData) => {
 };
 
 exports.toggleRestaurantBoardLike = async (boardIdx, isLiked) => {
-    try {
-        // 게시글 존재 확인 및 현재 좋아요 수 조회
-        const board = await RestaurantBoard.findByPk(boardIdx);
-        
-        if (!board) {
-            throw new Error('게시글을 찾을 수 없습니다.');
-        }
-
-        // 현재 좋아요 수를 숫자로 변환 (문자열 연결 방지)
-        const currentLikes = Number(board.boardLike) || 0;
-        let newLikes;
-        let message;
-        
-        if (isLiked) {
-            // 좋아요 증가
-            newLikes = currentLikes + 1;
-            message = '좋아요가 추가되었습니다.';
-        } else {
-            // 좋아요 감소 (0 미만으로 내려가지 않도록 처리)
-            newLikes = Math.max(0, currentLikes - 1);
-            message = '좋아요가 취소되었습니다.';
-        }
-
-        await RestaurantBoard.update(
-            { boardLike: newLikes },
-            { where: { boardIdx: boardIdx } }
-        );
-        
-        logger.info(`[toggleRestaurantBoardLike] Board like toggled. BoardIdx: ${boardIdx}, IsLiked: ${isLiked}, Current: ${currentLikes}, New: ${newLikes}`);
-        
-        return {
-            message: message,
-            likeCount: newLikes
-        };
-    } catch (error) {
-        logger.error(`[toggleRestaurantBoardLike] Error: ${error.message}`);
-        throw error;
-    }
+    const result = await toggleBoardLikeHelper(RestaurantBoard, boardIdx, isLiked, {
+        sequelize,
+        logger
+    });
+    return {
+        message: result.message,
+        likeCount: result.currentLikes
+    };
 };
 
 exports.getRestaurantBoardLike = async (boardId) => {
-    try {
-        const board = await RestaurantBoard.findByPk(boardId, {
-            attributes: ['boardLike']
-        });
-        
-        if (!board) {
-            throw new Error('게시글을 찾을 수 없습니다.');
-        }
-        
-        logger.info(`[getRestaurantBoardLike] Board like count retrieved. BoardId: ${boardId}, LikeCount: ${board.boardLike}`);
-        return board.boardLike;
-    } catch (error) {
-        logger.error(`[getRestaurantBoardLike] Error: ${error.message}`);
-        throw error;
-    }
+    return await getBoardLikeHelper(RestaurantBoard, boardId, {
+        logger,
+        throwOnNotFound: true
+    });
 };
 
 exports.getRecentRestaurantBoardsWithRestaurantInfo = async () => {

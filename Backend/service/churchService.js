@@ -1,6 +1,7 @@
 const { ChurchInfo, ChurchRequest, ChurchBoard, sequelize } = require('../model/index');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
+const hashPassword = require('../utils/hashPassword');
 
 // 교회 목록 조회
 exports.getChurches = async (searchParams = {}) => {
@@ -486,7 +487,7 @@ exports.insertChurchBoard = async (boardData) => {
                 boardLike: boardData.boardLike || 0,
                 boardHits: boardData.boardHits || 0,
                 boardID: boardData.boardId,
-                boardPW: (boardData.writerPw || boardData.boardPw) && (boardData.writerPw || boardData.boardPw).trim() !== '' ? require('crypto').createHash('sha256').update((boardData.writerPw || boardData.boardPw).trim()).digest('hex') : null,
+                boardPW: (boardData.writerPw || boardData.boardPw) && (boardData.writerPw || boardData.boardPw).trim() !== '' ? hashPassword((boardData.writerPw || boardData.boardPw).trim()) : null,
             },
             { transaction }
         );
@@ -526,7 +527,7 @@ exports.correctChurchBoard = async (boardData) => {
         // 비밀번호 확인 (비밀번호가 있는 경우)
         const password = writerPw || boardPw;
         if (password && typeof password === 'string' && password.trim() !== '') {
-            const hashedPassword = require('crypto').createHash('sha256').update(password.trim()).digest('hex');
+            const hashedPassword = hashPassword(password.trim());
             if (existingBoard.boardPW !== hashedPassword) {
                 throw new Error('Invalid password');
             }
@@ -578,7 +579,7 @@ exports.deleteChurchBoard = async (boardData) => {
         // 비밀번호 확인
         const password = writerPw || boardPw;
         if (password && typeof password === 'string' && password.trim() !== '') {
-            const hashedPassword = require('crypto').createHash('sha256').update(password.trim()).digest('hex');
+            const hashedPassword = hashPassword(password.trim());
             if (existingBoard.boardPW !== hashedPassword) {
                 throw new Error('Invalid password');
             }

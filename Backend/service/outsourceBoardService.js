@@ -1,49 +1,34 @@
 const { OutsourceBoard, OutsourceInfo, OutsourceComment, sequelize } = require('../model/index');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
-const crypto = require('crypto');
-
-// SHA256 암호화 함수
-const hashPassword = (password) => {
-    return crypto.createHash('sha256').update(password).digest('hex');
-};
+const hashPassword = require('../utils/hashPassword');
+const { buildBoardSearchConditions } = require('../utils/searchHelper');
+const { toggleBoardLike: toggleBoardLikeHelper, getBoardLike: getBoardLikeHelper } = require('../utils/boardLikeHelper');
 
 exports.getOutsourceBoards = async (outsourceIdx, searchParams = {}) => {
     try {
         let whereClause = { outsourceIdx: outsourceIdx };
         
-        // 검색 조건이 있는 경우 추가
-        const { id, title, content } = searchParams;
-        let hasSearchCondition = false;
+        // 검색 조건 적용
+        const { whereClause: updatedWhereClause, hasSearchCondition } = buildBoardSearchConditions(searchParams, whereClause);
         
-        if (id && id.trim() !== '') {
-            // boardID: 정확한 일치 검색
-            whereClause.boardID = id.trim();
-            hasSearchCondition = true;
-            logger.info(`[getOutsourceBoards] ID search applied: "${id.trim()}" for outsourceIdx: ${outsourceIdx}`);
-        }
-        
-        if (title && title.trim() !== '') {
-            // boardTitle: LIKE 검색
-            whereClause.boardTitle = {
-                [Op.like]: `%${title.trim()}%`
-            };
-            hasSearchCondition = true;
-            logger.info(`[getOutsourceBoards] Title search applied: "${title.trim()}" for outsourceIdx: ${outsourceIdx}`);
-        }
-        
-        if (content && content.trim() !== '') {
-            // boardContent: LIKE 검색
-            whereClause.boardContent = {
-                [Op.like]: `%${content.trim()}%`
-            };
-            hasSearchCondition = true;
-            logger.info(`[getOutsourceBoards] Content search applied: "${content.trim()}" for outsourceIdx: ${outsourceIdx}`);
-        }
-        
-        if (!hasSearchCondition) {
+        // 검색 조건 로깅
+        if (hasSearchCondition) {
+            const { id, title, content } = searchParams;
+            if (id && id.trim() !== '') {
+                logger.info(`[getOutsourceBoards] ID search applied: "${id.trim()}" for outsourceIdx: ${outsourceIdx}`);
+            }
+            if (title && title.trim() !== '') {
+                logger.info(`[getOutsourceBoards] Title search applied: "${title.trim()}" for outsourceIdx: ${outsourceIdx}`);
+            }
+            if (content && content.trim() !== '') {
+                logger.info(`[getOutsourceBoards] Content search applied: "${content.trim()}" for outsourceIdx: ${outsourceIdx}`);
+            }
+        } else {
             logger.info(`[getOutsourceBoards] No search condition, returning all boards for outsourceIdx: ${outsourceIdx}`);
         }
+        
+        whereClause = updatedWhereClause;
         
         const boards = await OutsourceBoard.findAll({ 
             where: whereClause,
@@ -230,62 +215,21 @@ exports.deleteOutsourceBoard = async (boardData) => {
 };
 
 exports.toggleOutsourceBoardLike = async (boardIdx, isLiked) => {
-    try {
-        // 게시글 존재 확인
-        const board = await OutsourceBoard.findByPk(boardIdx);
-        
-        if (!board) {
-            throw new Error('게시글을 찾을 수 없습니다.');
-        }
-
-        let updateQuery;
-        let message;
-        
-        if (isLiked) {
-            // 좋아요 증가
-            updateQuery = { boardLike: sequelize.literal('boardLike + 1') };
-            message = '좋아요가 추가되었습니다.';
-        } else {
-            // 좋아요 감소 (0 미만으로 내려가지 않도록 처리)
-            updateQuery = { boardLike: sequelize.literal('GREATEST(boardLike - 1, 0)') };
-            message = '좋아요가 취소되었습니다.';
-        }
-
-        await OutsourceBoard.update(updateQuery, {
-            where: { boardIdx: boardIdx }
-        });
-
-        // 업데이트된 좋아요 수 조회
-        const updatedBoard = await OutsourceBoard.findByPk(boardIdx);
-        
-        logger.info(`[toggleOutsourceBoardLike] Board like toggled. BoardIdx: ${boardIdx}, IsLiked: ${isLiked}, NewLikeCount: ${updatedBoard.boardLike}`);
-        
-        return {
-            message: message,
-            likeCount: updatedBoard.boardLike
-        };
-    } catch (error) {
-        logger.error(`[toggleOutsourceBoardLike] Error: ${error.message}`);
-        throw error;
-    }
+    const result = await toggleBoardLikeHelper(OutsourceBoard, boardIdx, isLiked, {
+        sequelize,
+        logger
+    });
+    return {
+        message: result.message,
+        likeCount: result.currentLikes
+    };
 };
 
 exports.getOutsourceBoardLike = async (boardId) => {
-    try {
-        const board = await OutsourceBoard.findByPk(boardId, {
-            attributes: ['boardLike']
-        });
-        
-        if (!board) {
-            throw new Error('게시글을 찾을 수 없습니다.');
-        }
-        
-        logger.info(`[getOutsourceBoardLike] Board like count retrieved. BoardId: ${boardId}, LikeCount: ${board.boardLike}`);
-        return board.boardLike;
-    } catch (error) {
-        logger.error(`[getOutsourceBoardLike] Error: ${error.message}`);
-        throw error;
-    }
+    return await getBoardLikeHelper(OutsourceBoard, boardId, {
+        logger,
+        throwOnNotFound: true
+    });
 };
 
 exports.getRecentOutsourceBoardsWithOutsourceInfo = async () => {
