@@ -285,37 +285,55 @@ exports.getRecentBoardsWithUnivInfo = async () => {
     try {
         const limit = 5; // 고정된 제한 수
 
-        // UnivBoard와 UniversityInfo 테이블 조인하여 최근순으로 조회
-        const { count, rows } = await UnivBoard.findAndCountAll({
-            include: [
-                {
-                    model: require('../model/index').University,
-                    as: 'university',
-                    attributes: ['univName', 'univLocate', 'univType', 'univCampos'],
-                    where: { univStatus: 1 } // 활성화된 대학교만
-                }
-            ],
-            attributes: [
-                'boardIdx', 
-                'boardTitle', 
-                'boardContent', 
-                'univIdx', 
-                'boardRegDate', 
-                'boardLike', 
-                'boardHits', 
-                'boardID'
-            ],
-            order: [['boardRegDate', 'DESC']], // 최근순 정렬
-            limit: limit
+        // Raw Query로 UnivBoard와 UniversityInfo 테이블 조인하여 최근순으로 조회
+        const query = `
+            SELECT 
+                ub.boardIdx, 
+                ub.boardTitle, 
+                ub.boardContent, 
+                ub.univIdx, 
+                ub.boardRegDate, 
+                ub.boardLike, 
+                ub.boardHits, 
+                ub.boardID,
+                u.univName,
+                u.univLocate,
+                u.univType,
+                u.univCampos
+            FROM tb_univboard ub
+            INNER JOIN tb_universityinfo u ON ub.univIdx = u.univIdx
+            WHERE u.univStatus = 1
+            ORDER BY ub.boardRegDate DESC
+            LIMIT :limit
+        `;
+
+        // Sequelize로 Raw Query 실행
+        const results = await sequelize.query(query, {
+            type: sequelize.QueryTypes.SELECT,
+            replacements: { limit: limit }
         });
 
-        logger.info(`[getRecentBoardsWithUnivInfo] Retrieved ${rows.length} boards`);
+        // 전체 개수 조회를 위한 별도 쿼리
+        const countQuery = `
+            SELECT COUNT(*) as totalCount
+            FROM tb_univboard ub
+            INNER JOIN tb_universityinfo u ON ub.univIdx = u.univIdx
+            WHERE u.univStatus = 1
+        `;
+
+        const countResult = await sequelize.query(countQuery, {
+            type: sequelize.QueryTypes.SELECT
+        });
+
+        const totalCount = countResult[0]?.totalCount || 0;
+
+        logger.info(`[getRecentBoardsWithUnivInfo] Retrieved ${results.length} boards`);
         
         return {
             status: 200,
-            data: rows,
-            totalCount: count,
-            currentCount: rows.length
+            data: results,
+            totalCount: totalCount,
+            currentCount: results.length
         };
     } catch (error) {
         logger.error(`[getRecentBoardsWithUnivInfo] Error: ${error.message}`);
@@ -329,33 +347,38 @@ exports.getRecentBoardsWithUnivInfo = async () => {
  */
 exports.getTopViewedBoardsByUniversity = async () => {
     try {
-        const topBoards = await UnivBoard.findAll({
-            include: [
-                {
-                    model: require('../model/index').University,
-                    as: 'university',
-                    attributes: ['univName', 'univLocate', 'univType', 'univCampos'],
-                    where: { univStatus: 1 } // 활성화된 대학교만
-                }
-            ],
-            attributes: [
-                'boardIdx',
-                'boardTitle', 
-                'boardContent', 
-                'boardRegDate', 
-                'boardLike', 
-                'boardHits', 
-                'boardID'
-            ],
-            order: [['boardHits', 'DESC']], // 조회수 높은 순 정렬
-            limit: 10 // 상위 10개만
+        // Raw Query로 조회수 기준 인기 후기 TOP10 조회
+        const query = `
+            SELECT 
+                ub.boardIdx,
+                ub.boardTitle, 
+                ub.boardContent, 
+                ub.boardRegDate, 
+                ub.boardLike, 
+                ub.boardHits, 
+                ub.boardID,
+                u.univName,
+                u.univLocate,
+                u.univType,
+                u.univCampos
+            FROM tb_univboard ub
+            INNER JOIN tb_universityinfo u ON ub.univIdx = u.univIdx
+            WHERE u.univStatus = 1
+            ORDER BY ub.boardHits DESC
+            LIMIT :limit
+        `;
+
+        // Sequelize로 Raw Query 실행
+        const results = await sequelize.query(query, {
+            type: sequelize.QueryTypes.SELECT,
+            replacements: { limit: 10 }
         });
 
-        logger.info(`[getTopViewedBoardsByUniversity] 전체 대학교의 인기 후기 TOP10 조회 완료: ${topBoards.length}개`);
+        logger.info(`[getTopViewedBoardsByUniversity] 전체 대학교의 인기 후기 TOP10 조회 완료: ${results.length}개`);
         
         return {
             status: 200,
-            data: topBoards
+            data: results
         };
     } catch (error) {
         logger.error(`[getTopViewedBoardsByUniversity] Error: ${error.message}`);

@@ -7,7 +7,7 @@ const { httpLogger } = logger;
 const routes = require('./routes');
 const securityMiddleware = require('./middlewares/securityMiddleware');
 const xssMiddleware = require('./middlewares/xssMiddleware');
-// const rateLimitMiddleware = require('./middlewares/rateLimitMiddleware');
+const rateLimitMiddleware = require('./middlewares/rateLimitMiddleware');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 
@@ -41,7 +41,7 @@ app.use(cookieParser());
 securityMiddleware(app);
 
 // Rate Limiting
-// rateLimitMiddleware(app);
+rateLimitMiddleware(app);
 
 // 로깅
 app.use(httpLogger);
@@ -73,6 +73,6 @@ app.disable('x-powered-by');
 // 회사 데이터 스케줄러 시작 (매일 자정에 자동 실행)
 const companyDataScheduler = require('./scheduler/companyDataScheduler');
 companyDataScheduler.start();
-logger.info('✅ Company data scheduler started (runs daily at midnight)');
+logger.info('Company data scheduler started (runs daily at midnight)');
 
 module.exports = app;

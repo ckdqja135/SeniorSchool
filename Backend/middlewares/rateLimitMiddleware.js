@@ -25,8 +25,8 @@ const rateLimitMiddleware = (app) => {
     
     // 프로덕션 환경: 적절한 보안 설정
     const generalLimiter = rateLimit({
-        windowMs: 15 * 60 * 1000, // 15분
-        max: 1000, // IP당 15분 동안 최대 1000회 요청
+        windowMs: 1 * 60 * 1000, // 1분
+        max: 50, // IP당 1분 동안 최대 50회 요청
         message: {
             status: 429,
             message: '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
@@ -48,12 +48,11 @@ const rateLimitMiddleware = (app) => {
         legacyHeaders: false,
     });
 
-    // 일반적인 API 요청에 적용
-    // app.use('/api/', generalLimiter);
+    // 일반적인 API 요청에 적용 (프로덕션 환경)
+    app.use(generalLimiter);
     
-    // 민감한 API에 엄격한 제한 적용 (비활성화)
-    // app.use('/api/auth/', strictLimiter);
-    // app.use('/api/admin/', strictLimiter);
+    // 민감한 API에 엄격한 제한 적용
+    app.use('/admin', strictLimiter);
 };
 
 module.exports = rateLimitMiddleware; 

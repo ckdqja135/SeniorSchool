@@ -1,5 +1,4 @@
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const xss = require('xss-clean');
 
 const securityMiddleware = (app) => {
@@ -64,25 +63,6 @@ const securityMiddleware = (app) => {
 
     // XSS 입력값 검증
     app.use(xss());
-
-    // Rate Limiting 설정
-    const limiter = rateLimit({
-        windowMs: 15 * 60 * 1000, // 15분
-        max: 100, // IP당 15분 동안 최대 100회 요청
-        message: {
-            status: 429,
-            message: '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
-        },
-        standardHeaders: true, // Rate limit info in the `RateLimit-*` headers
-        legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    });
-
-    // 모든 API 요청에 Rate Limiting 적용 (search 경로 제외)
-    // app.use('/admin/', limiter);
-    // app.use('/board/', limiter);
-    // app.use('/search/', limiter);  // search 경로 rate limiting 비활성화
-    // app.use('/comment/', limiter);
-    // app.use('/admin/', limiter);
 
     // SameSite 쿠키 설정을 위한 미들웨어
     app.use((req, res, next) => {
