@@ -423,88 +423,139 @@ exports.updateOutsourceRequestStatus = async (requestIdx, statusData) => {
 
         // 승인 시 외주업체 자동 생성
         if (requestStatus === 'completed' && request.requestStatus === 'pending') {
-            // requestData 파싱
-            let requestData = null;
-            if (request.requestData) {
-                if (typeof request.requestData === 'string') {
-                    try {
-                        requestData = JSON.parse(request.requestData);
-                    } catch (e) {
-                        logger.warn(`[updateOutsourceRequestStatus] Failed to parse requestData: ${e.message}`);
+            try {
+                // requestData 파싱
+                let requestData = null;
+                if (request.requestData) {
+                    if (typeof request.requestData === 'string') {
+                        try {
+                            requestData = JSON.parse(request.requestData);
+                        } catch (e) {
+                            logger.warn(`[updateOutsourceRequestStatus] Failed to parse requestData: ${e.message}`);
+                            requestData = null; // 파싱 실패 시 null로 설정
+                        }
+                    } else {
                         requestData = request.requestData;
                     }
-                } else {
-                    requestData = request.requestData;
                 }
-            }
 
-            // requestData가 있으면 외주업체 생성
-            if (requestData) {
+                // 외주업체명 결정
+                const outsourceName = (requestData && requestData.name) ? requestData.name.trim() : request.outsourceName;
+                
+                if (!outsourceName || outsourceName.trim() === '') {
+                    logger.error(`[updateOutsourceRequestStatus] Outsource name is missing for requestIdx: ${requestIdx}`);
+                    throw new Error('외주업체명이 없어 외주업체를 생성할 수 없습니다.');
+                }
+
                 // 이미 동일한 이름의 외주업체가 있는지 확인
                 const existingOutsource = await OutsourceInfo.findOne({
                     where: {
-                        outsourceName: requestData.name || request.outsourceName
+                        outsourceName: outsourceName
                     }
                 });
 
                 if (existingOutsource) {
-                    logger.warn(`[updateOutsourceRequestStatus] Outsource already exists: ${requestData.name || request.outsourceName}`);
+                    logger.warn(`[updateOutsourceRequestStatus] Outsource already exists: ${outsourceName}`);
                     return {
                         status: 409,
                         message: '이미 동일한 이름의 외주업체가 존재합니다.'
                     };
                 }
 
-                // requestData를 OutsourceInfo 구조로 매핑
-                const outsourceData = {
-                    outsourceName: requestData.name || request.outsourceName,
-                    outsourceLocation: requestData.region ? requestData.region.split(' ')[0] : '미정', // 지역 추출 (예: "서울특별시 강남구" -> "서울특별시")
-                    outsourceType: requestData.category || request.outsourceType || '기타',
-                    outsourceEstablished: '미정', // requestData에 설립년도 정보가 없으면 기본값
-                    outsourceCEO: requestData.devInfo?.avgDevExperienceYears ? 
-                        `평균 ${requestData.devInfo.avgDevExperienceYears}년 경력` : 
-                        (request.outsourceCEO || '미정'),
-                    outsourceLatX: 0.0, // 좌표 정보가 없으면 기본값
-                    outsourceLatY: 0.0,
-                    outsourceURL: requestData.websiteUrl || requestData.mainPortfolioUrl || '',
-                    outsourceLotAddr: '', // 지번주소 정보가 없으면 빈 문자열
-                    outsourceAddr: requestData.region || request.outsourceAddr || '',
-                    outsourceMapIMG: null,
-                    outsourceStatus: 1, // 활성 상태
-                    outsourceViewCount: 0
-                };
-
-                // 외주업체 생성
-                const createdOutsource = await OutsourceInfo.create(outsourceData);
-                logger.info(`[updateOutsourceRequestStatus] Outsource created: ${createdOutsource.outsourceIdx} - ${outsourceData.outsourceName}`);
-            } else {
-                // requestData가 없으면 기존 필드로 외주업체 생성
-                const existingOutsource = await OutsourceInfo.findOne({
-                    where: {
-                        outsourceName: request.outsourceName
+                // requestData가 있으면 외주업체 생성
+                if (requestData && typeof requestData === 'object' && Object.keys(requestData).length > 0) {
+                    // 지역 추출 (안전하게 처리)
+                    let outsourceLocation = '미정';
+                    if (requestData.region && typeof requestData.region === 'string') {
+                        const regionParts = requestData.region.trim().split(' ');
+                        if (regionParts.length > 0 && regionParts[0]) {
+                            outsourceLocation = regionParts[0];
+                        }
+                    } else if (request.outsourceAddr) {
+                        const addrParts = request.outsourceAddr.trim().split(' ');
+                        if (addrParts.length > 0 && addrParts[0]) {
+                            outsourceLocation = addrParts[0];
+                        }
                     }
-                });
 
-                if (!existingOutsource) {
+                    // 대표자 정보 처리 (우선순위: outsourceCEO > devInfo.avgDevExperienceYears > request.outsourceCEO)
+                    let outsourceCEO = '미정';
+                    if (requestData.outsourceCEO && requestData.outsourceCEO.trim() !== '' && requestData.outsourceCEO !== '-') {
+                        outsourceCEO = requestData.outsourceCEO.trim();
+                    } else if (requestData.devInfo && requestData.devInfo.avgDevExperienceYears) {
+                        outsourceCEO = `평균 ${requestData.devInfo.avgDevExperienceYears}년 경력`;
+                    } else if (request.outsourceCEO && request.outsourceCEO.trim() !== '' && request.outsourceCEO !== '-') {
+                        outsourceCEO = request.outsourceCEO.trim();
+                    }
+
+                    // URL 처리
+                    const outsourceURL = (requestData.websiteUrl || requestData.mainPortfolioUrl || '').trim();
+
+                    // requestData를 OutsourceInfo 구조로 매핑
                     const outsourceData = {
-                        outsourceName: request.outsourceName,
-                        outsourceLocation: request.outsourceAddr ? request.outsourceAddr.split(' ')[0] : '미정',
-                        outsourceType: request.outsourceType || '기타',
+                        outsourceName: outsourceName,
+                        outsourceLocation: outsourceLocation,
+                        outsourceType: (requestData.category || request.outsourceType || '기타').trim(),
                         outsourceEstablished: '미정',
-                        outsourceCEO: request.outsourceCEO || '미정',
+                        outsourceCEO: outsourceCEO,
                         outsourceLatX: 0.0,
                         outsourceLatY: 0.0,
-                        outsourceURL: '',
+                        outsourceURL: outsourceURL,
                         outsourceLotAddr: '',
-                        outsourceAddr: request.outsourceAddr || '',
+                        outsourceAddr: (requestData.region || request.outsourceAddr || '').trim(),
                         outsourceMapIMG: null,
                         outsourceStatus: 1,
                         outsourceViewCount: 0
                     };
 
+                    logger.info(`[updateOutsourceRequestStatus] Creating outsource with data: ${JSON.stringify(outsourceData)}`);
+
+                    // 외주업체 생성
                     const createdOutsource = await OutsourceInfo.create(outsourceData);
-                    logger.info(`[updateOutsourceRequestStatus] Outsource created (legacy): ${createdOutsource.outsourceIdx} - ${outsourceData.outsourceName}`);
+                    logger.info(`[updateOutsourceRequestStatus] Outsource created successfully: ${createdOutsource.outsourceIdx} - ${outsourceData.outsourceName}`);
+                } else {
+                    // requestData가 없으면 기존 필드로 외주업체 생성
+                    // 지역 추출 (안전하게 처리)
+                    let outsourceLocation = '미정';
+                    if (request.outsourceAddr) {
+                        const addrParts = request.outsourceAddr.trim().split(' ');
+                        if (addrParts.length > 0 && addrParts[0]) {
+                            outsourceLocation = addrParts[0];
+                        }
+                    }
+
+                    // 대표자 정보 처리
+                    const outsourceCEO = (request.outsourceCEO && request.outsourceCEO.trim() !== '' && request.outsourceCEO !== '-') 
+                        ? request.outsourceCEO.trim() 
+                        : '미정';
+
+                    const outsourceData = {
+                        outsourceName: outsourceName,
+                        outsourceLocation: outsourceLocation,
+                        outsourceType: (request.outsourceType || '기타').trim(),
+                        outsourceEstablished: '미정',
+                        outsourceCEO: outsourceCEO,
+                        outsourceLatX: 0.0,
+                        outsourceLatY: 0.0,
+                        outsourceURL: '',
+                        outsourceLotAddr: '',
+                        outsourceAddr: (request.outsourceAddr || '').trim(),
+                        outsourceMapIMG: null,
+                        outsourceStatus: 1,
+                        outsourceViewCount: 0
+                    };
+
+                    logger.info(`[updateOutsourceRequestStatus] Creating outsource (legacy) with data: ${JSON.stringify(outsourceData)}`);
+
+                    const createdOutsource = await OutsourceInfo.create(outsourceData);
+                    logger.info(`[updateOutsourceRequestStatus] Outsource created (legacy) successfully: ${createdOutsource.outsourceIdx} - ${outsourceData.outsourceName}`);
                 }
+            } catch (error) {
+                logger.error(`[updateOutsourceRequestStatus] Failed to create outsource for requestIdx ${requestIdx}: ${error.message}`);
+                logger.error(`[updateOutsourceRequestStatus] Error stack: ${error.stack}`);
+                // 외주업체 생성 실패해도 요청 상태는 업데이트 (관리자가 수동으로 처리할 수 있도록)
+                // 하지만 에러를 다시 throw하여 클라이언트에 알림
+                throw new Error(`외주업체 생성 중 오류가 발생했습니다: ${error.message}`);
             }
         }
 

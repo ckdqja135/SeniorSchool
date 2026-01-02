@@ -202,7 +202,8 @@ exports.deleteOutsource = async (outsourceIdx) => {
 exports.createOutsourceRequest = async (requestData) => {
     try {
         const { 
-            name, 
+            name,
+            outsourceCEO, // 대표자명 (공통 필드)
             tagline, 
             category, 
             contactEmail, 
@@ -213,6 +214,7 @@ exports.createOutsourceRequest = async (requestData) => {
             websiteUrl,
             mainPortfolioUrl,
             contactChannel,
+            timezone, // 타임존 (선택 필드)
             // 개발 분야 전용 필드
             minBudget,
             avgBudget,
@@ -295,14 +297,14 @@ exports.createOutsourceRequest = async (requestData) => {
 
         // 기존 필드 호환성을 위해 매핑 (하위 호환성 유지)
         const outsourceName = name.trim();
-        const outsourceCEO = null; // 새 구조에서는 CEO 정보가 없으므로 null
+        const outsourceCEOValue = outsourceCEO ? outsourceCEO.trim() : null;
         const outsourceType = category; // 카테고리를 타입으로 사용
         const outsourceAddr = region ? region.trim() : null;
 
         // 새 요청 생성 (모든 데이터를 JSON으로 저장)
         const newRequest = await OutsourceRequest.create({
             outsourceName: outsourceName,
-            outsourceCEO: outsourceCEO,
+            outsourceCEO: outsourceCEOValue,
             outsourceType: outsourceType,
             outsourceAddr: outsourceAddr,
             requestStatus: 'pending',
