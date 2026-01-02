@@ -13,10 +13,21 @@ exports.createOutsource = async (req, res, next) => {
 // 외주업체 검색
 exports.searchOutsource = async (req, res) => {
     try {
-        const data = req.query;
-        logger.info(`[searchOutsource] Request query: ${JSON.stringify(data)}`);
+        const { outsourceName, outsourceType, outsourceLocation, page, rowsPerPage } = req.query;
         
-        const result = await outsourceService.searchOutsource(data);
+        // 파라미터 매핑 (API 파라미터 -> 서비스 파라미터)
+        const searchParams = {
+            name: outsourceName, // outsourceName -> name
+            type: outsourceType, // outsourceType -> type
+            location: outsourceLocation, // outsourceLocation -> location
+            page: page || 1,
+            limit: rowsPerPage || 10 // rowsPerPage -> limit
+        };
+        
+        logger.info(`[searchOutsource] Request query: ${JSON.stringify(req.query)}`);
+        logger.info(`[searchOutsource] Mapped params: ${JSON.stringify(searchParams)}`);
+        
+        const result = await outsourceService.searchOutsource(searchParams);
         logger.info(`[searchOutsource] Success: ${result.totalCount} results found`);
 
         res.status(result.status).json(result);
