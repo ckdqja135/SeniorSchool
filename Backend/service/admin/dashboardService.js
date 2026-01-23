@@ -179,214 +179,236 @@ exports.getRecentActivities = async (limit = 20) => {
         const query = `
             SELECT * FROM (
                 -- 업체 추가 (Church)
-                SELECT 
+                SELECT
                     churchIdx AS id,
                     CONVERT('church' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('add' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
                     CONVERT(churchName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    NULL AS entityName,
                     created_at AS timestamp
                 FROM tb_church_info
                 WHERE created_at IS NOT NULL
-                
+
                 UNION ALL
-                
+
                 -- 업체 업데이트 (Church)
-                SELECT 
+                SELECT
                     churchIdx AS id,
                     CONVERT('church' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('update' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
                     CONVERT(churchName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    NULL AS entityName,
                     updated_at AS timestamp
                 FROM tb_church_info
-                WHERE updated_at IS NOT NULL 
+                WHERE updated_at IS NOT NULL
                 AND updated_at > created_at
-                
+
                 UNION ALL
-                
+
                 -- 업체 추가 (Company)
-                SELECT 
+                SELECT
                     compIdx AS id,
                     CONVERT('company' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('add' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
                     CONVERT(compName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    NULL AS entityName,
                     created_at AS timestamp
                 FROM tb_comp_info
                 WHERE created_at IS NOT NULL
-                
+
                 UNION ALL
-                
+
                 -- 업체 업데이트 (Company)
-                SELECT 
+                SELECT
                     compIdx AS id,
                     CONVERT('company' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('update' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
                     CONVERT(compName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    NULL AS entityName,
                     updated_at AS timestamp
                 FROM tb_comp_info
-                WHERE updated_at IS NOT NULL 
+                WHERE updated_at IS NOT NULL
                 AND updated_at > created_at
-                
+
                 UNION ALL
-                
+
                 -- 업체 추가 (Outsource)
-                SELECT 
+                SELECT
                     outsourceIdx AS id,
                     CONVERT('outsource' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('add' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
                     CONVERT(outsourceName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    NULL AS entityName,
                     created_at AS timestamp
                 FROM tb_outsource_info
                 WHERE created_at IS NOT NULL
-                
+
                 UNION ALL
-                
+
                 -- 업체 업데이트 (Outsource)
-                SELECT 
+                SELECT
                     outsourceIdx AS id,
                     CONVERT('outsource' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('update' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
                     CONVERT(outsourceName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    NULL AS entityName,
                     updated_at AS timestamp
                 FROM tb_outsource_info
-                WHERE updated_at IS NOT NULL 
+                WHERE updated_at IS NOT NULL
                 AND updated_at > created_at
-                
+
                 UNION ALL
-                
+
                 -- 업체 추가 (Restaurant)
-                SELECT 
+                SELECT
                     restaurantIdx AS id,
                     CONVERT('restaurant' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('add' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
                     CONVERT(restaurantName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    NULL AS entityName,
                     created_at AS timestamp
                 FROM tb_restaurant_info
                 WHERE created_at IS NOT NULL
-                
+
                 UNION ALL
-                
+
                 -- 업체 업데이트 (Restaurant)
-                SELECT 
+                SELECT
                     restaurantIdx AS id,
                     CONVERT('restaurant' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('update' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
                     CONVERT(restaurantName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    NULL AS entityName,
                     updated_at AS timestamp
                 FROM tb_restaurant_info
-                WHERE updated_at IS NOT NULL 
+                WHERE updated_at IS NOT NULL
                 AND updated_at > created_at
-                
+
                 UNION ALL
-                
+
                 -- 업체 추가 (University)
-                SELECT 
+                SELECT
                     univIdx AS id,
                     CONVERT('university' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('add' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
                     CONVERT(univName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    NULL AS entityName,
                     created_at AS timestamp
                 FROM tb_universityinfo
                 WHERE created_at IS NOT NULL
-                
+
                 UNION ALL
-                
+
                 -- 업체 업데이트 (University)
-                SELECT 
+                SELECT
                     univIdx AS id,
                     CONVERT('university' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('update' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
                     CONVERT(univName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    NULL AS entityName,
                     updated_at AS timestamp
                 FROM tb_universityinfo
-                WHERE updated_at IS NOT NULL 
+                WHERE updated_at IS NOT NULL
                 AND updated_at > created_at
-                
+
                 UNION ALL
-                
+
                 -- 게시글 작성 (FreeBoard)
-                SELECT 
-                    boardIdx AS id,
+                SELECT
+                    b.boardIdx AS id,
                     CONVERT('freeboard_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('create' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
-                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
-                    boardRegDate AS timestamp
-                FROM tb_freeboard
-                WHERE boardRegDate IS NOT NULL 
-                AND isDeleted = 0
-                
+                    CONVERT(b.boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    NULL AS entityName,
+                    b.boardRegDate AS timestamp
+                FROM tb_freeboard b
+                WHERE b.boardRegDate IS NOT NULL
+                AND b.isDeleted = 0
+
                 UNION ALL
-                
+
                 -- 게시글 수정 (FreeBoard)
-                SELECT 
-                    boardIdx AS id,
+                SELECT
+                    b.boardIdx AS id,
                     CONVERT('freeboard_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('update' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
-                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
-                    boardModDate AS timestamp
-                FROM tb_freeboard
-                WHERE boardModDate IS NOT NULL 
-                AND isDeleted = 0
-                
+                    CONVERT(b.boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    NULL AS entityName,
+                    b.boardModDate AS timestamp
+                FROM tb_freeboard b
+                WHERE b.boardModDate IS NOT NULL
+                AND b.isDeleted = 0
+
                 UNION ALL
-                
+
                 -- 게시글 작성 (Church Board)
-                SELECT 
-                    boardIdx AS id,
+                SELECT
+                    b.boardIdx AS id,
                     CONVERT('church_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('create' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
-                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
-                    STR_TO_DATE(boardRegDate, '%Y-%m-%d') AS timestamp
-                FROM tb_church_board
-                WHERE boardRegDate IS NOT NULL
-                
+                    CONVERT(b.boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    CONVERT(e.churchName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS entityName,
+                    STR_TO_DATE(b.boardRegDate, '%Y-%m-%d') AS timestamp
+                FROM tb_church_board b
+                LEFT JOIN tb_church_info e ON b.churchIdx = e.churchIdx
+                WHERE b.boardRegDate IS NOT NULL
+
                 UNION ALL
-                
+
                 -- 게시글 작성 (Company Board)
-                SELECT 
-                    boardIdx AS id,
+                SELECT
+                    b.boardIdx AS id,
                     CONVERT('company_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('create' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
-                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
-                    STR_TO_DATE(boardRegDate, '%Y-%m-%d') AS timestamp
-                FROM tb_comp_board
-                WHERE boardRegDate IS NOT NULL 
-                AND isDeleted = 0
-                
+                    CONVERT(b.boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    CONVERT(e.compName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS entityName,
+                    STR_TO_DATE(b.boardRegDate, '%Y-%m-%d') AS timestamp
+                FROM tb_comp_board b
+                LEFT JOIN tb_comp_info e ON b.compIdx = e.compIdx
+                WHERE b.boardRegDate IS NOT NULL
+                AND b.isDeleted = 0
+
                 UNION ALL
-                
+
                 -- 게시글 작성 (Outsource Board)
-                SELECT 
-                    boardIdx AS id,
+                SELECT
+                    b.boardIdx AS id,
                     CONVERT('outsource_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('create' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
-                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
-                    STR_TO_DATE(boardRegDate, '%Y-%m-%d') AS timestamp
-                FROM tb_outsource_board
-                WHERE boardRegDate IS NOT NULL
-                
+                    CONVERT(b.boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    CONVERT(e.outsourceName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS entityName,
+                    STR_TO_DATE(b.boardRegDate, '%Y-%m-%d') AS timestamp
+                FROM tb_outsource_board b
+                LEFT JOIN tb_outsource_info e ON b.outsourceIdx = e.outsourceIdx
+                WHERE b.boardRegDate IS NOT NULL
+
                 UNION ALL
-                
+
                 -- 게시글 작성 (Restaurant Board)
-                SELECT 
-                    boardIdx AS id,
+                SELECT
+                    b.boardIdx AS id,
                     CONVERT('restaurant_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('create' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
-                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
-                    STR_TO_DATE(boardRegDate, '%Y-%m-%d') AS timestamp
-                FROM tb_restaurant_board
-                WHERE boardRegDate IS NOT NULL
-                
+                    CONVERT(b.boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    CONVERT(e.restaurantName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS entityName,
+                    STR_TO_DATE(b.boardRegDate, '%Y-%m-%d') AS timestamp
+                FROM tb_restaurant_board b
+                LEFT JOIN tb_restaurant_info e ON b.restaurantIdx = e.restaurantIdx
+                WHERE b.boardRegDate IS NOT NULL
+
                 UNION ALL
-                
+
                 -- 게시글 작성 (University Board)
-                SELECT 
-                    boardIdx AS id,
+                SELECT
+                    b.boardIdx AS id,
                     CONVERT('university_post' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS type,
                     CONVERT('create' USING utf8mb4) COLLATE utf8mb4_unicode_ci AS action,
-                    CONVERT(boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
-                    STR_TO_DATE(boardRegDate, '%Y-%m-%d') AS timestamp
-                FROM tb_univboard
-                WHERE boardRegDate IS NOT NULL
+                    CONVERT(b.boardTitle USING utf8mb4) COLLATE utf8mb4_unicode_ci AS name,
+                    CONVERT(e.univName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS entityName,
+                    STR_TO_DATE(b.boardRegDate, '%Y-%m-%d') AS timestamp
+                FROM tb_univboard b
+                LEFT JOIN tb_universityinfo e ON b.univIdx = e.univIdx
+                WHERE b.boardRegDate IS NOT NULL
             ) activities
             WHERE timestamp IS NOT NULL
             ORDER BY timestamp DESC
