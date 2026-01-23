@@ -96,8 +96,11 @@ class FreeBoardService {
                 return { status: 404, message: '게시글을 찾을 수 없습니다.' };
             }
 
-            // 조회수 증가
-            await board.increment('boardHits');
+            // 조회수 증가 (boardModDate 보존)
+            await FreeBoard.update(
+                { boardHits: sequelize.literal('boardHits + 1'), boardModDate: sequelize.literal('boardModDate') },
+                { where: { boardIdx: boardIdx }, silent: true }
+            );
 
             // 댓글 조회 (계층 구조)
             const comments = await this.getCommentsByBoardId(boardIdx);
@@ -414,7 +417,10 @@ class FreeBoardService {
     // 조회수 증가
     async incrementHits(boardIdx) {
         try {
-            await FreeBoard.increment('boardHits', { where: { boardIdx } });
+            await FreeBoard.update(
+                { boardHits: sequelize.literal('boardHits + 1'), boardModDate: sequelize.literal('boardModDate') },
+                { where: { boardIdx }, silent: true }
+            );
             return { status: 200, data: { message: '조회수가 증가되었습니다.' } };
         } catch (error) {
             logger.error(`조회수 증가 오류: ${error.message}`);
