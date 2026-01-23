@@ -1,5 +1,5 @@
 const { CompInfo, CompRequest, CompInterview, CompSalary } = require('../model/index');
-const { Op, fn, col } = require('sequelize');
+const { Op, fn, col, literal } = require('sequelize');
 const logger = require('../utils/logger');
 const hashPassword = require('../utils/hashPassword');
 
@@ -83,7 +83,10 @@ exports.getCompDetail = async (compIdx) => {
         }
 
         // 조회수 증가
-        await company.increment('compViewCount');
+        await CompInfo.update(
+            { compViewCount: literal('compViewCount + 1'), updatedAt: literal('updated_at') },
+            { where: { compIdx: company.compIdx }, silent: true }
+        );
 
         logger.info(`[getCompDetail] Company found: ${company.compName}`);
 

@@ -66,8 +66,8 @@ exports.getChurchDetail = async (churchIdx, churchName, churchAddr) => {
 
         // 조회수 증가
         await ChurchInfo.update(
-            { churchViewCount: sequelize.literal('churchViewCount + 1') },
-            { where: { churchIdx: church.churchIdx } }
+            { churchViewCount: sequelize.literal('churchViewCount + 1'), updatedAt: sequelize.literal('updated_at') },
+            { where: { churchIdx: church.churchIdx }, silent: true }
         );
 
         logger.info(`[getChurchDetail] Church detail retrieved. ChurchIdx: ${church.churchIdx}, ChurchName: ${church.churchName}`);
@@ -294,8 +294,8 @@ exports.getChurchInfoByName = async (churchName) => {
 
         // churchViewCount 증가
         await ChurchInfo.update(
-            { churchViewCount: sequelize.literal("churchViewCount + 1") },
-            { where: { churchIdx: church.churchIdx }, transaction }
+            { churchViewCount: sequelize.literal("churchViewCount + 1"), updatedAt: sequelize.literal('updated_at') },
+            { where: { churchIdx: church.churchIdx }, transaction, silent: true }
         );
 
         await transaction.commit();

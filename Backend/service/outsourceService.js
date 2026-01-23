@@ -73,8 +73,8 @@ exports.getOutsourceDetail = async (outsourceIdx, outsourceName, outsourceAddr) 
 
         // 조회수 증가
         await OutsourceInfo.update(
-            { outsourceViewCount: sequelize.literal('outsourceViewCount + 1') },
-            { where: { outsourceIdx: outsource.outsourceIdx } }
+            { outsourceViewCount: sequelize.literal('outsourceViewCount + 1'), updatedAt: sequelize.literal('updated_at') },
+            { where: { outsourceIdx: outsource.outsourceIdx }, silent: true }
         );
 
         logger.info(`[getOutsourceDetail] Outsource detail retrieved. OutsourceIdx: ${outsource.outsourceIdx}, OutsourceName: ${outsource.outsourceName}`);

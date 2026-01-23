@@ -1,5 +1,5 @@
 const { CompInfo, CompRequest } = require('../../model/index');
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const logger = require('../../utils/logger');
 
 // 회사 생성
@@ -165,7 +165,10 @@ exports.getCompDetail = async (compIdx) => {
         }
 
         // 조회수 증가
-        await company.increment('compViewCount');
+        await CompInfo.update(
+            { compViewCount: literal('compViewCount + 1'), updatedAt: literal('updated_at') },
+            { where: { compIdx: company.compIdx }, silent: true }
+        );
 
         logger.info(`[getCompDetail] Company found: ${company.compName}`);
 
@@ -208,7 +211,10 @@ exports.getCompDetailByName = async (compName) => {
         }
 
         // 조회수 증가
-        await company.increment('compViewCount');
+        await CompInfo.update(
+            { compViewCount: literal('compViewCount + 1'), updatedAt: literal('updated_at') },
+            { where: { compIdx: company.compIdx }, silent: true }
+        );
 
         logger.info(`[getCompDetailByName] Company found: ${company.compName}`);
 

@@ -34,8 +34,8 @@ exports.getSchoolInfo = async (univName) => {
 
         // univViewCount 증가
         await University.update(
-            { univViewCount: Sequelize.literal("univViewCount + 1") },
-            { where: { univIdx: university.univIdx }, transaction } // Primary Key 기준 업데이트
+            { univViewCount: Sequelize.literal("univViewCount + 1"), updatedAt: Sequelize.literal('updated_at') },
+            { where: { univIdx: university.univIdx }, transaction, silent: true } // Primary Key 기준 업데이트
         );
 
         await transaction.commit(); // 트랜잭션 커밋

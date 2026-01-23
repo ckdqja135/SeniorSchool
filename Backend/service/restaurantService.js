@@ -73,8 +73,8 @@ exports.getRestaurantDetail = async (restaurantIdx, restaurantName, restaurantAd
 
         // 조회수 증가
         await RestaurantInfo.update(
-            { restaurantViewCount: sequelize.literal('restaurantViewCount + 1') },
-            { where: { restaurantIdx: restaurant.restaurantIdx } }
+            { restaurantViewCount: sequelize.literal('restaurantViewCount + 1'), updatedAt: sequelize.literal('updated_at') },
+            { where: { restaurantIdx: restaurant.restaurantIdx }, silent: true }
         );
 
         // 식당 후기 평점 평균 계산
