@@ -449,7 +449,7 @@ class ExternalApiService {
      * @param {string} businessNumber - 사업자등록번호 (선택)
      * @returns {Object} 상장회사 정보
      */
-    async getCompanyDataFromOpenDart(compName, businessNumber = null, year = null) {
+    async getCompanyDataFromOpenDart(compName, businessNumber = null, year = null, existingCorpCode = null) {
         if (!this.apis.openDart.apiKey) {
             logger.warn(`[getCompanyDataFromOpenDart] API Key not configured`);
             return null;
@@ -461,8 +461,8 @@ class ExternalApiService {
             const cached = this.getFromCache(cacheKey);
             if (cached) return cached;
 
-            // 1단계: corpCode.xml에서 corp_code 조회
-            const corpCode = await this.getCorpCode(compName);
+            // 1단계: DB에 corpCode가 있으면 바로 사용, 없으면 corpCode.xml에서 조회
+            const corpCode = existingCorpCode || await this.getCorpCode(compName);
             if (!corpCode) {
                 logger.warn(`[getCompanyDataFromOpenDart] No corp_code found for: ${compName}`);
                 return null;
@@ -489,29 +489,46 @@ class ExternalApiService {
 
                 const company = companyResponse.data;
                 
-                // 3단계: 새로운 API 메서드로 직원 및 재무정보 조회
+                // 3단계: 직원 및 재무정보 조회 (reprt_code fallback 적용)
+                // 11011: 사업보고서, 11012: 반기보고서, 11013: 1분기, 11014: 3분기
                 const targetYear = year || (new Date().getFullYear() - 1);
+                const reprtCodes = ['11011', '11012', '11014', '11013'];
                 let employeeData = null;
                 let financialData = null;
                 let avgSalary = null;
                 let avgTenure = null;
-                
-                try {
-                    // 직원 현황 조회
-                    employeeData = await this.getEmployeeStatus(corpCode, targetYear, '11011');
-                    if (employeeData) {
-                        avgSalary = employeeData.avgSalary;
-                        avgTenure = employeeData.avgTenure;
+
+                // 직원 현황 조회 (reprt_code fallback)
+                for (const reprtCode of reprtCodes) {
+                    if (employeeData) break;
+                    try {
+                        employeeData = await this.getEmployeeStatus(corpCode, targetYear, reprtCode);
+                        if (employeeData) {
+                            avgSalary = employeeData.avgSalary;
+                            avgTenure = employeeData.avgTenure;
+                            logger.info(`[getCompanyDataFromOpenDart] Employee data found with reprt_code: ${reprtCode}`);
+                        }
+                    } catch (empError) {
+                        logger.warn(`[getCompanyDataFromOpenDart] Employee status failed (reprt_code: ${reprtCode}): ${empError.message}`);
                     }
-                } catch (empError) {
-                    logger.warn(`[getCompanyDataFromOpenDart] Failed to fetch employee status: ${empError.message}`);
                 }
-                
-                try {
-                    // 재무제표 조회
-                    financialData = await this.getFinancialStatement(corpCode, targetYear, '11011', 'CFS');
-                } catch (finError) {
-                    logger.warn(`[getCompanyDataFromOpenDart] Failed to fetch financial statement: ${finError.message}`);
+
+                // 재무제표 조회 (CFS→OFS fallback + reprt_code fallback)
+                for (const reprtCode of reprtCodes) {
+                    if (financialData) break;
+                    try {
+                        // CFS(연결재무제표) 먼저 시도
+                        financialData = await this.getFinancialStatement(corpCode, targetYear, reprtCode, 'CFS');
+                        if (!financialData) {
+                            // OFS(별도재무제표) fallback
+                            financialData = await this.getFinancialStatement(corpCode, targetYear, reprtCode, 'OFS');
+                        }
+                        if (financialData) {
+                            logger.info(`[getCompanyDataFromOpenDart] Financial data found with reprt_code: ${reprtCode}, fs_div: ${financialData.fsDiv}`);
+                        }
+                    } catch (finError) {
+                        logger.warn(`[getCompanyDataFromOpenDart] Financial statement failed (reprt_code: ${reprtCode}): ${finError.message}`);
+                    }
                 }
 
                 return {
@@ -1096,7 +1113,7 @@ class ExternalApiService {
                     employmentType: item.fo_bbm || null,
                     sexDivision: item.sexdstn || null,
                     employeeCount: parseInt((item.sm || '').replace(/,/g, '')) || 0,
-                    avgSalary: Math.round(parseFloat((item.avrg_cnwk_sdytrn || '').replace(/,/g, '')) * 10000000) || 0, // 천만원 단위
+                    avgSalary: Math.round(parseFloat((item.avrg_cnwk_sdytrn || '').replace(/,/g, '')) * 1000) || 0, // 천원 → 원 변환
                     avgTenure: parseFloat((item.fyer_avr_cnwk_sdytrn || '').replace(/,/g, '')) || 0
                 }));
 

@@ -96,12 +96,13 @@ class CompanyDataScheduler {
                 try {
                     logger.info(`${progress} Processing: ${company.compName} (compIdx: ${company.compIdx})`);
 
-                    // OpenDart에서 데이터 조회
+                    // OpenDart에서 데이터 조회 (DB에 corpCode가 있으면 바로 사용)
                     const currentYear = new Date().getFullYear() - 1; // 전년도 데이터
                     const openDartData = await externalApiService.getCompanyDataFromOpenDart(
                         company.compName,
                         null,
-                        currentYear
+                        currentYear,
+                        company.compCorpCode || null
                     );
 
                     if (!openDartData) {
@@ -141,7 +142,7 @@ class CompanyDataScheduler {
                     await company.update(updateData);
                     
                     this.stats.successCount++;
-                    logger.info(`${progress} ✅ Updated successfully: ${company.compName}`);
+                    logger.info(`${progress} 업데이트 성공: ${company.compName}`);
                     logger.info(`${progress}    - 직원 수: ${openDartData.employeeCount?.toLocaleString() || 'N/A'}명`);
                     logger.info(`${progress}    - 평균 연봉: ${openDartData.avgSalary?.toLocaleString() || 'N/A'}원`);
                     logger.info(`${progress}    - 매출액: ${openDartData.revenue?.toLocaleString() || 'N/A'}원`);
@@ -156,7 +157,7 @@ class CompanyDataScheduler {
                         compName: company.compName,
                         error: error.message
                     });
-                    logger.error(`${progress} ❌ Failed to update ${company.compName}: ${error.message}`);
+                    logger.error(`${progress} 업데이트 실패: ${company.compName}: ${error.message}`);
                 }
             }
 
@@ -182,11 +183,11 @@ class CompanyDataScheduler {
         logger.info('[CompanyDataScheduler] Update Summary');
         logger.info('[CompanyDataScheduler] ========================================');
         logger.info(`[CompanyDataScheduler] Total companies: ${this.stats.totalCompanies}`);
-        logger.info(`[CompanyDataScheduler] ✅ Success: ${this.stats.successCount}`);
-        logger.info(`[CompanyDataScheduler] ⏭️  Skipped: ${this.stats.skippedCount}`);
-        logger.info(`[CompanyDataScheduler] ❌ Failed: ${this.stats.failedCount}`);
-        logger.info(`[CompanyDataScheduler] ⏱️  Duration: ${this.stats.duration} seconds`);
-        logger.info(`[CompanyDataScheduler] Success rate: ${Math.round((this.stats.successCount / this.stats.totalCompanies) * 100)}%`);
+        logger.info(`[CompanyDataScheduler] 업데이트 성공: ${this.stats.successCount}`);
+        logger.info(`[CompanyDataScheduler] 건너뛰기: ${this.stats.skippedCount}`);
+        logger.info(`[CompanyDataScheduler] 업데이트 실패: ${this.stats.failedCount}`);
+        logger.info(`[CompanyDataScheduler] 소요 시간: ${this.stats.duration} 초`);
+        logger.info(`[CompanyDataScheduler] 성공률: ${Math.round((this.stats.successCount / this.stats.totalCompanies) * 100)}%`);
         
         if (this.stats.errors.length > 0) {
             logger.info('[CompanyDataScheduler] ========================================');
