@@ -36,10 +36,10 @@ module.exports = class CompRequest extends Sequelize.Model {
                     comment: '회사 주소 (선택사항)'
                 },
                 requestStatus: {
-                    type: Sequelize.ENUM('pending', 'completed'),
+                    type: Sequelize.ENUM('pending', 'completed', 'rejected'),
                     allowNull: false,
                     defaultValue: 'pending',
-                    comment: '처리 상태 (미처리: pending, 처리완료: completed)'
+                    comment: '처리 상태 (미처리: pending, 처리완료: completed, 거절: rejected)'
                 },
                 requestDate: {
                     type: Sequelize.DATE,

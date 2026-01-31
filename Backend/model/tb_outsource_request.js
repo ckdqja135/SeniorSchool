@@ -31,10 +31,10 @@ module.exports = class OutsourceRequest extends Sequelize.Model {
                     comment: '외주업체 주소 (선택사항)'
                 },
                 requestStatus: {
-                    type: Sequelize.ENUM('pending', 'completed'),
+                    type: Sequelize.ENUM('pending', 'completed', 'rejected'),
                     allowNull: false,
                     defaultValue: 'pending',
-                    comment: '처리 상태 (미처리: pending, 처리완료: completed)'
+                    comment: '처리 상태 (미처리: pending, 처리완료: completed, 거절: rejected)'
                 },
                 requestDate: {
                     type: Sequelize.DATE,

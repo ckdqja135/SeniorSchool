@@ -317,8 +317,8 @@ exports.getOutsourceRequests = async (searchParams) => {
         const { status, page = 1, limit = 10 } = searchParams;
         
         let whereClause = {};
-        
-        if (status && ['pending', 'completed'].includes(status)) {
+
+        if (status && ['pending', 'completed', 'rejected'].includes(status)) {
             whereClause.requestStatus = status;
         }
 
@@ -405,10 +405,10 @@ exports.updateOutsourceRequestStatus = async (requestIdx, statusData) => {
     try {
         const { requestStatus, adminNote } = statusData;
         
-        if (!['pending', 'completed'].includes(requestStatus)) {
+        if (!['pending', 'completed', 'rejected'].includes(requestStatus)) {
             return {
                 status: 400,
-                message: '유효하지 않은 상태값입니다. (pending, completed)'
+                message: '유효하지 않은 상태값입니다. (pending, completed, rejected)'
             };
         }
 

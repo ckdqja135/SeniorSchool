@@ -396,7 +396,7 @@ exports.getChurchRequests = async (searchParams = {}) => {
 
         // 검색 조건 구성
         const whereClause = {};
-        if (status && ['pending', 'completed'].includes(status)) {
+        if (status && ['pending', 'completed', 'rejected'].includes(status)) {
             whereClause.requestStatus = status;
         }
 
