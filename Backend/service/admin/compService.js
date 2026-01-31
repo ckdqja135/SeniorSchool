@@ -391,3 +391,55 @@ exports.getCompRequests = async (searchParams = {}) => {
         throw error;
     }
 };
+
+/**
+ * 회사 추가 요청 상태 업데이트 서비스 (관리자용)
+ * @param {number} requestIdx - 요청 인덱스
+ * @param {string} status - 새로운 상태 ('pending', 'completed', 'rejected')
+ * @param {string} adminNote - 관리자 메모
+ * @returns {Promise<Object>} - 업데이트 결과
+ */
+exports.updateCompRequestStatus = async (requestIdx, status, adminNote) => {
+    try {
+        const request = await CompRequest.findByPk(requestIdx);
+
+        if (!request) {
+            return {
+                status: 404,
+                message: '회사 요청을 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        // 상태 업데이트
+        const updateData = {
+            requestStatus: status
+        };
+
+        if (status === 'completed') {
+            updateData.processedDate = new Date();
+        }
+
+        if (adminNote) {
+            updateData.adminNote = adminNote;
+        }
+
+        await CompRequest.update(updateData, {
+            where: { requestIdx: requestIdx }
+        });
+
+        // 업데이트된 요청 정보 조회
+        const updatedRequest = await CompRequest.findByPk(requestIdx);
+
+        logger.info(`[updateCompRequestStatus] 회사 요청 상태 업데이트 완료: ${requestIdx} -> ${status}`);
+
+        return {
+            status: 200,
+            message: '회사 요청 상태가 성공적으로 업데이트되었습니다.',
+            data: updatedRequest
+        };
+    } catch (error) {
+        logger.error(`[updateCompRequestStatus] Error: ${error.message}`);
+        throw error;
+    }
+};

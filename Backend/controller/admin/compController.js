@@ -41,7 +41,7 @@ exports.getCompRequests = async (req, res) => {
     try {
         const data = req.query;
         logger.info(`[getCompRequests] Request query: ${JSON.stringify(data)}`);
-        
+
         const result = await compService.getCompRequests(data);
         logger.info(`[getCompRequests] Success: ${result.totalCount} requests found`);
 
@@ -50,6 +50,22 @@ exports.getCompRequests = async (req, res) => {
         logger.error(`[getCompRequests] Error: ${error.message}`);
         logger.error(`[getCompRequests] Stack trace: ${error.stack}`);
         res.status(500).json({ status: 500, message: '서버 오류가 발생했습니다.' });
+    }
+};
+
+// 회사 추가 요청 상태 업데이트 (관리자만)
+exports.updateCompRequestStatus = async (req, res, next) => {
+    try {
+        const { requestIdx } = req.params;
+        const { status, adminNote } = req.body;
+
+        logger.info(`[updateCompRequestStatus] Updating requestIdx: ${requestIdx}, status: ${status}`);
+
+        const result = await compService.updateCompRequestStatus(requestIdx, status, adminNote);
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[updateCompRequestStatus] Error: ${error.message}`);
+        next(error);
     }
 };
 
