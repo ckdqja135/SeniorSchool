@@ -47,10 +47,10 @@ const rateLimitMiddleware = (app) => {
                url.includes('/user/signIn');
     };
 
-    // 로그인/회원가입 등 민감한 API에 대한 엄격한 Rate Limiting
+    // 어드민 API에 대한 적절한 Rate Limiting
     const strictLimiter = rateLimit({
         windowMs: 15 * 60 * 1000, // 15분
-        max: 5, // IP당 15분 동안 최대 5회 요청
+        max: 100, // IP당 15분 동안 최대 100회 요청
         message: {
             status: 429,
             message: '보안상 너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
