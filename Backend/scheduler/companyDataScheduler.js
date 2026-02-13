@@ -137,8 +137,7 @@ class CompanyDataScheduler {
 
                         // 메타 정보
                         compCorpCode: openDartData.corpCode,
-                        compDataUpdatedAt: new Date(),
-                        updated_at: new Date()
+                        compDataUpdatedAt: new Date()
                     };
 
                     await company.update(updateData);
