@@ -1125,9 +1125,9 @@ class ExternalApiService {
                         sexDivision: item.sexdstn || null,
                         beginCount,
                         employeeCount: endCount,
-                        avgSalary: Math.round(parseFloat((item.jan_salary_am || '').replace(/,/g, '')) * 1000) || 0, // 천원 → 원
+                        avgSalary: Math.round(parseFloat((item.jan_salary_am || '').replace(/,/g, ''))) || 0, // 원 단위
                         avgTenure: parseTenure(item.avrg_cnwk_sdytrn),
-                        annualSalaryTotal: Math.round(parseFloat((item.fyer_salary_totamt || '').replace(/,/g, '')) * 1000000) || 0 // 백만원 → 원
+                        annualSalaryTotal: Math.round(parseFloat((item.fyer_salary_totamt || '').replace(/,/g, ''))) || 0 // 원 단위
                     };
                 });
 
@@ -1146,10 +1146,14 @@ class ExternalApiService {
                     }
                 });
 
-                // 신규입사/퇴사 추정 (기초인원 vs 기말인원)
-                const netChange = totalCount - totalBeginCount;
-                const estimatedNewHires = netChange > 0 ? netChange : 0;
-                const estimatedResignations = netChange < 0 ? Math.abs(netChange) : 0;
+                // 신규입사/퇴사 추정 (기초인원 vs 기말인원, 기초인원 없으면 추정 불가)
+                let estimatedNewHires = null;
+                let estimatedResignations = null;
+                if (totalBeginCount > 0) {
+                    const netChange = totalCount - totalBeginCount;
+                    estimatedNewHires = netChange > 0 ? netChange : 0;
+                    estimatedResignations = netChange < 0 ? Math.abs(netChange) : 0;
+                }
 
                 const result = {
                     corpCode,
