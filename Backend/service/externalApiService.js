@@ -506,7 +506,7 @@ class ExternalApiService {
                         if (employeeData) {
                             avgSalary = employeeData.avgSalary;
                             avgTenure = employeeData.avgTenure;
-                            logger.info(`[getCompanyDataFromOpenDart] Employee data found with reprt_code: ${reprtCode}`);
+                            logger.info(`[getCompanyDataFromOpenDart] Employee data found with reprt_code: ${reprtCode} (총 ${employeeData.totalCount}명, 평균연봉 ${avgSalary?.toLocaleString()}원, 근속 ${avgTenure}년)`);
                         }
                     } catch (empError) {
                         logger.warn(`[getCompanyDataFromOpenDart] Employee status failed (reprt_code: ${reprtCode}): ${empError.message}`);
@@ -544,6 +544,8 @@ class ExternalApiService {
                     employeeCount: employeeData?.totalCount || null,
                     avgSalary: avgSalary,
                     avgTenure: avgTenure,
+                    estimatedNewHires: employeeData?.estimatedNewHires ?? null,
+                    estimatedResignations: employeeData?.estimatedResignations ?? null,
                     // 재무 정보
                     revenue: financialData?.revenue || null,
                     operatingProfit: financialData?.operatingProfit || null,
@@ -1097,48 +1099,68 @@ class ExternalApiService {
                     return null;
                 }
 
-                // 🔍 DEBUG: 첫 번째 직원 데이터 원본 확인
-                if (response.data.list.length > 0) {
-                    const firstItem = response.data.list[0];
-                    logger.info(`[getEmployeeStatus] 🔍 API 원본 데이터 샘플:`);
-                    logger.info(`   fo_bbm (직원유형): ${firstItem.fo_bbm}`);
-                    logger.info(`   sm (직원수): ${firstItem.sm}`);
-                    logger.info(`   avrg_cnwk_sdytrn (평균급여액 원본): "${firstItem.avrg_cnwk_sdytrn}"`);
-                    logger.info(`   fyer_avr_cnwk_sdytrn (평균근속연수): ${firstItem.fyer_avr_cnwk_sdytrn}`);
-                }
+                // 근속연수 파싱 ("8년 6개월", "8년6월", "8.5" 등)
+                const parseTenure = (str) => {
+                    if (!str) return 0;
+                    const cleaned = str.replace(/,/g, '').trim();
+                    const match = cleaned.match(/(\d+)\s*년\s*(\d+)?\s*(개월|월)?/);
+                    if (match) {
+                        return parseFloat(match[1]) + (parseFloat(match[2] || 0) / 12);
+                    }
+                    const num = parseFloat(cleaned);
+                    return isNaN(num) ? 0 : num;
+                };
 
-                // 직원 데이터 파싱
+                const parseNum = (str) => parseInt((str || '').replace(/[^0-9-]/g, '')) || 0;
 
-                const employees = response.data.list.map(item => ({
-                    employmentType: item.fo_bbm || null,
-                    sexDivision: item.sexdstn || null,
-                    employeeCount: parseInt((item.sm || '').replace(/,/g, '')) || 0,
-                    avgSalary: Math.round(parseFloat((item.avrg_cnwk_sdytrn || '').replace(/,/g, '')) * 1000) || 0, // 천원 → 원 변환
-                    avgTenure: parseFloat((item.fyer_avr_cnwk_sdytrn || '').replace(/,/g, '')) || 0
-                }));
+                // 직원 데이터 파싱 (OpenDart empSttus.json 필드 기준)
+                const employees = response.data.list.map(item => {
+                    const beginCount = parseNum(item.reform_bfe_emp_co_rgllbr)
+                        + parseNum(item.reform_bfe_emp_co_cnttk)
+                        + parseNum(item.reform_bfe_emp_co_etc);
+                    const endCount = parseNum(item.sm);
+
+                    return {
+                        employmentType: item.fo_bbm || null,
+                        sexDivision: item.sexdstn || null,
+                        beginCount,
+                        employeeCount: endCount,
+                        avgSalary: Math.round(parseFloat((item.jan_salary_am || '').replace(/,/g, '')) * 1000) || 0, // 천원 → 원
+                        avgTenure: parseTenure(item.avrg_cnwk_sdytrn),
+                        annualSalaryTotal: Math.round(parseFloat((item.fyer_salary_totamt || '').replace(/,/g, '')) * 1000000) || 0 // 백만원 → 원
+                    };
+                });
 
                 // 총계 계산
                 let totalCount = 0;
+                let totalBeginCount = 0;
                 let totalSalary = 0;
                 let totalTenure = 0;
-                let count = 0;
 
                 employees.forEach(emp => {
                     if (emp.employeeCount > 0) {
                         totalCount += emp.employeeCount;
+                        totalBeginCount += emp.beginCount;
                         totalSalary += emp.avgSalary * emp.employeeCount;
                         totalTenure += emp.avgTenure * emp.employeeCount;
-                        count++;
                     }
                 });
+
+                // 신규입사/퇴사 추정 (기초인원 vs 기말인원)
+                const netChange = totalCount - totalBeginCount;
+                const estimatedNewHires = netChange > 0 ? netChange : 0;
+                const estimatedResignations = netChange < 0 ? Math.abs(netChange) : 0;
 
                 const result = {
                     corpCode,
                     year,
                     reprtCode,
                     totalCount,
+                    totalBeginCount,
                     avgSalary: totalCount > 0 ? Math.round(totalSalary / totalCount) : 0,
                     avgTenure: totalCount > 0 ? Math.round((totalTenure / totalCount) * 10) / 10 : 0,
+                    estimatedNewHires,
+                    estimatedResignations,
                     employees,
                     rawData: response.data.list
                 };
@@ -1203,16 +1225,19 @@ class ExternalApiService {
                     return null;
                 }
 
-                // 재무 항목 추출 함수
-                const findAmount = (accountNames, sjDiv = 'IS') => {
+                // 재무 항목 추출 함수 (IS → CIS fallback 적용)
+                const findAmount = (accountNames, sjDivs) => {
                     const names = Array.isArray(accountNames) ? accountNames : [accountNames];
-                    for (const accountName of names) {
-                        const item = response.data.list.find(i => 
-                            i.account_nm && i.account_nm.includes(accountName) && i.sj_div === sjDiv
-                        );
-                        if (item && item.thstrm_amount) {
-                            const value = parseInt(item.thstrm_amount.replace(/[^0-9-]/g, ''));
-                            if (value !== 0) return value;
+                    const divs = Array.isArray(sjDivs) ? sjDivs : [sjDivs];
+                    for (const sjDiv of divs) {
+                        for (const accountName of names) {
+                            const item = response.data.list.find(i =>
+                                i.account_nm && i.account_nm.includes(accountName) && i.sj_div === sjDiv
+                            );
+                            if (item && item.thstrm_amount) {
+                                const value = parseInt(item.thstrm_amount.replace(/[^0-9-]/g, ''));
+                                if (!isNaN(value)) return value;
+                            }
                         }
                     }
                     return null;
@@ -1223,13 +1248,13 @@ class ExternalApiService {
                     year,
                     reprtCode,
                     fsDiv,
-                    // 다양한 계정과목명 시도
-                    revenue: findAmount(['매출액', '수익(매출액)', '매출', '영업수익'], 'IS'),
-                    operatingProfit: findAmount(['영업이익', '영업이익(손실)'], 'IS'),
-                    netIncome: findAmount(['당기순이익', '당기순이익(손실)', '분기순이익'], 'IS'),
-                    totalAssets: findAmount(['자산총계', '자산총액'], 'BS'),
-                    totalLiabilities: findAmount(['부채총계', '부채총액'], 'BS'),
-                    totalEquity: findAmount(['자본총계', '자본총액'], 'BS'),
+                    // IS(손익계산서) → CIS(포괄손익계산서) fallback
+                    revenue: findAmount(['매출액', '수익(매출액)', '매출', '영업수익', '순매출액'], ['IS', 'CIS']),
+                    operatingProfit: findAmount(['영업이익', '영업이익(손실)'], ['IS', 'CIS']),
+                    netIncome: findAmount(['당기순이익', '당기순이익(손실)', '분기순이익', '당기순손익'], ['IS', 'CIS']),
+                    totalAssets: findAmount(['자산총계', '자산총액'], ['BS']),
+                    totalLiabilities: findAmount(['부채총계', '부채총액'], ['BS']),
+                    totalEquity: findAmount(['자본총계', '자본총액'], ['BS']),
                     rawData: response.data.list
                 };
 

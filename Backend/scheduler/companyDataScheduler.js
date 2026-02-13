@@ -117,22 +117,24 @@ class CompanyDataScheduler {
                         compCEO: openDartData.ceoName || company.compCEO,
                         compURL: openDartData.homepage || company.compURL,
                         compAddr: openDartData.address || company.compAddr,
-                        
+
                         // 직원 정보
                         compEmployeeCount: openDartData.employeeCount || company.compEmployeeCount,
                         totalEmployees: openDartData.employeeCount || company.totalEmployees,
                         compAvgSalary: openDartData.avgSalary,
                         compAvgTenure: openDartData.avgTenure,
-                        
+                        newHires: openDartData.estimatedNewHires,
+                        resignations: openDartData.estimatedResignations,
+
                         // 재무 정보
-                        compSales: openDartData.revenue, // 매출액
-                        compCapital: openDartData.equity, // 자본총계
-                        compOperatingProfit: openDartData.operatingProfit, // 영업이익
-                        compNetIncome: openDartData.profit, // 당기순이익
-                        compTotalAssets: openDartData.assets, // 자산총계
-                        compTotalLiabilities: openDartData.liabilities, // 부채총계
-                        compTotalEquity: openDartData.equity, // 자본총계
-                        
+                        compSales: openDartData.revenue,
+                        compCapital: openDartData.equity,
+                        compOperatingProfit: openDartData.operatingProfit,
+                        compNetIncome: openDartData.profit,
+                        compTotalAssets: openDartData.assets,
+                        compTotalLiabilities: openDartData.liabilities,
+                        compTotalEquity: openDartData.equity,
+
                         // 메타 정보
                         compCorpCode: openDartData.corpCode,
                         compDataUpdatedAt: new Date(),
@@ -140,11 +142,13 @@ class CompanyDataScheduler {
                     };
 
                     await company.update(updateData);
-                    
+
                     this.stats.successCount++;
                     logger.info(`${progress} 업데이트 성공: ${company.compName}`);
                     logger.info(`${progress}    - 직원 수: ${openDartData.employeeCount?.toLocaleString() || 'N/A'}명`);
                     logger.info(`${progress}    - 평균 연봉: ${openDartData.avgSalary?.toLocaleString() || 'N/A'}원`);
+                    logger.info(`${progress}    - 평균 근속: ${openDartData.avgTenure || 'N/A'}년`);
+                    logger.info(`${progress}    - 신규입사(추정): ${openDartData.estimatedNewHires ?? 'N/A'}명 / 퇴사(추정): ${openDartData.estimatedResignations ?? 'N/A'}명`);
                     logger.info(`${progress}    - 매출액: ${openDartData.revenue?.toLocaleString() || 'N/A'}원`);
 
                     // API Rate Limiting 방지를 위한 딜레이 (2초)
