@@ -11,6 +11,11 @@ const churchRouter = require('./church.router');
 const outsourceRouter = require('./outsource.router');
 const restaurantRouter = require('./restaurant.router');
 const freeBoardRouter = require('./freeBoard.router');
+const univBoardRouter = require('./univBoard.router');
+const churchBoardRouter = require('./churchBoard.router');
+const compBoardRouter = require('./compBoard.router');
+const outsourceBoardRouter = require('./outsourceBoard.router');
+const restaurantBoardRouter = require('./restaurantBoard.router');
 const dashboardRouter = require('./dashboard.router');
 const schedulerRouter = require('./companyDataScheduler.router');
 
@@ -24,6 +29,11 @@ router.use('/church', churchRouter);
 router.use('/outsource', outsourceRouter);
 router.use('/restaurant', restaurantRouter);
 router.use('/freeboard', freeBoardRouter);
+router.use('/univboard', univBoardRouter);
+router.use('/churchboard', churchBoardRouter);
+router.use('/compboard', compBoardRouter);
+router.use('/outsourceboard', outsourceBoardRouter);
+router.use('/restaurantboard', restaurantBoardRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/scheduler', schedulerRouter);
 
