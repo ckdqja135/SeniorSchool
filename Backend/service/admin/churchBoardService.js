@@ -1,4 +1,4 @@
-const { ChurchBoard } = require('../../model/index');
+const { ChurchBoard, ChurchInfo } = require('../../model/index');
 const createBoardService = require('./boardServiceFactory');
 
 module.exports = createBoardService({
@@ -9,4 +9,5 @@ module.exports = createBoardService({
     creatableFields: ['boardTitle', 'boardContent', 'boardID', 'boardPW', 'churchIdx', 'boardRegDate', 'boardLike', 'boardHits'],
     updatableFields: ['boardTitle', 'boardContent'],
     hasIsDeleted: false,
+    includeEntity: { model: ChurchInfo, as: 'church', attributes: ['churchIdx', 'churchName'] },
 });

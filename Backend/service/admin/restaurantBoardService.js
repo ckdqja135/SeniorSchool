@@ -1,4 +1,4 @@
-const { RestaurantBoard } = require('../../model/index');
+const { RestaurantBoard, RestaurantInfo } = require('../../model/index');
 const createBoardService = require('./boardServiceFactory');
 
 module.exports = createBoardService({
@@ -9,4 +9,5 @@ module.exports = createBoardService({
     creatableFields: ['boardTitle', 'boardContent', 'boardID', 'boardPW', 'restaurantIdx', 'boardRegDate', 'boardLike', 'boardHits', 'boardRating'],
     updatableFields: ['boardTitle', 'boardContent', 'boardRating'],
     hasIsDeleted: false,
+    includeEntity: { model: RestaurantInfo, as: 'restaurant', attributes: ['restaurantIdx', 'restaurantName'] },
 });

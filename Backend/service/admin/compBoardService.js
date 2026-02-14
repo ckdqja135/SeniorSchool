@@ -1,4 +1,4 @@
-const { CompBoard } = require('../../model/index');
+const { CompBoard, CompInfo } = require('../../model/index');
 const createBoardService = require('./boardServiceFactory');
 
 module.exports = createBoardService({
@@ -9,4 +9,5 @@ module.exports = createBoardService({
     creatableFields: ['boardTitle', 'boardContent', 'boardID', 'boardPW', 'compIdx', 'boardRegDate', 'boardLike', 'boardHits', 'boardCategory', 'boardRating', 'isDeleted'],
     updatableFields: ['boardTitle', 'boardContent', 'boardCategory', 'boardRating'],
     hasIsDeleted: true,
+    includeEntity: { model: CompInfo, as: 'company', attributes: ['compIdx', 'compName'] },
 });

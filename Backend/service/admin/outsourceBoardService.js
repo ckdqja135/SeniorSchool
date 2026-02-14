@@ -1,4 +1,4 @@
-const { OutsourceBoard } = require('../../model/index');
+const { OutsourceBoard, OutsourceInfo } = require('../../model/index');
 const createBoardService = require('./boardServiceFactory');
 
 module.exports = createBoardService({
@@ -9,4 +9,5 @@ module.exports = createBoardService({
     creatableFields: ['boardTitle', 'boardContent', 'boardID', 'boardPW', 'outsourceIdx', 'boardRegDate', 'boardLike', 'boardHits'],
     updatableFields: ['boardTitle', 'boardContent'],
     hasIsDeleted: false,
+    includeEntity: { model: OutsourceInfo, as: 'outsource', attributes: ['outsourceIdx', 'outsourceName'] },
 });

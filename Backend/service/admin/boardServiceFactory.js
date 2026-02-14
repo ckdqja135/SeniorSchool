@@ -10,12 +10,16 @@ const logger = require('../../utils/logger');
  * @param {string[]} config.creatableFields - 생성 시 허용 필드
  * @param {string[]} config.updatableFields - 수정 시 허용 필드
  * @param {boolean} config.hasIsDeleted - isDeleted 컬럼 존재 여부
+ * @param {Object} [config.includeEntity] - 목록 조회 시 연관 엔티티 include 설정
+ * @param {Object} config.includeEntity.model - 연관 Sequelize 모델
+ * @param {string} config.includeEntity.as - association alias
+ * @param {string[]} config.includeEntity.attributes - 가져올 컬럼 목록
  */
 module.exports = function createBoardService(config) {
     const {
         Model, modelName, entityIdxField,
         requiredFields, creatableFields, updatableFields,
-        hasIsDeleted
+        hasIsDeleted, includeEntity
     } = config;
 
     const tag = `admin.${modelName}`;
@@ -52,12 +56,22 @@ module.exports = function createBoardService(config) {
                 }
 
                 const offset = (page - 1) * limit;
-                const result = await Model.findAndCountAll({
+                const findOptions = {
                     where,
                     order: [['boardRegDate', 'DESC'], ['boardIdx', 'DESC']],
                     limit,
                     offset
-                });
+                };
+
+                if (includeEntity) {
+                    findOptions.include = [{
+                        model: includeEntity.model,
+                        as: includeEntity.as,
+                        attributes: includeEntity.attributes
+                    }];
+                }
+
+                const result = await Model.findAndCountAll(findOptions);
 
                 return {
                     status: 200,
