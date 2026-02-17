@@ -4,15 +4,13 @@
  */
 
 const FIELD_TYPE_MAP = {
-    string: (len) => `VARCHAR(${len || 200})`,
-    text: () => 'TEXT',
-    integer: () => 'INT',
-    bigint: () => 'BIGINT',
-    double: () => 'DOUBLE',
-    decimal: () => 'DECIMAL(10,2)',
-    boolean: () => 'TINYINT(1)',
+    text: (len) => `VARCHAR(${len || 200})`,
+    number: () => 'BIGINT',
     date: () => 'DATETIME',
-    enum: () => `VARCHAR(50)`
+    url: (len) => `VARCHAR(${len || 500})`,
+    image: (len) => `VARCHAR(${len || 500})`,
+    rating: () => 'DECIMAL(2,1)',
+    textarea: () => 'TEXT'
 };
 
 /**
@@ -65,13 +63,26 @@ function buildCreateEntitiesSQL(tableName, templateType, customFields = []) {
         );
     }
 
-    // 커스텀 필드 추가
+    // 이미 정의된 컬럼명 수집 (중복 방지)
+    const BUILTIN_COLUMNS = new Set([
+        'entity_idx', 'name', 'location', 'type', 'established', 'leader',
+        'lat_x', 'lat_y', 'url', 'lot_addr', 'addr', 'map_img', 'status', 'view_count',
+        'created_at', 'updated_at',
+        // company
+        'ceo', 'industry', 'employee_count', 'avg_salary', 'capital',
+        'sales', 'operating_profit', 'net_income', 'total_assets', 'total_liabilities', 'total_equity',
+        // restaurant
+        'owner', 'image', 'average_rating', 'rating_count', 'food_type'
+    ]);
+
+    // 커스텀 필드 추가 (기본 컬럼과 중복되지 않는 것만)
     for (const field of customFields) {
+        const key = field.fieldKey || field.field_key;
+        if (BUILTIN_COLUMNS.has(key)) continue;
         const typeBuilder = FIELD_TYPE_MAP[field.fieldType || field.field_type];
         if (!typeBuilder) continue;
         const colType = typeBuilder(field.fieldLength || field.field_length);
         const required = (field.isRequired || field.is_required) ? 'NOT NULL' : 'DEFAULT NULL';
-        const key = field.fieldKey || field.field_key;
         const label = field.fieldLabel || field.field_label;
         columns.push(`\`${key}\` ${colType} ${required} COMMENT '${label}'`);
     }

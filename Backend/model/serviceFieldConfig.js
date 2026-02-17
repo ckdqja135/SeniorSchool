@@ -30,9 +30,9 @@ module.exports = class ServiceFieldConfig extends Sequelize.Model {
                     comment: '필드 라벨 (표시명)'
                 },
                 fieldType: {
-                    type: Sequelize.ENUM('string', 'text', 'integer', 'bigint', 'double', 'decimal', 'boolean', 'date', 'enum'),
+                    type: Sequelize.ENUM('text', 'number', 'date', 'url', 'image', 'rating', 'textarea'),
                     allowNull: false,
-                    defaultValue: 'string',
+                    defaultValue: 'text',
                     field: 'field_type',
                     comment: '필드 데이터 타입'
                 },

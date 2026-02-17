@@ -96,11 +96,6 @@ const TEMPLATE_FIELDS = {
     ]
 };
 
-// 프론트 fieldType → DB fieldType 매핑 (DDL용)
-const FIELD_TYPE_TO_DB = {
-    text: 'string', number: 'integer', date: 'date', url: 'string',
-    image: 'string', rating: 'decimal', textarea: 'text'
-};
 
 /**
  * 서비스 목록 조회 (fields 포함)
@@ -205,21 +200,8 @@ exports.createService = async (data) => {
             where: { serviceId: serviceConfig.serviceId }
         });
 
-        // fieldType → DB 컬럼타입 변환 (DDL 빌더가 쓰는 형식으로)
-        const dbFieldConfigs = fieldConfigs.map(f => {
-            const raw = f.toJSON();
-            return {
-                ...raw,
-                field_type: FIELD_TYPE_TO_DB[raw.fieldType] || raw.fieldType,
-                field_key: raw.fieldKey,
-                field_label: raw.fieldLabel,
-                field_length: raw.fieldLength,
-                is_required: raw.isRequired
-            };
-        });
-
         const ddlStatements = [
-            { name: 'entities', sql: buildCreateEntitiesSQL(tables.entities, templateType, dbFieldConfigs) },
+            { name: 'entities', sql: buildCreateEntitiesSQL(tables.entities, templateType, fieldConfigs) },
             { name: 'boards', sql: buildCreateBoardsSQL(tables.boards) },
             { name: 'comments', sql: buildCreateCommentsSQL(tables.comments) },
             { name: 'requests', sql: buildCreateRequestsSQL(tables.requests) }

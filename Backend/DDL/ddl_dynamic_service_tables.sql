@@ -26,7 +26,7 @@ CREATE TABLE `service_field_configs` (
   `service_id` bigint NOT NULL COMMENT '서비스 ID (FK)',
   `field_key` varchar(60) NOT NULL COMMENT '필드 키 (DB 컬럼명)',
   `field_label` varchar(60) NOT NULL COMMENT '필드 라벨 (표시명)',
-  `field_type` enum('string','text','integer','bigint','double','decimal','boolean','date','enum') NOT NULL DEFAULT 'string' COMMENT '필드 데이터 타입',
+  `field_type` enum('text','number','date','url','image','rating','textarea') NOT NULL DEFAULT 'text' COMMENT '필드 데이터 타입',
   `field_length` int DEFAULT NULL COMMENT '필드 길이 (string 타입 시)',
   `is_required` tinyint NOT NULL DEFAULT '0' COMMENT '필수 여부',
   `is_searchable` tinyint NOT NULL DEFAULT '0' COMMENT '검색 대상 여부',
