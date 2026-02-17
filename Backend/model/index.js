@@ -27,6 +27,8 @@ const restaurantRequest = require('./tb_restaurant_request');
 const freeBoard = require('./freeBoard');
 const freeBoardComment = require('./freeBoardComment');
 const freeBoardStats = require('./freeBoardStats');
+const serviceConfig = require('./serviceConfig');
+const serviceFieldConfig = require('./serviceFieldConfig');
 const config = require('../conf/sequelize');
 const logger = require('../utils/logger');
 
@@ -74,6 +76,8 @@ db.RestaurantRequest = restaurantRequest;
 db.FreeBoard = freeBoard;
 db.FreeBoardComment = freeBoardComment;
 db.FreeBoardStats = freeBoardStats;
+db.ServiceConfig = serviceConfig;
+db.ServiceFieldConfig = serviceFieldConfig;
 
 //init이 실행되어야 테이블이 모델로 연결됨
 univBoard.init(sequelize);
@@ -104,6 +108,8 @@ restaurantRequest.init(sequelize);
 freeBoard.init(sequelize);
 freeBoardComment.init(sequelize);
 freeBoardStats.init(sequelize);
+serviceConfig.init(sequelize);
+serviceFieldConfig.init(sequelize);
 
 
 // 다른 테이블과의 관계를 연결함
@@ -135,6 +141,8 @@ restaurantRequest.associate(db);
 freeBoard.associate(db);
 freeBoardComment.associate(db);
 freeBoardStats.associate(db);
+serviceConfig.associate(db);
+serviceFieldConfig.associate(db);
 
 sequelize.authenticate()
     .then(() => logger.info('✅ 데이터베이스 연결 성공'))
