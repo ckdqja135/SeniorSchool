@@ -140,7 +140,7 @@ class CompanyDataScheduler {
                         compDataUpdatedAt: new Date()
                     };
 
-                    await company.update(updateData);
+                    await company.update(updateData, { silent: true });
 
                     this.stats.successCount++;
                     logger.info(`${progress} 업데이트 성공: ${company.compName}`);
