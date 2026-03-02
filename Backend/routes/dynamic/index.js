@@ -3,10 +3,14 @@ const router = express.Router();
 const { slugResolver } = require('../../middlewares/slugResolver');
 
 // 퍼블릭 컨트롤러
+const serviceController = require('../../controller/dynamic/dynamicServiceController');
 const entityController = require('../../controller/dynamic/dynamicEntityController');
 const boardController = require('../../controller/dynamic/dynamicBoardController');
 const commentController = require('../../controller/dynamic/dynamicCommentController');
 const requestController = require('../../controller/dynamic/dynamicRequestController');
+
+// 퍼블릭 서비스 목록 (인증 불필요)
+router.get('/', serviceController.listActiveServices);
 
 // 모든 :slug 경로에 slugResolver 미들웨어 적용
 router.use('/:slug', slugResolver);
