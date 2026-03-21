@@ -16,7 +16,7 @@ const app = express();
 
 // CORS 설정 (가장 먼저 설정)
 const corsOptions = {
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://192.168.45.242:3000', 'http://192.168.45.242:3001', 'http://1.233.163.148:9001', 'https://api.ori.blue', 'https://api.ori.blue/'],
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://192.168.45.242:3000', 'http://192.168.45.242:3001', 'http://1.233.163.148:9001', 'https://www.ori.blue', 'https://ori.blue', 'https://api.ori.blue'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept', 'Cache-Control', 'Pragma', 'If-Modified-Since'],
