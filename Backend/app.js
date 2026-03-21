@@ -8,6 +8,7 @@ const routes = require('./routes');
 const securityMiddleware = require('./middlewares/securityMiddleware');
 const xssMiddleware = require('./middlewares/xssMiddleware');
 const rateLimitMiddleware = require('./middlewares/rateLimitMiddleware');
+const contentFilterMiddleware = require('./middlewares/contentFilterMiddleware');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 
@@ -33,6 +34,9 @@ app.use(xssMiddleware);
 // body 파서
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// 콘텐츠 필터 (욕설, 성적 표현, XSS 차단)
+app.use(contentFilterMiddleware);
 
 // 쿠키 파서
 app.use(cookieParser());
@@ -62,9 +66,11 @@ app.use((req, res, next) => {
 
 // 에러 로깅 핸들러
 app.use((err, req, res, next) => {
-    logger.error(`[${req.method}] ${req.url} - ${err.message}`);
-    res.status(err.status || 500);
-    res.json({ message: err.message });
+    logger.error(`[${req.method}] ${req.url} - ${err.message}\n${err.stack}`);
+    const status = err.status || 500;
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.status(status);
+    res.json({ message: isProduction ? '서버 오류가 발생했습니다.' : err.message });
 });
 
 // 서버 정보 숨기기
@@ -74,5 +80,14 @@ app.disable('x-powered-by');
 const companyDataScheduler = require('./scheduler/companyDataScheduler');
 companyDataScheduler.start();
 logger.info('Company data scheduler started (runs daily at midnight)');
+
+// 예기치 못한 에러 처리
+process.on('uncaughtException', (err) => {
+    logger.error(`[UncaughtException] ${err.message}\n${err.stack}`);
+});
+
+process.on('unhandledRejection', (reason) => {
+    logger.error(`[UnhandledRejection] ${reason}`);
+});
 
 module.exports = app;
