@@ -32,8 +32,8 @@ app.options('*', cors(corsOptions));
 app.use(xssMiddleware);
 
 // body 파서
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '30mb' }));
+app.use(bodyParser.urlencoded({ limit: '30mb', extended: true }));
 
 // 콘텐츠 필터 (욕설, 성적 표현, XSS 차단)
 app.use(contentFilterMiddleware);
