@@ -6,12 +6,12 @@ const logger = require('../../utils/logger');
  */
 exports.track = async (req, res) => {
     try {
-        const { path } = req.body;
+        const { path, referrer } = req.body;
         if (!path) return res.status(400).json({ success: false, message: 'path is required' });
 
         const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
         const userAgent = req.headers['user-agent'] || null;
-        const referer = req.headers['referer'] || null;
+        const referer = referrer || req.headers['referer'] || null;
 
         await pageViewService.trackPageView({ path, ip, userAgent, referer });
         return res.status(200).json({ success: true });
@@ -40,8 +40,8 @@ exports.getPathStats = async (req, res) => {
  */
 exports.getRecentLogs = async (req, res) => {
     try {
-        const { page, rowsPerPage, path, startDate, endDate } = req.query;
-        const data = await pageViewService.getRecentLogs({ page, rowsPerPage, path, startDate, endDate });
+        const { page, rowsPerPage, path, startDate, endDate, order } = req.query;
+        const data = await pageViewService.getRecentLogs({ page, rowsPerPage, path, startDate, endDate, order });
         return res.status(200).json({ success: true, ...data });
     } catch (error) {
         logger.error(`[pageView.getRecentLogs] ${error.message}`);

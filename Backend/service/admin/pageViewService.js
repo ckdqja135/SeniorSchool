@@ -43,7 +43,7 @@ exports.getPathStats = async ({ startDate, endDate, limit = 20 }) => {
 /**
  * 최근 방문 로그 (페이지네이션)
  */
-exports.getRecentLogs = async ({ page = 1, rowsPerPage = 30, path, startDate, endDate }) => {
+exports.getRecentLogs = async ({ page = 1, rowsPerPage = 30, path, startDate, endDate, order = 'DESC' }) => {
     const where = {};
     if (path) where.pvPath = { [Op.like]: `%${path}%` };
     if (startDate || endDate) {
@@ -59,7 +59,7 @@ exports.getRecentLogs = async ({ page = 1, rowsPerPage = 30, path, startDate, en
     const offset = (parseInt(page) - 1) * parseInt(rowsPerPage);
     const { count, rows } = await PageView.findAndCountAll({
         where,
-        order: [['createdAt', 'DESC']],
+        order: [['createdAt', order === 'ASC' ? 'ASC' : 'DESC']],
         limit: parseInt(rowsPerPage),
         offset,
         raw: true,
