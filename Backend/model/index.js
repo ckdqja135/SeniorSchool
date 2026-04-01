@@ -29,6 +29,7 @@ const freeBoardComment = require('./freeBoardComment');
 const freeBoardStats = require('./freeBoardStats');
 const serviceConfig = require('./serviceConfig');
 const serviceFieldConfig = require('./serviceFieldConfig');
+const pageView = require('./pageView');
 const config = require('../conf/sequelize');
 const logger = require('../utils/logger');
 
@@ -78,6 +79,7 @@ db.FreeBoardComment = freeBoardComment;
 db.FreeBoardStats = freeBoardStats;
 db.ServiceConfig = serviceConfig;
 db.ServiceFieldConfig = serviceFieldConfig;
+db.PageView = pageView;
 
 //init이 실행되어야 테이블이 모델로 연결됨
 univBoard.init(sequelize);
@@ -110,6 +112,7 @@ freeBoardComment.init(sequelize);
 freeBoardStats.init(sequelize);
 serviceConfig.init(sequelize);
 serviceFieldConfig.init(sequelize);
+pageView.init(sequelize);
 
 
 // 다른 테이블과의 관계를 연결함
