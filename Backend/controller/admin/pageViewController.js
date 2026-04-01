@@ -50,6 +50,20 @@ exports.getRecentLogs = async (req, res) => {
 };
 
 /**
+ * Referer별 통계
+ */
+exports.getRefererStats = async (req, res) => {
+    try {
+        const { startDate, endDate, limit } = req.query;
+        const data = await pageViewService.getRefererStats({ startDate, endDate, limit });
+        return res.status(200).json({ success: true, data });
+    } catch (error) {
+        logger.error(`[pageView.getRefererStats] ${error.message}`);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
  * 일별 방문 수
  */
 exports.getDailyStats = async (req, res) => {

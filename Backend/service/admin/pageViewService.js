@@ -74,6 +74,34 @@ exports.getRecentLogs = async ({ page = 1, rowsPerPage = 30, path, startDate, en
 };
 
 /**
+ * Referer별 방문 횟수 통계
+ */
+exports.getRefererStats = async ({ startDate, endDate, limit = 20 }) => {
+    const { Op, fn, col, literal } = require('sequelize');
+    const where = { pvReferer: { [Op.ne]: null, [Op.ne]: '' } };
+    if (startDate || endDate) {
+        where.createdAt = {};
+        if (startDate) where.createdAt[Op.gte] = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            where.createdAt[Op.lte] = end;
+        }
+    }
+
+    const stats = await PageView.findAll({
+        attributes: ['pvReferer', [fn('COUNT', col('pvIdx')), 'count']],
+        where,
+        group: ['pvReferer'],
+        order: [[literal('count'), 'DESC']],
+        limit: parseInt(limit),
+        raw: true,
+    });
+
+    return stats;
+};
+
+/**
  * 일별 방문 수 (최근 30일)
  */
 exports.getDailyStats = async ({ startDate, endDate }) => {
