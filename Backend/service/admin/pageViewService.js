@@ -1,6 +1,8 @@
 const { PageView } = require('../../model');
 const { Op, fn, col, literal } = require('sequelize');
 
+const EXCLUDE_LOCALHOST = { pvIp: { [Op.notIn]: ['::1', '127.0.0.1'] } };
+
 /**
  * 방문 기록 저장
  */
@@ -17,7 +19,7 @@ exports.trackPageView = async ({ path, ip, userAgent, referer }) => {
  * 경로별 방문 횟수 통계
  */
 exports.getPathStats = async ({ startDate, endDate, limit = 20 }) => {
-    const where = {};
+    const where = { ...EXCLUDE_LOCALHOST };
     if (startDate || endDate) {
         where.createdAt = {};
         if (startDate) where.createdAt[Op.gte] = new Date(startDate);
@@ -44,7 +46,7 @@ exports.getPathStats = async ({ startDate, endDate, limit = 20 }) => {
  * 최근 방문 로그 (페이지네이션)
  */
 exports.getRecentLogs = async ({ page = 1, rowsPerPage = 30, path, startDate, endDate, order = 'DESC' }) => {
-    const where = {};
+    const where = { ...EXCLUDE_LOCALHOST };
     if (path) where.pvPath = { [Op.like]: `%${path}%` };
     if (startDate || endDate) {
         where.createdAt = {};
@@ -78,7 +80,7 @@ exports.getRecentLogs = async ({ page = 1, rowsPerPage = 30, path, startDate, en
  */
 exports.getRefererStats = async ({ startDate, endDate, limit = 20 }) => {
     const { Op, fn, col, literal } = require('sequelize');
-    const where = { pvReferer: { [Op.ne]: null, [Op.ne]: '' } };
+    const where = { pvReferer: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }, { [Op.notLike]: 'http://localhost%' }] } };
     if (startDate || endDate) {
         where.createdAt = {};
         if (startDate) where.createdAt[Op.gte] = new Date(startDate);
@@ -105,7 +107,7 @@ exports.getRefererStats = async ({ startDate, endDate, limit = 20 }) => {
  * 일별 방문 수 (최근 30일)
  */
 exports.getDailyStats = async ({ startDate, endDate }) => {
-    const where = {};
+    const where = { ...EXCLUDE_LOCALHOST };
     if (startDate || endDate) {
         where.createdAt = {};
         if (startDate) where.createdAt[Op.gte] = new Date(startDate);
