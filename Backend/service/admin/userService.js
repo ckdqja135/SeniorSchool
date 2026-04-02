@@ -35,7 +35,7 @@ exports.signIn = async (userData) => {
         const token = jwt.sign(
             { idx: user.userIdx, userId: user.userId, userRole: user.userRole },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '24h' }
         );
 
         // 로그인 성공 후, User 테이블의 accessToken 칼럼에 JWT 토큰을 업데이트하였음.

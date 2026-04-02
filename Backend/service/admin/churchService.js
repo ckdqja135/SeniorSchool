@@ -262,6 +262,43 @@ exports.deleteChurch = async (churchIdx) => {
 };
 
 /**
+ * 교회 일괄 삭제 서비스 (소프트 삭제)
+ * @param {number[]} churchIdxList - 교회 인덱스 배열
+ * @returns {Object} 삭제 결과
+ */
+exports.deleteChurches = async (churchIdxList) => {
+    try {
+        const churches = await ChurchInfo.findAll({
+            where: { churchIdx: churchIdxList }
+        });
+
+        if (churches.length === 0) {
+            return {
+                status: 404,
+                message: '교회를 찾을 수 없습니다.',
+                data: null
+            };
+        }
+
+        await ChurchInfo.update(
+            { churchStatus: 0 },
+            { where: { churchIdx: churchIdxList } }
+        );
+
+        logger.info(`[deleteChurches] 교회 일괄 삭제 완료: ${churchIdxList.join(', ')}`);
+
+        return {
+            status: 200,
+            message: `${churches.length}개의 교회가 성공적으로 삭제되었습니다.`,
+            data: null
+        };
+    } catch (error) {
+        logger.error(`[deleteChurches] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
  * 교회 통계 조회 서비스
  * @returns {Object} 교회 통계 정보
  */

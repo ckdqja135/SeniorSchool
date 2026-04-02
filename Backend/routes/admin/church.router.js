@@ -19,6 +19,9 @@ router.get('/church', authenticateToken, isAdmin, churchController.getChurchDeta
 // 교회 데이터 수정
 router.put('/:churchIdx', authenticateToken, isAdmin, churchController.updateChurch);
 
+// 교회 일괄 삭제 (body: { churchIdxList: [...] })
+router.delete('/bulk', authenticateToken, isAdmin, churchController.deleteChurches);
+
 // 교회 데이터 삭제
 router.delete('/:churchIdx', authenticateToken, isAdmin, churchController.deleteChurch);
 

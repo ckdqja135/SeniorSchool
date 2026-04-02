@@ -66,6 +66,23 @@ exports.deleteChurch = async (req, res) => {
     }
 };
 
+// 교회 일괄 삭제
+exports.deleteChurches = async (req, res) => {
+    const { churchIdxList } = req.body;
+
+    if (!Array.isArray(churchIdxList) || churchIdxList.length === 0) {
+        return res.status(400).json({ status: 400, message: 'churchIdxList 배열이 필요합니다.' });
+    }
+
+    try {
+        const result = await churchService.deleteChurches(churchIdxList);
+        res.status(result.status).json(result);
+    } catch (error) {
+        logger.error(`[deleteChurches] Error: ${error.message}`);
+        res.status(500).json({ status: 500, message: '서버 오류가 발생했습니다.' });
+    }
+};
+
 // 교회 통계 조회
 exports.getChurchStats = async (req, res) => {
     try {
