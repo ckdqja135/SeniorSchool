@@ -127,6 +127,7 @@ exports.searchComp = async (searchParams) => {
             status: 200,
             message: '회사 검색이 완료되었습니다.',
             data: companies,
+            totalCount: totalCount,
             pagination: {
                 totalCount: totalCount,
                 totalPages: totalPages,
