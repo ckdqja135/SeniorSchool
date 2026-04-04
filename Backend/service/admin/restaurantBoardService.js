@@ -7,7 +7,7 @@ module.exports = createBoardService({
     entityIdxField: 'restaurantIdx',
     requiredFields: ['boardTitle', 'boardContent', 'boardID', 'boardPW'],
     creatableFields: ['boardTitle', 'boardContent', 'boardID', 'boardPW', 'restaurantIdx', 'boardRegDate', 'boardLike', 'boardHits', 'boardRating'],
-    updatableFields: ['boardTitle', 'boardContent', 'boardRating'],
+    updatableFields: ['boardTitle', 'boardContent', 'boardID', 'boardRating'],
     hasIsDeleted: false,
     includeEntity: { model: RestaurantInfo, as: 'restaurant', attributes: ['restaurantIdx', 'restaurantName'] },
 });
