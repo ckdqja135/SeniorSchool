@@ -66,9 +66,11 @@ module.exports = class RestaurantBoard extends Sequelize.Model {
         });
         
         // RestaurantBoard와 RestaurantComment 간의 관계 설정
-        db.RestaurantBoard.hasMany(db.RestaurantComment, { 
-            foreignKey: "boardIdx", 
-            sourceKey: "boardIdx" 
+        db.RestaurantBoard.hasMany(db.RestaurantComment, {
+            foreignKey: "boardIdx",
+            sourceKey: "boardIdx",
+            onDelete: 'CASCADE',
+            hooks: true
         });
     }
 };
