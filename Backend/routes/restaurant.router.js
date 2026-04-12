@@ -29,5 +29,11 @@ router.post('/requests', restaurantController.createRestaurantRequest);
 // 식당 자동 완성 검색
 router.get('/auto', restaurantController.autoComplete);
 
+// 랜덤 식당 추천
+router.get('/random', restaurantController.getRandomRestaurant);
+
+// 식당 카테고리(업종) 목록 조회
+router.get('/types', restaurantController.getRestaurantTypes);
+
 module.exports = router;
 

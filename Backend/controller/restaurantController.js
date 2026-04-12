@@ -154,3 +154,31 @@ exports.autoComplete = async (req, res, next) => {
     }
 };
 
+// 랜덤 식당 추천
+exports.getRandomRestaurant = async (req, res, next) => {
+    try {
+        const { type } = req.query;
+        const restaurant = await restaurantService.getRandomRestaurant(type);
+
+        if (!restaurant) {
+            return res.status(404).json({ error: 'No restaurant found' });
+        }
+
+        res.status(200).json(restaurant);
+    } catch (error) {
+        logger.error(`[getRandomRestaurant] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// 식당 카테고리 목록 조회
+exports.getRestaurantTypes = async (req, res, next) => {
+    try {
+        const types = await restaurantService.getRestaurantTypes();
+        res.status(200).json(types);
+    } catch (error) {
+        logger.error(`[getRestaurantTypes] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+

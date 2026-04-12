@@ -479,3 +479,65 @@ exports.getRestaurantBoardLike = async (boardIdx) => {
     }
 };
 
+// 랜덤 식당 추천
+exports.getRandomRestaurant = async (type) => {
+    try {
+        let whereClause = { restaurantStatus: 1 };
+        if (type && type.trim() !== '' && type !== '전체') {
+            whereClause.restaurantType = { [Op.like]: `%${type.trim()}%` };
+        }
+
+        const restaurant = await RestaurantInfo.findOne({
+            where: whereClause,
+            order: sequelize.random()
+        });
+
+        if (!restaurant) {
+            logger.info(`[getRandomRestaurant] No restaurant found for type: ${type || '전체'}`);
+            return null;
+        }
+
+        // 평균 평점 계산
+        const ratingResult = await RestaurantBoard.findOne({
+            where: { restaurantIdx: restaurant.restaurantIdx },
+            attributes: [
+                [sequelize.fn('AVG', sequelize.col('boardRating')), 'averageRating'],
+                [sequelize.fn('COUNT', sequelize.col('boardRating')), 'ratingCount']
+            ],
+            raw: true
+        });
+
+        const result = restaurant.toJSON();
+        result.averageRating = ratingResult?.averageRating ? parseFloat(parseFloat(ratingResult.averageRating).toFixed(1)) : null;
+        result.ratingCount = ratingResult?.ratingCount || 0;
+
+        logger.info(`[getRandomRestaurant] Random pick: ${result.restaurantName} (type: ${type || '전체'})`);
+        return result;
+    } catch (error) {
+        logger.error(`[getRandomRestaurant] Error: ${error.message}`);
+        throw error;
+    }
+};
+
+// 식당 카테고리(업종) 목록 조회
+exports.getRestaurantTypes = async () => {
+    try {
+        const types = await RestaurantInfo.findAll({
+            where: { restaurantStatus: 1 },
+            attributes: [
+                'restaurantType',
+                [sequelize.fn('COUNT', sequelize.col('restaurantIdx')), 'count']
+            ],
+            group: ['restaurantType'],
+            order: [[sequelize.fn('COUNT', sequelize.col('restaurantIdx')), 'DESC']],
+            raw: true
+        });
+
+        logger.info(`[getRestaurantTypes] Found ${types.length} restaurant types`);
+        return types;
+    } catch (error) {
+        logger.error(`[getRestaurantTypes] Error: ${error.message}`);
+        throw error;
+    }
+};
+
