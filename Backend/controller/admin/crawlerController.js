@@ -1,4 +1,6 @@
 const crawlerService = require('../../service/restaurantCrawlerService');
+const { RestaurantInfo } = require('../../model/index');
+const { fn, col, Op } = require('sequelize');
 const logger = require('../../utils/logger');
 
 // 크롤링 가능한 소스 목록 조회
@@ -48,6 +50,56 @@ exports.runCrawl = async (req, res) => {
     } catch (error) {
         logger.error(`[CrawlerController:runCrawl] ${error.message}`);
         res.status(500).json({ error: error.message || 'Internal Server Error' });
+    }
+};
+
+// DB 현황 조회
+exports.getStats = async (req, res) => {
+    try {
+        const totalRestaurants = await RestaurantInfo.count({
+            where: { restaurantStatus: 1 },
+        });
+
+        const withMenu = await RestaurantInfo.count({
+            where: {
+                restaurantStatus: 1,
+                restaurantMenu: { [Op.not]: null },
+            },
+        });
+
+        const withImage = await RestaurantInfo.count({
+            where: {
+                restaurantStatus: 1,
+                restaurantImage: { [Op.not]: null },
+            },
+        });
+
+        const withRating = await RestaurantInfo.count({
+            where: {
+                restaurantStatus: 1,
+                restaurantRating: { [Op.not]: null },
+            },
+        });
+
+        // 최근 7일 내 추가된 식당
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const recentAdded = await RestaurantInfo.count({
+            where: {
+                restaurantStatus: 1,
+                createdAt: { [Op.gte]: sevenDaysAgo },
+            },
+        });
+
+        res.status(200).json({
+            totalRestaurants,
+            withMenu,
+            withImage,
+            withRating,
+            recentAdded,
+        });
+    } catch (error) {
+        logger.error(`[CrawlerController:getStats] ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 

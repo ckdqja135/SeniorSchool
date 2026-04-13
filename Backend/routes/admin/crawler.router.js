@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const crawlerController = require('../../controller/admin/crawlerController');
 
+// DB 현황 조회
+router.get('/stats', crawlerController.getStats);
+
 // 크롤링 가능한 소스 목록 조회
 router.get('/sources', crawlerController.getSources);
 
