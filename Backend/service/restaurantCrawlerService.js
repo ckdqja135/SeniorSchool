@@ -26,6 +26,7 @@ function normalizeToRestaurant(raw) {
         restaurantMapIMG: null,
         restaurantImage: raw.image || null,
         restaurantRating: raw.rating ? Math.round(parseFloat(raw.rating) * 2) / 2 : null,
+        restaurantMenu: raw.menu || null,   // 메뉴 JSON 배열: [{name, price}]
         _source: raw.source,                // 크롤링 출처 (DB 저장 X, 로그용)
         _sourceId: raw.sourceId || null,    // 출처 고유 ID (중복 체크용)
     };
@@ -320,8 +321,172 @@ async function fetchFromGoogle({ query = 'restaurant in Seoul', lat = 37.5665, l
     return results;
 }
 
-// ─── 4) 식신(Siksin) 웹 크롤링 ──────────────────────────────
+// ─── 4) 식신(Siksin) JSON API 크롤링 ────────────────────────
+/**
+ * 식신 홈페이지에서 siksinOauth JWT 토큰 추출
+ */
+async function getSiksinToken() {
+    try {
+        const { data: html } = await axios.get('https://www.siksinhot.com', {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml',
+            },
+            timeout: 10000,
+        });
+
+        const match = html.match(/window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\});?\s*<\/script>/);
+        if (match) {
+            const state = JSON.parse(match[1]);
+            const token = state?.headers?.siksinOauth || state?.siksinOauth;
+            if (token) return token;
+        }
+
+        // fallback: script 태그에서 직접 토큰 추출
+        const tokenMatch = html.match(/siksinOauth['"]\s*:\s*['"]([^'"]+)['"]/);
+        if (tokenMatch) return tokenMatch[1];
+
+        logger.warn('[Crawler:Siksin] OAuth 토큰 추출 실패');
+        return null;
+    } catch (err) {
+        logger.error(`[Crawler:Siksin] 토큰 요청 실패: ${err.message}`);
+        return null;
+    }
+}
+
+/**
+ * 식신 메뉴 API에서 특정 식당의 메뉴 목록 조회
+ */
+async function fetchSiksinMenu(pid, token) {
+    try {
+        const { data } = await axios.get(`https://api.siksinhot.com/v1/hp/${pid}/menu`, {
+            headers: {
+                'siksinOauth': token,
+                'Origin': 'https://www.siksinhot.com',
+                'Referer': 'https://www.siksinhot.com/',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            },
+            timeout: 10000,
+        });
+
+        const menuItems = data?.data?.menu || [];
+        if (menuItems.length === 0) return null;
+
+        return menuItems.map(m => ({
+            name: m.menuNm || '',
+            price: m.price || 0,
+        })).filter(m => m.name);
+    } catch (err) {
+        logger.error(`[Crawler:Siksin] 메뉴 조회 실패 (pid=${pid}): ${err.message}`);
+        return null;
+    }
+}
+
 async function fetchFromSiksin({ region = '서울', count = 50 }) {
+    const token = await getSiksinToken();
+    if (!token) {
+        logger.warn('[Crawler:Siksin] 토큰 없이 HTML 방식으로 폴백');
+        return fetchFromSiksinFallback({ region, count });
+    }
+
+    const results = [];
+    const seen = new Set();
+
+    // 지역 ID 매핑 (식신 API에서 사용하는 areaId)
+    const AREA_MAP = {
+        '서울': 'Seoul', '부산': 'Busan', '대구': 'Daegu', '인천': 'Incheon',
+        '광주': 'Gwangju', '대전': 'Daejeon', '울산': 'Ulsan', '세종': 'Sejong',
+        '경기': 'Gyeonggi', '강원': 'Gangwon', '충북': 'Chungbuk', '충남': 'Chungnam',
+        '전북': 'Jeonbuk', '전남': 'Jeonnam', '경북': 'Gyeongbuk', '경남': 'Gyeongnam',
+        '제주': 'Jeju',
+    };
+
+    const regionKey = Object.keys(AREA_MAP).find(k => region.includes(k));
+    const areaId = regionKey ? AREA_MAP[regionKey] : 'Seoul';
+    let offset = 0;
+    const limit = 20;
+
+    while (results.length < count) {
+        try {
+            const { data } = await axios.get('https://api.siksinhot.com/v1/hp', {
+                headers: {
+                    'siksinOauth': token,
+                    'Origin': 'https://www.siksinhot.com',
+                    'Referer': 'https://www.siksinhot.com/',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                },
+                params: {
+                    hpAreaId: areaId,
+                    limit,
+                    offset,
+                    sort: 'R',  // 추천순
+                },
+                timeout: 10000,
+            });
+
+            const stores = data?.data?.list || data?.data || [];
+            if (!Array.isArray(stores) || stores.length === 0) break;
+
+            for (const store of stores) {
+                const name = (store.storNm || store.name || '').trim();
+                if (!name) continue;
+
+                const addr = store.addr || store.roadAddr || '';
+                const key = `siksin_${name}_${addr}`;
+                if (seen.has(key)) continue;
+                seen.add(key);
+
+                const pid = store.pid || store.storeId;
+
+                // 목록 API 응답의 인라인 메뉴 정보
+                let menu = null;
+                if (store.menu && Array.isArray(store.menu) && store.menu.length > 0) {
+                    menu = store.menu.map(m => ({
+                        name: m.menuNm || '',
+                        price: m.price || 0,
+                    })).filter(m => m.name);
+                }
+
+                // 인라인 메뉴가 없으면 상세 메뉴 API 호출
+                if ((!menu || menu.length === 0) && pid) {
+                    menu = await fetchSiksinMenu(pid, token);
+                }
+
+                const type = store.foodKind || store.category || '음식점';
+                const rating = store.score || store.totalScore || null;
+                const image = store.mainImg || store.img || null;
+                const url = pid ? `https://www.siksinhot.com/P/${pid}` : '';
+
+                results.push(normalizeToRestaurant({
+                    name,
+                    addr,
+                    type,
+                    rating,
+                    url,
+                    image,
+                    menu: (menu && menu.length > 0) ? menu : null,
+                    source: 'siksin',
+                    sourceId: key,
+                }));
+
+                if (results.length >= count) break;
+            }
+
+            offset += limit;
+        } catch (err) {
+            logger.error(`[Crawler:Siksin] offset=${offset} 에러: ${err.message}`);
+            break;
+        }
+    }
+
+    logger.info(`[Crawler:Siksin] ${results.length}건 수집 완료 (JSON API)`);
+    return results;
+}
+
+/**
+ * 식신 HTML 폴백 (토큰 추출 실패 시)
+ */
+async function fetchFromSiksinFallback({ region = '서울', count = 50 }) {
     const results = [];
     const seen = new Set();
     let page = 1;
@@ -337,7 +502,6 @@ async function fetchFromSiksin({ region = '서울', count = 50 }) {
                 timeout: 10000,
             });
 
-            // localFood_list 내 <li> 항목 추출
             const itemPattern = /<ul class="localFood_list"[^>]*>([\s\S]*?)<\/ul>/g;
             let listHtml = '';
             let listMatch;
@@ -360,46 +524,34 @@ async function fetchFromSiksin({ region = '서울', count = 50 }) {
             }
 
             for (const block of blocks) {
-                // 이름: <h2>...</h2>
                 const nameMatch = block.match(/<h2>([^<]+)<\/h2>/);
-                // 평점: <span class="score">4.7</span>
                 const ratingMatch = block.match(/<span class="score">([0-9.]+)<\/span>/);
-                // 링크: href="https://www.siksinhot.com/P/12345" 또는 href="/P/12345"
                 const linkMatch = block.match(/href="((?:https?:\/\/www\.siksinhot\.com)?\/P\/\d+)"/);
-                // 주소: <img alt="이름 , 주소"/> (img alt 속성에서 추출)
                 const altMatch = block.match(/<img[^>]*alt="([^"]+)"[^>]*>/);
-                // 카테고리: <p class="cate"> 안의 마지막 / 뒤 <a> 태그 텍스트
                 const cateMatch = block.match(/<p class="cate">([\s\S]*?)<\/p>/);
-                // 이미지: img.siksinhot.com 이미지
                 const imgMatch = block.match(/<img[^>]*src="(https:\/\/img\.siksinhot\.com\/[^"]+)"/);
 
                 const name = nameMatch?.[1]?.trim();
                 if (!name) continue;
 
-                // alt="남영돈 , 서울특별시 용산구 한강대로80길 17 남영돈" → 주소 추출
                 let addr = '';
                 if (altMatch) {
                     const altParts = altMatch[1].split(' , ');
                     if (altParts.length >= 2) {
                         addr = altParts.slice(1).join(' , ').trim();
-                        // 주소 끝에 식당 이름이 반복되면 제거
                         if (name && addr.endsWith(name)) {
                             addr = addr.slice(0, -name.length).trim();
                         }
                     }
                 }
 
-                // 카테고리: href 패턴으로 음식 카테고리만 추출 (지역 링크 제외)
                 let type = '음식점';
                 if (cateMatch) {
-                    // 지역 링크: href에 "서울", "강남", "강북" 등 포함 → 제외
-                    // 음식 링크: href="/search?keywords=삼겹살" 등 → 추출
                     const linkPattern = /<a[^>]*href="\/search\?keywords=([^"]+)"[^>]*>([^<]+)<\/a>/g;
                     const foodTypes = [];
                     let lm;
                     while ((lm = linkPattern.exec(cateMatch[1])) !== null) {
                         const keyword = decodeURIComponent(lm[1]);
-                        // 지역 키워드 필터링 (서울/부산/대구 등 시도명이나 동네명 패턴)
                         if (!/^(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)\s/.test(keyword)) {
                             foodTypes.push(lm[2].trim());
                         }
@@ -432,12 +584,12 @@ async function fetchFromSiksin({ region = '서울', count = 50 }) {
 
             page++;
         } catch (err) {
-            logger.error(`[Crawler:Siksin] page ${page} 에러: ${err.message}`);
+            logger.error(`[Crawler:Siksin:Fallback] page ${page} 에러: ${err.message}`);
             break;
         }
     }
 
-    logger.info(`[Crawler:Siksin] ${results.length}건 수집 완료`);
+    logger.info(`[Crawler:Siksin:Fallback] ${results.length}건 수집 완료 (HTML)`);
     return results;
 }
 
@@ -626,6 +778,7 @@ async function crawlRestaurants(options = {}) {
                     restaurantMapIMG: item.restaurantMapIMG || null,
                     restaurantImage: item.restaurantImage || null,
                     restaurantRating: item.restaurantRating,
+                    restaurantMenu: item.restaurantMenu || null,
                     restaurantStatus: 1,
                     restaurantViewCount: 0,
                 });
@@ -652,9 +805,6 @@ function getAvailableSources() {
 
     if (process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET) sources.push({ name: 'naver', label: '네이버', ready: true });
     else sources.push({ name: 'naver', label: '네이버', ready: false, reason: 'NAVER_CLIENT_ID/SECRET 미설정' });
-
-    if (process.env.GOOGLE_MAPS_API_KEY) sources.push({ name: 'google', label: '구글맵', ready: true });
-    else sources.push({ name: 'google', label: '구글맵', ready: false, reason: 'GOOGLE_MAPS_API_KEY 미설정' });
 
     sources.push({ name: 'siksin', label: '식신', ready: true, note: '웹 크롤링 (API 키 불필요)' });
 

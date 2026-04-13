@@ -66,6 +66,25 @@ module.exports = class RestaurantInfo extends Sequelize.Model {
                         max: 5.0,
                     },
                 },
+                restaurantMenu: {
+                    type: Sequelize.TEXT,
+                    allowNull: true,
+                    comment: '식당 메뉴 (JSON 배열: [{name, price}])',
+                    get() {
+                        const raw = this.getDataValue('restaurantMenu');
+                        if (!raw) return null;
+                        try { return JSON.parse(raw); } catch { return null; }
+                    },
+                    set(val) {
+                        if (val === null || val === undefined) {
+                            this.setDataValue('restaurantMenu', null);
+                        } else if (typeof val === 'string') {
+                            this.setDataValue('restaurantMenu', val);
+                        } else {
+                            this.setDataValue('restaurantMenu', JSON.stringify(val));
+                        }
+                    },
+                },
                 restaurantStatus: {
                     type: Sequelize.TINYINT,
                     allowNull: false,
