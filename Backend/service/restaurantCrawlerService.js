@@ -94,9 +94,11 @@ async function fetchFromKakao({ query = '맛집', lat, lng, radius = 20000, coun
     if (lat && lng) {
         searchPoints = [{ lat, lng }];
     } else {
-        // region에서 매칭되는 거점 좌표 찾기
+        // region에서 매칭되는 거점 좌표 찾기 (랜덤 셔플)
         const regionKey = Object.keys(REGION_COORDS).find(k => region.includes(k));
-        searchPoints = regionKey ? REGION_COORDS[regionKey] : [{ lat: 37.5665, lng: 126.9780 }];
+        searchPoints = regionKey
+            ? [...REGION_COORDS[regionKey]].sort(() => Math.random() - 0.5)
+            : [{ lat: 37.5665, lng: 126.9780 }];
     }
 
     const countPerPoint = Math.ceil(count / searchPoints.length);
@@ -104,8 +106,8 @@ async function fetchFromKakao({ query = '맛집', lat, lng, radius = 20000, coun
     for (const point of searchPoints) {
         if (results.length >= count) break;
 
-        // 카테고리 검색 (FD6: 음식점)
-        let page = 1;
+        // 카테고리 검색 (FD6: 음식점), 랜덤 시작 페이지
+        let page = Math.floor(Math.random() * 5) + 1;
         const pointTarget = Math.min(countPerPoint, count - results.length);
         let pointCount = 0;
 
@@ -776,8 +778,28 @@ async function crawlRestaurants(options = {}) {
     stats.totalFetched = allResults.length;
     logger.info(`[Crawler] 총 ${allResults.length}건 수집 완료, 소스별: ${JSON.stringify(stats.sources)}`);
 
-    // 좌표 보정 (dryRun에서도 실행하여 미리보기에 반영)
-    for (const item of allResults) {
+    // DB에 이미 존재하는 식당 제외
+    const existingNames = allResults
+        .filter(item => item.restaurantName)
+        .map(item => item.restaurantName);
+
+    const existingRecords = await RestaurantInfo.findAll({
+        where: {
+            restaurantName: { [Op.in]: existingNames },
+            restaurantStatus: 1,
+        },
+        attributes: ['restaurantName', 'restaurantAddr'],
+        raw: true,
+    });
+
+    const existingSet = new Set(existingRecords.map(r => `${r.restaurantName}_${r.restaurantAddr}`));
+    const newResults = allResults.filter(item => !existingSet.has(`${item.restaurantName}_${item.restaurantAddr}`));
+
+    stats.alreadyInDB = allResults.length - newResults.length;
+    logger.info(`[Crawler] DB 기존 ${stats.alreadyInDB}건 제외, 신규 ${newResults.length}건`);
+
+    // 좌표 보정
+    for (const item of newResults) {
         if ((!item.restaurantLatX || !item.restaurantLatY) && item.restaurantAddr) {
             const coords = await geocodeByKakao(item.restaurantAddr);
             if (coords) {
@@ -789,12 +811,12 @@ async function crawlRestaurants(options = {}) {
     }
 
     if (dryRun) {
-        logger.info(`[Crawler] dryRun 모드 - DB 저장 건너뜀 (좌표보정: ${stats.coordFixed}건)`);
-        return { stats, data: allResults };
+        logger.info(`[Crawler] dryRun 모드 - 신규 ${newResults.length}건 미리보기 (좌표보정: ${stats.coordFixed}건)`);
+        return { stats, data: newResults };
     }
 
     // bulkCreate로 일괄 insert/update (이름+주소 unique 기준)
-    const bulkData = allResults
+    const bulkData = newResults
         .filter(item => item.restaurantName)
         .map(item => ({
             restaurantName: item.restaurantName,
