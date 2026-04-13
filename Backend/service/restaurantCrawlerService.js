@@ -382,6 +382,46 @@ async function fetchSiksinMenu(pid, token) {
     }
 }
 
+/**
+ * 식신 area API에서 지역명에 해당하는 hpAreaId 목록 조회
+ */
+async function getSiksinAreaIds(token, region) {
+    const SIKSIN_HEADERS = {
+        'siksinOauth': token,
+        'Origin': 'https://www.siksinhot.com',
+        'Referer': 'https://www.siksinhot.com/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    };
+
+    try {
+        const { data } = await axios.get('https://api.siksinhot.com/v1/hp/area', {
+            headers: SIKSIN_HEADERS,
+            timeout: 10000,
+        });
+
+        const groups = data?.data?.list || [];
+        const areaIds = [];
+
+        for (const group of groups) {
+            // 상위 지역명 매칭 (예: "서울-강남", "서울-강북", "부산")
+            const title = group.upHpAreaTitle || '';
+            if (title.includes(region)) {
+                // 하위 지역 ID 수집
+                for (const sub of (group.list || [])) {
+                    if (sub.hpAreaId && sub.hpCnt > 0) {
+                        areaIds.push(sub.hpAreaId);
+                    }
+                }
+            }
+        }
+
+        return areaIds;
+    } catch (err) {
+        logger.error(`[Crawler:Siksin] area 조회 실패: ${err.message}`);
+        return [];
+    }
+}
+
 async function fetchFromSiksin({ region = '서울', count = 50 }) {
     const token = await getSiksinToken();
     if (!token) {
@@ -389,93 +429,104 @@ async function fetchFromSiksin({ region = '서울', count = 50 }) {
         return fetchFromSiksinFallback({ region, count });
     }
 
-    const results = [];
-    const seen = new Set();
-
-    // 지역 ID 매핑 (식신 API에서 사용하는 areaId)
-    const AREA_MAP = {
-        '서울': 'Seoul', '부산': 'Busan', '대구': 'Daegu', '인천': 'Incheon',
-        '광주': 'Gwangju', '대전': 'Daejeon', '울산': 'Ulsan', '세종': 'Sejong',
-        '경기': 'Gyeonggi', '강원': 'Gangwon', '충북': 'Chungbuk', '충남': 'Chungnam',
-        '전북': 'Jeonbuk', '전남': 'Jeonnam', '경북': 'Gyeongbuk', '경남': 'Gyeongnam',
-        '제주': 'Jeju',
+    const SIKSIN_HEADERS = {
+        'siksinOauth': token,
+        'Origin': 'https://www.siksinhot.com',
+        'Referer': 'https://www.siksinhot.com/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     };
 
-    const regionKey = Object.keys(AREA_MAP).find(k => region.includes(k));
-    const areaId = regionKey ? AREA_MAP[regionKey] : 'Seoul';
-    let offset = 0;
-    const limit = 20;
+    // 1) 지역명으로 hpAreaId 목록 조회
+    const areaIds = await getSiksinAreaIds(token, region);
+    if (areaIds.length === 0) {
+        logger.warn(`[Crawler:Siksin] "${region}" 지역 ID를 찾을 수 없음, 폴백`);
+        return fetchFromSiksinFallback({ region, count });
+    }
 
-    while (results.length < count) {
-        try {
-            const { data } = await axios.get('https://api.siksinhot.com/v1/hp', {
-                headers: {
-                    'siksinOauth': token,
-                    'Origin': 'https://www.siksinhot.com',
-                    'Referer': 'https://www.siksinhot.com/',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                },
-                params: {
-                    hpAreaId: areaId,
-                    limit,
-                    offset,
-                    sort: 'R',  // 추천순
-                },
-                timeout: 10000,
-            });
+    logger.info(`[Crawler:Siksin] "${region}" 지역 areaId ${areaIds.length}개 발견`);
 
-            const stores = data?.data?.list || data?.data || [];
-            if (!Array.isArray(stores) || stores.length === 0) break;
+    const results = [];
+    const seen = new Set();
+    const countPerArea = Math.ceil(count / areaIds.length);
 
-            for (const store of stores) {
-                const name = (store.storNm || store.name || '').trim();
-                if (!name) continue;
+    // 2) 각 지역별로 맛집 목록 수집
+    for (const areaId of areaIds) {
+        if (results.length >= count) break;
 
-                const addr = store.addr || store.roadAddr || '';
-                const key = `siksin_${name}_${addr}`;
-                if (seen.has(key)) continue;
-                seen.add(key);
+        let offset = 0;
+        const limit = 20;
+        let areaCount = 0;
 
-                const pid = store.pid || store.storeId;
+        while (areaCount < countPerArea && results.length < count) {
+            try {
+                const { data } = await axios.get('https://api.siksinhot.com/v1/hp', {
+                    headers: SIKSIN_HEADERS,
+                    params: { hpAreaId: areaId, limit, offset, sort: 'R' },
+                    timeout: 10000,
+                });
 
-                // 목록 API 응답의 인라인 메뉴 정보
-                let menu = null;
-                if (store.menu && Array.isArray(store.menu) && store.menu.length > 0) {
-                    menu = store.menu.map(m => ({
-                        name: m.menuNm || '',
-                        price: m.price || 0,
-                    })).filter(m => m.name);
+                const stores = data?.data?.list || [];
+                if (!Array.isArray(stores) || stores.length === 0) break;
+
+                for (const store of stores) {
+                    const name = (store.pname || '').trim();
+                    if (!name) continue;
+
+                    const addr = store.addr || store.addr2 || '';
+                    const key = `siksin_${name}_${addr}`;
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+
+                    const pid = store.pid;
+
+                    // 목록 API 응답에 인라인 메뉴 포함
+                    let menu = null;
+                    if (store.menu && Array.isArray(store.menu) && store.menu.length > 0) {
+                        menu = store.menu.map(m => ({
+                            name: m.menuNm || '',
+                            price: m.price || 0,
+                        })).filter(m => m.name);
+                    }
+
+                    // 인라인 메뉴가 없으면 상세 메뉴 API 호출
+                    if ((!menu || menu.length === 0) && pid) {
+                        menu = await fetchSiksinMenu(pid, token);
+                    }
+
+                    const type = store.mcateNm || store.hpSchCateNm || '음식점';
+                    const rating = store.score || null;
+                    const url = pid ? `https://www.siksinhot.com/P/${pid}` : '';
+
+                    // 이미지 URL 조합
+                    let image = null;
+                    if (store.photo?.imgNm) {
+                        image = `https://img.siksinhot.com/place/${store.photo.imgNm}`;
+                    }
+
+                    results.push(normalizeToRestaurant({
+                        name,
+                        addr,
+                        lotAddr: store.addr || '',
+                        type,
+                        lat: store.lat || 0,
+                        lng: store.lng || 0,
+                        rating,
+                        url,
+                        image,
+                        menu: (menu && menu.length > 0) ? menu : null,
+                        source: 'siksin',
+                        sourceId: key,
+                    }));
+
+                    areaCount++;
+                    if (results.length >= count) break;
                 }
 
-                // 인라인 메뉴가 없으면 상세 메뉴 API 호출
-                if ((!menu || menu.length === 0) && pid) {
-                    menu = await fetchSiksinMenu(pid, token);
-                }
-
-                const type = store.foodKind || store.category || '음식점';
-                const rating = store.score || store.totalScore || null;
-                const image = store.mainImg || store.img || null;
-                const url = pid ? `https://www.siksinhot.com/P/${pid}` : '';
-
-                results.push(normalizeToRestaurant({
-                    name,
-                    addr,
-                    type,
-                    rating,
-                    url,
-                    image,
-                    menu: (menu && menu.length > 0) ? menu : null,
-                    source: 'siksin',
-                    sourceId: key,
-                }));
-
-                if (results.length >= count) break;
+                offset += limit;
+            } catch (err) {
+                logger.error(`[Crawler:Siksin] areaId=${areaId} offset=${offset} 에러: ${err.message}`);
+                break;
             }
-
-            offset += limit;
-        } catch (err) {
-            logger.error(`[Crawler:Siksin] offset=${offset} 에러: ${err.message}`);
-            break;
         }
     }
 
