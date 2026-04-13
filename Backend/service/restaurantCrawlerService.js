@@ -436,8 +436,8 @@ async function fetchFromSiksin({ region = '서울', count = 50 }) {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     };
 
-    // 1) 지역명으로 hpAreaId 목록 조회
-    const areaIds = await getSiksinAreaIds(token, region);
+    // 1) 지역명으로 hpAreaId 목록 조회 (랜덤 셔플)
+    const areaIds = (await getSiksinAreaIds(token, region)).sort(() => Math.random() - 0.5);
     if (areaIds.length === 0) {
         logger.warn(`[Crawler:Siksin] "${region}" 지역 ID를 찾을 수 없음, 폴백`);
         return fetchFromSiksinFallback({ region, count });
@@ -669,18 +669,18 @@ async function geocodeByKakao(address) {
     return null;
 }
 
-// ─── 중복 체크 ───────────────────────────────────────────────
-async function isDuplicate(restaurant) {
-    const existing = await RestaurantInfo.findOne({
+// ─── (참고) 좌표 근접 기반 중복 조회 ─────────────────────────
+// bulkCreate + updateOnDuplicate 사용으로 이름+주소 unique 인덱스 기반 처리
+// 좌표 근접 체크가 필요한 경우 아래 함수를 개별 호출용으로 사용 가능
+async function findExisting(restaurant) {
+    return await RestaurantInfo.findOne({
         where: {
             restaurantStatus: 1,
             [Op.or]: [
-                // 이름 + 주소 완전 일치
                 {
                     restaurantName: restaurant.restaurantName,
                     restaurantAddr: restaurant.restaurantAddr,
                 },
-                // 이름 + 좌표 근접 (약 50m 이내)
                 ...(restaurant.restaurantLatX && restaurant.restaurantLatY ? [{
                     restaurantName: restaurant.restaurantName,
                     restaurantLatX: {
@@ -693,8 +693,6 @@ async function isDuplicate(restaurant) {
             ]
         }
     });
-
-    return !!existing;
 }
 
 // ─── 통합 크롤링 실행 ────────────────────────────────────────
@@ -795,55 +793,53 @@ async function crawlRestaurants(options = {}) {
         return { stats, data: allResults };
     }
 
-    // 중복 체크 + 좌표 보정 + DB 저장
+    // bulkCreate로 일괄 insert/update (이름+주소 unique 기준)
+    const bulkData = allResults
+        .filter(item => item.restaurantName)
+        .map(item => ({
+            restaurantName: item.restaurantName,
+            restaurantLocation: item.restaurantLocation || '미정',
+            restaurantType: item.restaurantType || '음식점',
+            restaurantEstablished: item.restaurantEstablished || '미정',
+            restaurantOwner: item.restaurantOwner || '미정',
+            restaurantLatX: item.restaurantLatX || 0,
+            restaurantLatY: item.restaurantLatY || 0,
+            restaurantURL: item.restaurantURL || '',
+            restaurantLotAddr: item.restaurantLotAddr || '',
+            restaurantAddr: item.restaurantAddr || '',
+            restaurantMapIMG: item.restaurantMapIMG || null,
+            restaurantImage: item.restaurantImage || null,
+            restaurantRating: item.restaurantRating,
+            restaurantMenu: item.restaurantMenu || null,
+            restaurantStatus: 1,
+            restaurantViewCount: 0,
+        }));
+
     const savedList = [];
 
-    for (const item of allResults) {
+    if (saveToDB && bulkData.length > 0) {
         try {
-            // 이름이 없으면 스킵
-            if (!item.restaurantName) {
-                stats.failed++;
-                continue;
-            }
+            const result = await RestaurantInfo.bulkCreate(bulkData, {
+                updateOnDuplicate: [
+                    'restaurantMenu',
+                    'restaurantImage',
+                    'restaurantRating',
+                    'restaurantURL',
+                    'restaurantType',
+                    'restaurantLatX',
+                    'restaurantLatY',
+                ],
+            });
 
-            // 중복 체크
-            const dup = await isDuplicate(item);
-            if (dup) {
-                stats.duplicateSkipped++;
-                continue;
-            }
-
-            if (saveToDB) {
-                // restaurantOwner가 '미정'이면 빈값으로는 안 넣되, NOT NULL이니 기본값 유지
-                await RestaurantInfo.create({
-                    restaurantName: item.restaurantName,
-                    restaurantLocation: item.restaurantLocation || '미정',
-                    restaurantType: item.restaurantType || '음식점',
-                    restaurantEstablished: item.restaurantEstablished || '미정',
-                    restaurantOwner: item.restaurantOwner || '미정',
-                    restaurantLatX: item.restaurantLatX || 0,
-                    restaurantLatY: item.restaurantLatY || 0,
-                    restaurantURL: item.restaurantURL || '',
-                    restaurantLotAddr: item.restaurantLotAddr || '',
-                    restaurantAddr: item.restaurantAddr || '',
-                    restaurantMapIMG: item.restaurantMapIMG || null,
-                    restaurantImage: item.restaurantImage || null,
-                    restaurantRating: item.restaurantRating,
-                    restaurantMenu: item.restaurantMenu || null,
-                    restaurantStatus: 1,
-                    restaurantViewCount: 0,
-                });
-
-                savedList.push(item.restaurantName);
-                stats.saved++;
-            }
+            stats.saved = result.length;
+            result.forEach(r => savedList.push(r.restaurantName));
         } catch (err) {
-            stats.failed++;
-            logger.error(`[Crawler] "${item.restaurantName}" 저장 실패: ${err.message}`);
+            stats.failed = bulkData.length;
+            logger.error(`[Crawler] bulkCreate 실패: ${err.message}`);
         }
     }
 
-    logger.info(`[Crawler] 완료 - 저장: ${stats.saved}, 중복스킵: ${stats.duplicateSkipped}, 좌표보정: ${stats.coordFixed}, 실패: ${stats.failed}`);
+    logger.info(`[Crawler] 완료 - 처리: ${stats.saved}, 좌표보정: ${stats.coordFixed}, 실패: ${stats.failed}`);
 
     return { stats, saved: savedList };
 }

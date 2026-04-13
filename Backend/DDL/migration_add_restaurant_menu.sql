@@ -4,3 +4,7 @@
 
 ALTER TABLE tb_restaurant_info
 ADD COLUMN restaurantMenu TEXT NULL COMMENT '식당 메뉴 (JSON 배열: [{name, price}])' AFTER restaurantRating;
+
+-- bulkCreate updateOnDuplicate용 unique 인덱스 (이름+주소)
+ALTER TABLE tb_restaurant_info
+ADD UNIQUE INDEX uq_restaurant_name_addr (restaurantName, restaurantAddr);
