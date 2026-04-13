@@ -1,4 +1,9 @@
-const crawlerService = require('../../service/restaurantCrawlerService');
+let crawlerService;
+try {
+    crawlerService = require('../../service/restaurantCrawlerService');
+} catch (err) {
+    console.error('[CrawlerController] restaurantCrawlerService 로드 실패:', err.message);
+}
 const { RestaurantInfo } = require('../../model/index');
 const { fn, col, Op } = require('sequelize');
 const logger = require('../../utils/logger');
