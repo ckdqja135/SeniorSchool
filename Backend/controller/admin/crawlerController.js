@@ -128,9 +128,13 @@ exports.runSingleSource = async (req, res) => {
             dryRun: dryRun === 'true',
         });
 
+        const isDryRun = dryRun === 'true';
         res.status(200).json({
             success: true,
             source,
+            message: isDryRun
+                ? `미리보기 완료: ${result.stats.totalFetched}건 수집`
+                : `크롤링 완료: ${result.stats.saved || 0}건 저장, ${result.stats.duplicateSkipped || 0}건 중복 스킵`,
             ...result,
         });
     } catch (error) {

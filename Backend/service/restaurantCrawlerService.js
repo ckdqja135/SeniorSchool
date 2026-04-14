@@ -25,7 +25,6 @@ function normalizeToRestaurant(raw) {
         restaurantAddr: addr.slice(0, 200),
         restaurantMapIMG: null,
         restaurantImage: raw.image || null,
-        restaurantRating: raw.rating ? Math.round(parseFloat(raw.rating) * 2) / 2 : null,
         restaurantMenu: raw.menu || null,   // 메뉴 JSON 배열: [{name, price}]
         _source: raw.source,                // 크롤링 출처 (DB 저장 X, 로그용)
         _sourceId: raw.sourceId || null,    // 출처 고유 ID (중복 체크용)
@@ -848,7 +847,6 @@ async function crawlRestaurants(options = {}) {
             restaurantAddr: item.restaurantAddr || '',
             restaurantMapIMG: item.restaurantMapIMG || null,
             restaurantImage: item.restaurantImage || null,
-            restaurantRating: item.restaurantRating,
             restaurantMenu: item.restaurantMenu || null,
             restaurantStatus: 1,
             restaurantViewCount: 0,
@@ -858,17 +856,31 @@ async function crawlRestaurants(options = {}) {
 
     if (saveToDB && bulkData.length > 0) {
         try {
+            // 메뉴/이미지/평점은 값이 있을 때만 덮어쓰도록 조건부 업데이트
             const result = await RestaurantInfo.bulkCreate(bulkData, {
                 updateOnDuplicate: [
-                    'restaurantMenu',
-                    'restaurantImage',
-                    'restaurantRating',
                     'restaurantURL',
                     'restaurantType',
                     'restaurantLatX',
                     'restaurantLatY',
                 ],
             });
+
+            // 메뉴/이미지/평점은 값이 있는 항목만 개별 업데이트 (null로 덮어쓰기 방지)
+            for (const item of bulkData) {
+                const updates = {};
+                if (item.restaurantMenu) updates.restaurantMenu = item.restaurantMenu;
+                if (item.restaurantImage) updates.restaurantImage = item.restaurantImage;
+                if (Object.keys(updates).length > 0) {
+                    await RestaurantInfo.update(updates, {
+                        where: {
+                            restaurantName: item.restaurantName,
+                            restaurantAddr: item.restaurantAddr,
+                            restaurantStatus: 1,
+                        },
+                    });
+                }
+            }
 
             stats.saved = result.length;
             result.forEach(r => savedList.push(r.restaurantName));
