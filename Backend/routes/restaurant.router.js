@@ -38,5 +38,8 @@ router.get('/random', restaurantController.getRandomRestaurant);
 // 식당 카테고리(업종) 목록 조회
 router.get('/types', restaurantController.getRestaurantTypes);
 
+// 식당 지역 목록 조회
+router.get('/locations', restaurantController.getRestaurantLocations);
+
 module.exports = router;
 

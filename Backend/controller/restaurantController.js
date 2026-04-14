@@ -193,6 +193,17 @@ exports.getRandomRestaurant = async (req, res, next) => {
     }
 };
 
+// 식당 지역 목록 조회
+exports.getRestaurantLocations = async (req, res, next) => {
+    try {
+        const locations = await restaurantService.getRestaurantLocations();
+        res.status(200).json(locations);
+    } catch (error) {
+        logger.error(`[getRestaurantLocations] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 // 식당 카테고리 목록 조회
 exports.getRestaurantTypes = async (req, res, next) => {
     try {

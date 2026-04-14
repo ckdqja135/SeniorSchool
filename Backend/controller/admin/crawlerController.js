@@ -54,7 +54,7 @@ exports.runCrawl = async (req, res) => {
         });
     } catch (error) {
         logger.error(`[CrawlerController:runCrawl] ${error.message}`);
-        res.status(500).json({ error: error.message || 'Internal Server Error' });
+        res.status(500).json({ success: false, message: `크롤링 실패: ${error.message || 'Internal Server Error'}` });
     }
 };
 
@@ -139,6 +139,6 @@ exports.runSingleSource = async (req, res) => {
         });
     } catch (error) {
         logger.error(`[CrawlerController:runSingleSource] ${error.message}`);
-        res.status(500).json({ error: error.message || 'Internal Server Error' });
+        res.status(500).json({ success: false, message: `크롤링 실패: ${error.message || 'Internal Server Error'}` });
     }
 };

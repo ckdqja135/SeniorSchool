@@ -577,6 +577,28 @@ exports.getRandomRestaurant = async (type) => {
 };
 
 // 식당 카테고리(업종) 목록 조회
+// 식당 지역 목록 조회
+exports.getRestaurantLocations = async () => {
+    try {
+        const locations = await RestaurantInfo.findAll({
+            where: { restaurantStatus: 1 },
+            attributes: [
+                'restaurantLocation',
+                [sequelize.fn('COUNT', sequelize.col('restaurantIdx')), 'count']
+            ],
+            group: ['restaurantLocation'],
+            order: [[sequelize.fn('COUNT', sequelize.col('restaurantIdx')), 'DESC']],
+            raw: true
+        });
+
+        logger.info(`[getRestaurantLocations] Found ${locations.length} locations`);
+        return locations.filter(l => l.restaurantLocation && l.restaurantLocation.trim());
+    } catch (error) {
+        logger.error(`[getRestaurantLocations] Error: ${error.message}`);
+        throw error;
+    }
+};
+
 exports.getRestaurantTypes = async () => {
     try {
         const types = await RestaurantInfo.findAll({
