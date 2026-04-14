@@ -8,6 +8,12 @@ router.get('/stats', crawlerController.getStats);
 // 크롤링 가능한 소스 목록 조회
 router.get('/sources', crawlerController.getSources);
 
+// 비어있는 데이터 통계
+router.get('/missing-stats', crawlerController.getMissingStats);
+
+// 비어있는 필드 보강 크롤링
+router.post('/enrich', crawlerController.enrichMissing);
+
 // 통합 크롤링 실행
 router.post('/run', crawlerController.runCrawl);
 

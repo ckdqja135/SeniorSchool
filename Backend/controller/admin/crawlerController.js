@@ -108,6 +108,107 @@ exports.getStats = async (req, res) => {
     }
 };
 
+// 비어있는 데이터 컬럼별 통계 조회
+exports.getMissingStats = async (req, res) => {
+    try {
+        const total = await RestaurantInfo.count({ where: { restaurantStatus: 1 } });
+
+        const fields = [
+            { key: 'restaurantMenu', label: '메뉴', condition: { [Op.or]: [{ restaurantMenu: null }, { restaurantMenu: '' }] } },
+            { key: 'restaurantImage', label: '이미지', condition: { [Op.or]: [{ restaurantImage: null }, { restaurantImage: '' }] } },
+            { key: 'restaurantURL', label: 'URL', condition: { [Op.or]: [{ restaurantURL: null }, { restaurantURL: '' }] } },
+            { key: 'restaurantLotAddr', label: '지번주소', condition: { [Op.or]: [{ restaurantLotAddr: null }, { restaurantLotAddr: '' }] } },
+        ];
+
+        const stats = [];
+        for (const f of fields) {
+            const missing = await RestaurantInfo.count({
+                where: { restaurantStatus: 1, ...f.condition },
+            });
+            stats.push({ key: f.key, label: f.label, total, missing, filled: total - missing });
+        }
+
+        res.status(200).json(stats);
+    } catch (error) {
+        logger.error(`[CrawlerController:getMissingStats] ${error.message}`);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 비어있는 필드 보강 크롤링 (식신 기반)
+exports.enrichMissing = async (req, res) => {
+    try {
+        const { field, limit: reqLimit } = req.body;
+        const validFields = ['restaurantMenu', 'restaurantImage'];
+        if (!validFields.includes(field)) {
+            return res.status(400).json({ success: false, message: `보강 가능 필드: ${validFields.join(', ')}` });
+        }
+
+        const batchLimit = reqLimit ? parseInt(reqLimit) : 20;
+
+        // 해당 필드가 비어있는 식당 조회
+        const restaurants = await RestaurantInfo.findAll({
+            where: {
+                restaurantStatus: 1,
+                [Op.or]: [{ [field]: null }, { [field]: '' }],
+            },
+            attributes: ['restaurantIdx', 'restaurantName', 'restaurantAddr'],
+            limit: batchLimit,
+            order: [['restaurantViewCount', 'DESC']],
+            raw: true,
+        });
+
+        if (restaurants.length === 0) {
+            return res.status(200).json({ success: true, message: '보강할 식당이 없습니다.', updated: 0 });
+        }
+
+        // 식신에서 각 식당 검색하여 보강
+        let updated = 0;
+        const results = [];
+
+        for (const r of restaurants) {
+            try {
+                const siksinResults = await crawlerService.fetchFromSiksin({
+                    region: r.restaurantAddr ? r.restaurantAddr.split(' ').slice(0, 2).join(' ') : '서울',
+                    count: 5,
+                    query: r.restaurantName,
+                });
+
+                // 이름이 유사한 결과 찾기
+                const match = siksinResults.find(s =>
+                    s.restaurantName === r.restaurantName ||
+                    s.restaurantName.includes(r.restaurantName) ||
+                    r.restaurantName.includes(s.restaurantName)
+                );
+
+                if (match && match[field]) {
+                    await RestaurantInfo.update(
+                        { [field]: match[field] },
+                        { where: { restaurantIdx: r.restaurantIdx } }
+                    );
+                    updated++;
+                    results.push({ name: r.restaurantName, status: 'updated' });
+                } else {
+                    results.push({ name: r.restaurantName, status: 'not_found' });
+                }
+            } catch (err) {
+                results.push({ name: r.restaurantName, status: 'error', error: err.message });
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `${restaurants.length}개 중 ${updated}개 보강 완료`,
+            total: restaurants.length,
+            updated,
+            results,
+        });
+    } catch (error) {
+        logger.error(`[CrawlerController:enrichMissing] ${error.message}`);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // 단일 소스 크롤링 (테스트용)
 exports.runSingleSource = async (req, res) => {
     try {
