@@ -577,22 +577,52 @@ exports.getRandomRestaurant = async (type) => {
 };
 
 // 식당 카테고리(업종) 목록 조회
-// 식당 지역 목록 조회
+// 식당 지역 목록 조회 (시/도 → 구/군 계층 구조)
 exports.getRestaurantLocations = async () => {
     try {
-        const locations = await RestaurantInfo.findAll({
+        const restaurants = await RestaurantInfo.findAll({
             where: { restaurantStatus: 1 },
-            attributes: [
-                'restaurantLocation',
-                [sequelize.fn('COUNT', sequelize.col('restaurantIdx')), 'count']
-            ],
-            group: ['restaurantLocation'],
-            order: [[sequelize.fn('COUNT', sequelize.col('restaurantIdx')), 'DESC']],
-            raw: true
+            attributes: ['restaurantAddr'],
+            raw: true,
         });
 
-        logger.info(`[getRestaurantLocations] Found ${locations.length} locations`);
-        return locations.filter(l => l.restaurantLocation && l.restaurantLocation.trim());
+        // 시/도명 정규화 (서울특별시/서울시/서울 → 서울)
+        const normalizeCity = (raw) => {
+            const s = raw.replace(/특별시|광역시|특별자치시|특별자치도/g, '').replace(/도$|시$/, '');
+            const map = { '서울': '서울', '부산': '부산', '대구': '대구', '인천': '인천', '광주': '광주', '대전': '대전', '울산': '울산', '세종': '세종', '경기': '경기', '강원': '강원', '충북': '충북', '충남': '충남', '전북': '전북', '전남': '전남', '경북': '경북', '경남': '경남', '제주': '제주' };
+            return map[s] || raw;
+        };
+
+        // 주소에서 시/도 + 구/군 추출하여 집계
+        const cityMap = {}; // { "서울": { "강남구": 5, "강동구": 3, ... } }
+
+        for (const r of restaurants) {
+            const addr = (r.restaurantAddr || '').trim();
+            if (!addr) continue;
+
+            const parts = addr.split(' ');
+            const city = normalizeCity(parts[0] || '');
+            const district = parts[1] || '';
+
+            if (!city || !district) continue;
+
+            if (!cityMap[city]) cityMap[city] = {};
+            cityMap[city][district] = (cityMap[city][district] || 0) + 1;
+        }
+
+        // 정렬된 구조로 변환
+        const result = Object.entries(cityMap)
+            .map(([city, districts]) => ({
+                city,
+                count: Object.values(districts).reduce((a, b) => a + b, 0),
+                districts: Object.entries(districts)
+                    .map(([district, count]) => ({ district, count }))
+                    .sort((a, b) => b.count - a.count),
+            }))
+            .sort((a, b) => b.count - a.count);
+
+        logger.info(`[getRestaurantLocations] Found ${result.length} cities`);
+        return result;
     } catch (error) {
         logger.error(`[getRestaurantLocations] Error: ${error.message}`);
         throw error;
