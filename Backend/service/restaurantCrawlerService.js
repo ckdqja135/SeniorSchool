@@ -796,6 +796,7 @@ async function crawlRestaurants(options = {}) {
     const newResults = allResults.filter(item => !existingSet.has(`${item.restaurantName}_${item.restaurantAddr}`));
 
     stats.alreadyInDB = allResults.length - newResults.length;
+    stats.duplicateSkipped = stats.alreadyInDB;
     logger.info(`[Crawler] DB 기존 ${stats.alreadyInDB}건 제외, 신규 ${newResults.length}건`);
 
     // 좌표 보정
@@ -817,7 +818,7 @@ async function crawlRestaurants(options = {}) {
 
     // bulkCreate로 일괄 insert/update (이름+주소 unique 기준)
     const bulkData = newResults
-        .filter(item => item.restaurantName)
+        .filter(item => item.restaurantName && item.restaurantLatX && item.restaurantLatY)
         .map(item => ({
             restaurantName: item.restaurantName,
             restaurantLocation: item.restaurantLocation || '미정',
