@@ -928,15 +928,28 @@ async function enrichFromSiksin(restaurantName) {
             return null;
         }
 
-        // 3) 이름이 가장 유사한 결과 찾기
-        let bestIdx = 0;
-        for (let i = 0; i < names.length && i < pids.length; i++) {
-            if (names[i] === restaurantName) { bestIdx = i; break; }
-            if (names[i].includes(restaurantName) || restaurantName.includes(names[i])) { bestIdx = i; break; }
-        }
-        const pid = pids[bestIdx];
+        // 3) 이름 유사도 검증 — 정확 일치 > 포함 관계만 허용
+        // 공백/특수문자 제거 후 비교
+        const normalize = (s) => s.replace(/[\s·\-()（）]/g, '').toLowerCase();
+        const target = normalize(restaurantName);
 
-        logger.info(`[Enrich:Siksin] "${restaurantName}" → pid=${pid} (${names[bestIdx] || '?'})`);
+        let bestIdx = -1;
+        for (let i = 0; i < names.length && i < pids.length; i++) {
+            const candidate = normalize(names[i]);
+            // 정확 일치
+            if (candidate === target) { bestIdx = i; break; }
+            // 한쪽이 다른쪽을 포함 (핵심 단어 3글자 이상 매칭)
+            if (target.length >= 3 && candidate.includes(target)) { bestIdx = i; break; }
+            if (candidate.length >= 3 && target.includes(candidate)) { bestIdx = i; break; }
+        }
+
+        if (bestIdx === -1) {
+            logger.warn(`[Enrich:Siksin] "${restaurantName}" → 검색 결과 ${names.slice(0, 3).join(', ')} 중 매칭 없음`);
+            return null;
+        }
+
+        const pid = pids[bestIdx];
+        logger.info(`[Enrich:Siksin] "${restaurantName}" → pid=${pid} (${names[bestIdx]})`);
 
         // 4) 메뉴 가져오기 (JSON API 또는 상세 페이지 HTML)
         let menu = null;
