@@ -896,6 +896,94 @@ async function crawlRestaurants(options = {}) {
     return { stats, saved: savedList };
 }
 
+// ─── 식신에서 식당 이름으로 검색 → 메뉴/이미지 보강 ─────────
+async function enrichFromSiksin(restaurantName) {
+    const token = await getSiksinToken();
+    const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+    try {
+        // 1) 식신 검색 페이지에서 식당 검색
+        const searchUrl = `https://www.siksinhot.com/search?keywords=${encodeURIComponent(restaurantName)}`;
+        const { data: html } = await axios.get(searchUrl, {
+            headers: { 'User-Agent': UA, 'Accept': 'text/html' },
+            timeout: 10000,
+        });
+
+        // 2) 검색 결과에서 pid 추출 (href="/P/12345" 패턴)
+        const linkPattern = /href="(?:https?:\/\/www\.siksinhot\.com)?\/P\/(\d+)"/g;
+        const namePattern = /<h2>([^<]+)<\/h2>/g;
+        const pids = [];
+        let linkMatch;
+        while ((linkMatch = linkPattern.exec(html)) !== null) {
+            pids.push(linkMatch[1]);
+        }
+        const names = [];
+        let nameMatch;
+        while ((nameMatch = namePattern.exec(html)) !== null) {
+            names.push(nameMatch[1].trim());
+        }
+
+        if (pids.length === 0) {
+            logger.warn(`[Enrich:Siksin] "${restaurantName}" 검색 결과 없음`);
+            return null;
+        }
+
+        // 3) 이름이 가장 유사한 결과 찾기
+        let bestIdx = 0;
+        for (let i = 0; i < names.length && i < pids.length; i++) {
+            if (names[i] === restaurantName) { bestIdx = i; break; }
+            if (names[i].includes(restaurantName) || restaurantName.includes(names[i])) { bestIdx = i; break; }
+        }
+        const pid = pids[bestIdx];
+
+        logger.info(`[Enrich:Siksin] "${restaurantName}" → pid=${pid} (${names[bestIdx] || '?'})`);
+
+        // 4) 메뉴 가져오기 (JSON API 또는 상세 페이지 HTML)
+        let menu = null;
+        if (token) {
+            menu = await fetchSiksinMenu(pid, token);
+        }
+
+        // API 실패 시 상세 페이지 HTML에서 메뉴 파싱
+        if (!menu) {
+            try {
+                const { data: detailHtml } = await axios.get(`https://www.siksinhot.com/P/${pid}`, {
+                    headers: { 'User-Agent': UA, 'Accept': 'text/html' },
+                    timeout: 10000,
+                });
+                const menuItems = [];
+                const menuRegex = /<strong class="menu-name[^"]*"[^>]*>([^<]+)<\/strong>\s*<span class="menu-price[^"]*"[^>]*><label>([^<]*)<\/label>/g;
+                let m;
+                while ((m = menuRegex.exec(detailHtml)) !== null) {
+                    const name = m[1].trim();
+                    const priceStr = m[2].replace(/[^0-9]/g, '');
+                    const price = priceStr ? parseInt(priceStr) : 0;
+                    if (name) menuItems.push({ name, price });
+                }
+                if (menuItems.length > 0) menu = menuItems;
+            } catch (err) {
+                logger.error(`[Enrich:Siksin] 상세 페이지 파싱 실패 (pid=${pid}): ${err.message}`);
+            }
+        }
+
+        // 5) 이미지 가져오기
+        let image = null;
+        try {
+            const { data: detailHtml } = await axios.get(`https://www.siksinhot.com/P/${pid}`, {
+                headers: { 'User-Agent': UA, 'Accept': 'text/html' },
+                timeout: 10000,
+            });
+            const imgMatch = detailHtml.match(/<img[^>]*src="(https:\/\/img\.siksinhot\.com\/[^"]+)"/);
+            if (imgMatch) image = imgMatch[1];
+        } catch (_) {}
+
+        return { menu, image, pid, matchedName: names[bestIdx] || null };
+    } catch (err) {
+        logger.error(`[Enrich:Siksin] "${restaurantName}" 보강 실패: ${err.message}`);
+        return null;
+    }
+}
+
 // ─── 소스별 상태 확인 ────────────────────────────────────────
 function getAvailableSources() {
     const sources = [];
@@ -917,4 +1005,5 @@ module.exports = {
     fetchFromNaver,
     fetchFromGoogle,
     fetchFromSiksin,
+    enrichFromSiksin,
 };

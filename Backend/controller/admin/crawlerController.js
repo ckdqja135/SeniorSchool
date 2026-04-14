@@ -162,42 +162,35 @@ exports.enrichMissing = async (req, res) => {
             return res.status(200).json({ success: true, message: '보강할 식당이 없습니다.', updated: 0 });
         }
 
-        // 식신에서 각 식당 검색하여 보강
+        // 식신에서 식당 이름 검색 → 메뉴/이미지 보강
         let updated = 0;
         const results = [];
 
-        // 시/도명 정규화 함수
-        const normalizeCity = (addr) => {
-            if (!addr) return '서울';
-            const raw = addr.split(' ')[0] || '';
-            return raw.replace(/특별시|광역시|특별자치시|특별자치도/g, '').replace(/도$|시$/, '') || '서울';
-        };
-
         for (const r of restaurants) {
             try {
-                const region = normalizeCity(r.restaurantAddr);
-                const siksinResults = await crawlerService.fetchFromSiksin({
-                    region,
-                    count: 5,
-                    query: r.restaurantName,
-                });
+                const enriched = await crawlerService.enrichFromSiksin(r.restaurantName);
 
-                // 이름이 유사한 결과 찾기
-                const match = siksinResults.find(s =>
-                    s.restaurantName === r.restaurantName ||
-                    s.restaurantName.includes(r.restaurantName) ||
-                    r.restaurantName.includes(s.restaurantName)
-                );
-
-                if (match && match[field]) {
-                    await RestaurantInfo.update(
-                        { [field]: match[field] },
-                        { where: { restaurantIdx: r.restaurantIdx } }
-                    );
-                    updated++;
-                    results.push({ name: r.restaurantName, status: 'updated' });
-                } else {
+                if (!enriched) {
                     results.push({ name: r.restaurantName, status: 'not_found' });
+                    continue;
+                }
+
+                const updates = {};
+                if (field === 'restaurantMenu' && enriched.menu && enriched.menu.length > 0) {
+                    updates.restaurantMenu = enriched.menu;
+                }
+                if (field === 'restaurantImage' && enriched.image) {
+                    updates.restaurantImage = enriched.image;
+                }
+
+                if (Object.keys(updates).length > 0) {
+                    await RestaurantInfo.update(updates, {
+                        where: { restaurantIdx: r.restaurantIdx },
+                    });
+                    updated++;
+                    results.push({ name: r.restaurantName, status: 'updated', matched: enriched.matchedName });
+                } else {
+                    results.push({ name: r.restaurantName, status: 'no_data', matched: enriched.matchedName });
                 }
             } catch (err) {
                 results.push({ name: r.restaurantName, status: 'error', error: err.message });
