@@ -330,6 +330,63 @@ exports.autoComplete = async (keyword) => {
 };
 
 // 식당 조회수 TOP10 조회
+// 주변 식당 조회 (좌표 기반, 지도용)
+exports.getNearbyRestaurants = async (lat, lng, radiusKm = 5, limit = 200) => {
+    try {
+        const { fn, col, literal } = require('sequelize');
+
+        // Haversine 거리 계산 (km)
+        const distanceExpr = literal(
+            `(6371 * acos(cos(radians(${lat})) * cos(radians(restaurantLatX)) * cos(radians(restaurantLatY) - radians(${lng})) + sin(radians(${lat})) * sin(radians(restaurantLatX))))`
+        );
+
+        const restaurants = await RestaurantInfo.findAll({
+            attributes: {
+                include: [[distanceExpr, 'distance']],
+            },
+            where: {
+                restaurantStatus: 1,
+                restaurantLatX: { [Op.not]: null, [Op.ne]: 0 },
+                restaurantLatY: { [Op.not]: null, [Op.ne]: 0 },
+            },
+            having: literal(`distance <= ${radiusKm}`),
+            order: [[literal('distance'), 'ASC']],
+            limit,
+            subQuery: false,
+        });
+
+        // 평균 평점 일괄 조회
+        const idxList = restaurants.map(r => r.restaurantIdx);
+        const ratings = idxList.length > 0
+            ? await RestaurantBoard.findAll({
+                attributes: [
+                    'restaurantIdx',
+                    [fn('AVG', col('boardRating')), 'averageRating'],
+                    [fn('COUNT', col('boardRating')), 'ratingCount'],
+                ],
+                where: { restaurantIdx: { [Op.in]: idxList }, boardRating: { [Op.not]: null } },
+                group: ['restaurantIdx'],
+                raw: true,
+            })
+            : [];
+        const ratingMap = new Map(ratings.map(r => [r.restaurantIdx, r]));
+
+        const result = restaurants.map(r => {
+            const data = r.toJSON();
+            const rating = ratingMap.get(data.restaurantIdx);
+            data.averageRating = rating?.averageRating ? parseFloat(Number(rating.averageRating).toFixed(1)) : null;
+            data.ratingCount = rating?.ratingCount ? parseInt(rating.ratingCount, 10) : 0;
+            return data;
+        });
+
+        logger.info(`[getNearbyRestaurants] lat=${lat}, lng=${lng}, radius=${radiusKm}km → ${result.length}건`);
+        return result;
+    } catch (error) {
+        logger.error(`[getNearbyRestaurants] Error: ${error.message}`);
+        throw error;
+    }
+};
+
 exports.getTopViewedRestaurants = async () => {
     try {
         const restaurants = await RestaurantInfo.findAll({

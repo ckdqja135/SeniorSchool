@@ -55,6 +55,28 @@ exports.createRestaurantRequest = async (req, res, next) => {
     }
 };
 
+// 주변 식당 조회 (좌표 기반, 지도용)
+exports.getNearbyRestaurants = async (req, res, next) => {
+    try {
+        const { lat, lng, radius, limit } = req.query;
+
+        if (!lat || !lng) {
+            return res.status(400).json({ error: 'lat and lng are required' });
+        }
+
+        const result = await restaurantService.getNearbyRestaurants(
+            parseFloat(lat),
+            parseFloat(lng),
+            radius ? parseFloat(radius) : 5,
+            limit ? parseInt(limit) : 200
+        );
+        res.status(200).json(result);
+    } catch (error) {
+        logger.error(`[getNearbyRestaurants] Error: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 // 식당 조회수 TOP10 조회
 exports.getTopViewedRestaurants = async (req, res, next) => {
     try {

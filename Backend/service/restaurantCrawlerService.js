@@ -95,7 +95,8 @@ async function fetchFromKakao({ query = '맛집', lat, lng, radius = 20000, coun
         searchPoints = [{ lat, lng }];
     } else {
         // region에서 매칭되는 거점 좌표 찾기 (랜덤 셔플)
-        const regionKey = Object.keys(REGION_COORDS).find(k => region.includes(k));
+        const mainRegion = region.split(' ')[0]; // "서울 강동구" → "서울"
+        const regionKey = Object.keys(REGION_COORDS).find(k => mainRegion.includes(k));
         searchPoints = regionKey
             ? [...REGION_COORDS[regionKey]].sort(() => Math.random() - 0.5)
             : [{ lat: 37.5665, lng: 126.9780 }];
@@ -106,16 +107,17 @@ async function fetchFromKakao({ query = '맛집', lat, lng, radius = 20000, coun
     for (const point of searchPoints) {
         if (results.length >= count) break;
 
-        // 카테고리 검색 (FD6: 음식점), 랜덤 시작 페이지
+        // 키워드 검색 (FD6 카테고리 필터 병용), 랜덤 시작 페이지
         let page = Math.floor(Math.random() * 5) + 1;
         const pointTarget = Math.min(countPerPoint, count - results.length);
         let pointCount = 0;
 
         while (pointCount < pointTarget && page <= 45) {
             try {
-                const { data } = await axios.get('https://dapi.kakao.com/v2/local/search/category.json', {
+                const { data } = await axios.get('https://dapi.kakao.com/v2/local/search/keyword.json', {
                     headers,
                     params: {
+                        query,
                         category_group_code: 'FD6',
                         x: point.lng, y: point.lat, radius,
                         page, size: 15,
@@ -404,14 +406,27 @@ async function getSiksinAreaIds(token, region) {
         const groups = data?.data?.list || [];
         const areaIds = [];
 
+        // "서울 강동구" → mainRegion="서울", subRegion="강동구"
+        const regionParts = region.split(' ');
+        const mainRegion = regionParts[0]; // "서울"
+        const subRegion = regionParts.length > 1 ? regionParts.slice(1).join(' ') : ''; // "강동구"
+
         for (const group of groups) {
             // 상위 지역명 매칭 (예: "서울-강남", "서울-강북", "부산")
             const title = group.upHpAreaTitle || '';
-            if (title.includes(region)) {
+            if (title.includes(mainRegion)) {
                 // 하위 지역 ID 수집
                 for (const sub of (group.list || [])) {
                     if (sub.hpAreaId && sub.hpCnt > 0) {
-                        areaIds.push(sub.hpAreaId);
+                        // 세부 행정구역 지정 시 해당 구역만, 아니면 전체
+                        if (subRegion) {
+                            const subTitle = sub.hpAreaTitle || '';
+                            if (subTitle.includes(subRegion)) {
+                                areaIds.push(sub.hpAreaId);
+                            }
+                        } else {
+                            areaIds.push(sub.hpAreaId);
+                        }
                     }
                 }
             }
@@ -424,11 +439,11 @@ async function getSiksinAreaIds(token, region) {
     }
 }
 
-async function fetchFromSiksin({ region = '서울', count = 50 }) {
+async function fetchFromSiksin({ region = '서울', count = 50, query = '' }) {
     const token = await getSiksinToken();
     if (!token) {
         logger.warn('[Crawler:Siksin] 토큰 없이 HTML 방식으로 폴백');
-        return fetchFromSiksinFallback({ region, count });
+        return fetchFromSiksinFallback({ region, count, query });
     }
 
     const SIKSIN_HEADERS = {
@@ -442,7 +457,7 @@ async function fetchFromSiksin({ region = '서울', count = 50 }) {
     const areaIds = (await getSiksinAreaIds(token, region)).sort(() => Math.random() - 0.5);
     if (areaIds.length === 0) {
         logger.warn(`[Crawler:Siksin] "${region}" 지역 ID를 찾을 수 없음, 폴백`);
-        return fetchFromSiksinFallback({ region, count });
+        return fetchFromSiksinFallback({ region, count, query });
     }
 
     logger.info(`[Crawler:Siksin] "${region}" 지역 areaId ${areaIds.length}개 발견`);
@@ -539,14 +554,15 @@ async function fetchFromSiksin({ region = '서울', count = 50 }) {
 /**
  * 식신 HTML 폴백 (토큰 추출 실패 시)
  */
-async function fetchFromSiksinFallback({ region = '서울', count = 50 }) {
+async function fetchFromSiksinFallback({ region = '서울', count = 50, query = '' }) {
     const results = [];
     const seen = new Set();
     let page = 1;
+    const searchKeyword = query || '맛집';
 
     while (results.length < count && page <= 10) {
         try {
-            const url = `https://www.siksinhot.com/search?keywords=${encodeURIComponent(region + ' 맛집')}&page=${page}`;
+            const url = `https://www.siksinhot.com/search?keywords=${encodeURIComponent(region + ' ' + searchKeyword)}&page=${page}`;
             const { data: html } = await axios.get(url, {
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -764,7 +780,7 @@ async function crawlRestaurants(options = {}) {
 
     if (sources.includes('siksin')) {
         fetchPromises.push(
-            fetchFromSiksin({ region, count: countPerSource })
+            fetchFromSiksin({ region, count: countPerSource, query })
                 .then(r => { stats.sources.siksin = r.length; return r; })
                 .catch(e => { logger.error(`[Crawler] 식신 실패: ${e.message}`); stats.sources.siksin = 0; return []; })
         );
