@@ -405,10 +405,11 @@ async function getSiksinAreaIds(token, region) {
         const groups = data?.data?.list || [];
         const areaIds = [];
 
-        // "서울 강동구" → mainRegion="서울", subRegion="강동구"
+        // "서울특별시 강동구" / "서울시 강남구" / "서울 강동구" → mainRegion="서울", subRegion="강동구"
         const regionParts = region.split(' ');
-        const mainRegion = regionParts[0]; // "서울"
-        const subRegion = regionParts.length > 1 ? regionParts.slice(1).join(' ') : ''; // "강동구"
+        const rawCity = regionParts[0];
+        const mainRegion = rawCity.replace(/특별시|광역시|특별자치시|특별자치도/g, '').replace(/도$|시$/, '') || rawCity;
+        const subRegion = regionParts.length > 1 ? regionParts.slice(1).join(' ') : '';
 
         for (const group of groups) {
             // 상위 지역명 매칭 (예: "서울-강남", "서울-강북", "부산")
