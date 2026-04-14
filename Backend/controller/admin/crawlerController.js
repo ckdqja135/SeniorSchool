@@ -166,10 +166,18 @@ exports.enrichMissing = async (req, res) => {
         let updated = 0;
         const results = [];
 
+        // 시/도명 정규화 함수
+        const normalizeCity = (addr) => {
+            if (!addr) return '서울';
+            const raw = addr.split(' ')[0] || '';
+            return raw.replace(/특별시|광역시|특별자치시|특별자치도/g, '').replace(/도$|시$/, '') || '서울';
+        };
+
         for (const r of restaurants) {
             try {
+                const region = normalizeCity(r.restaurantAddr);
                 const siksinResults = await crawlerService.fetchFromSiksin({
-                    region: r.restaurantAddr ? r.restaurantAddr.split(' ').slice(0, 2).join(' ') : '서울',
+                    region,
                     count: 5,
                     query: r.restaurantName,
                 });
