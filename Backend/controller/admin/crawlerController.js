@@ -137,6 +137,10 @@ exports.getMissingStats = async (req, res) => {
 
 // 비어있는 필드 보강 크롤링 (식신 기반)
 exports.enrichMissing = async (req, res) => {
+    // nginx 등 프록시 타임아웃 방지
+    req.setTimeout(600000); // 10분
+    res.setTimeout(600000);
+
     try {
         const { field, limit: reqLimit } = req.body;
         const validFields = ['restaurantMenu', 'restaurantImage'];
@@ -144,7 +148,7 @@ exports.enrichMissing = async (req, res) => {
             return res.status(400).json({ success: false, message: `보강 가능 필드: ${validFields.join(', ')}` });
         }
 
-        const batchLimit = reqLimit ? parseInt(reqLimit) : 20;
+        const batchLimit = Math.min(reqLimit ? parseInt(reqLimit) : 10, 50); // 최대 50
 
         // 해당 필드가 비어있는 식당 조회
         const restaurants = await RestaurantInfo.findAll({
