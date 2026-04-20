@@ -26,6 +26,7 @@ const toRow = (service, row) => {
         requestStatus: plain.requestStatus,
         requestDate: plain.requestDate,
         processedDate: plain.processedDate,
+        adminNote: plain.adminNote || null,
     };
 };
 
@@ -37,7 +38,7 @@ exports.getRecentRequests = async ({ limit = 20 } = {}) => {
         const results = await Promise.all(
             Object.entries(SERVICE_META).map(async ([key, meta]) => {
                 const rows = await meta.model.findAll({
-                    attributes: ['requestIdx', meta.nameField, 'requestStatus', 'requestDate', 'processedDate'],
+                    attributes: ['requestIdx', meta.nameField, 'requestStatus', 'requestDate', 'processedDate', 'adminNote'],
                     order: [['requestDate', 'DESC']],
                     limit: perTable,
                 });
