@@ -14,6 +14,9 @@ router.get('/missing-stats', crawlerController.getMissingStats);
 // 비어있는 필드 보강 크롤링
 router.post('/enrich', crawlerController.enrichMissing);
 
+// 비어있는 필드 보강 크롤링 (실시간 진행 스트리밍, NDJSON)
+router.post('/enrich/stream', crawlerController.enrichMissingStream);
+
 // 통합 크롤링 실행
 router.post('/run', crawlerController.runCrawl);
 

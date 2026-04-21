@@ -214,6 +214,110 @@ exports.enrichMissing = async (req, res) => {
     }
 };
 
+// 비어있는 필드 보강 크롤링 — 실시간 스트리밍(NDJSON)
+exports.enrichMissingStream = async (req, res) => {
+    req.setTimeout(600000);
+    res.setTimeout(600000);
+
+    const { field, limit: reqLimit } = req.body;
+    const validFields = ['restaurantMenu', 'restaurantImage'];
+    if (!validFields.includes(field)) {
+        return res.status(400).json({ success: false, message: `보강 가능 필드: ${validFields.join(', ')}` });
+    }
+
+    const batchLimit = Math.min(reqLimit ? parseInt(reqLimit) : 10, 50);
+
+    let restaurants;
+    try {
+        restaurants = await RestaurantInfo.findAll({
+            where: {
+                restaurantStatus: 1,
+                [Op.or]: [{ [field]: null }, { [field]: '' }],
+            },
+            attributes: ['restaurantIdx', 'restaurantName', 'restaurantAddr'],
+            limit: batchLimit,
+            order: [['restaurantViewCount', 'DESC']],
+            raw: true,
+        });
+    } catch (error) {
+        logger.error(`[CrawlerController:enrichMissingStream] findAll: ${error.message}`);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+
+    // 스트리밍 응답 헤더 (nginx 버퍼링 해제 포함)
+    res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('X-Accel-Buffering', 'no');
+    if (typeof res.flushHeaders === 'function') res.flushHeaders();
+
+    const writeLine = (obj) => {
+        res.write(JSON.stringify(obj) + '\n');
+        if (typeof res.flush === 'function') res.flush();
+    };
+
+    writeLine({ type: 'start', total: restaurants.length, field });
+
+    if (restaurants.length === 0) {
+        writeLine({ type: 'done', success: true, message: '보강할 식당이 없습니다.', total: 0, updated: 0, results: [] });
+        return res.end();
+    }
+
+    let updated = 0;
+    const results = [];
+
+    for (let i = 0; i < restaurants.length; i++) {
+        const r = restaurants[i];
+        const startedAt = Date.now();
+        let entry;
+        try {
+            const enriched = await crawlerService.enrichFromSiksin(r.restaurantName);
+
+            if (!enriched) {
+                entry = { name: r.restaurantName, status: 'not_found' };
+            } else {
+                const updates = {};
+                if (field === 'restaurantMenu' && enriched.menu && enriched.menu.length > 0) {
+                    updates.restaurantMenu = enriched.menu;
+                }
+                if (field === 'restaurantImage' && enriched.image) {
+                    updates.restaurantImage = enriched.image;
+                }
+
+                if (Object.keys(updates).length > 0) {
+                    await RestaurantInfo.update(updates, { where: { restaurantIdx: r.restaurantIdx } });
+                    updated++;
+                    entry = { name: r.restaurantName, status: 'updated', matched: enriched.matchedName };
+                } else {
+                    entry = { name: r.restaurantName, status: 'no_data', matched: enriched.matchedName };
+                }
+            }
+        } catch (err) {
+            logger.error(`[CrawlerController:enrichMissingStream] ${r.restaurantName}: ${err.message}`);
+            entry = { name: r.restaurantName, status: 'error', error: err.message };
+        }
+
+        results.push(entry);
+        writeLine({
+            type: 'progress',
+            index: i,
+            total: restaurants.length,
+            updated,
+            elapsedMs: Date.now() - startedAt,
+            ...entry,
+        });
+    }
+
+    writeLine({
+        type: 'done',
+        success: true,
+        message: `${restaurants.length}개 중 ${updated}개 보강 완료`,
+        total: restaurants.length,
+        updated,
+        results,
+    });
+    res.end();
+};
+
 // 단일 소스 크롤링 (테스트용)
 exports.runSingleSource = async (req, res) => {
     try {
