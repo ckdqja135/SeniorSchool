@@ -21,6 +21,7 @@ const schedulerRouter = require('./companyDataScheduler.router');
 const serviceConfigRouter = require('./serviceConfig.router');
 const pageViewRouter = require('./pageView.router');
 const crawlerRouter = require('./crawler.router');
+const companyCrawlerRouter = require('./companyCrawler.router');
 
 // 라우터 등록
 router.use('/univ', univRouter);
@@ -42,5 +43,6 @@ router.use('/scheduler', schedulerRouter);
 router.use('/services', serviceConfigRouter);
 router.use('/pageview', pageViewRouter);
 router.use('/crawler', crawlerRouter);
+router.use('/company-crawler', companyCrawlerRouter);
 
 module.exports = router;

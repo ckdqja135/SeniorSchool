@@ -85,6 +85,10 @@ logger.info('Company data scheduler started (runs daily at midnight)');
 const restaurantCrawlerScheduler = require('./scheduler/restaurantCrawlerScheduler');
 restaurantCrawlerScheduler.start();
 
+// 회사 크롤러 스케줄러 시작 (매주 월요일 새벽 4시)
+const companyCrawlerScheduler = require('./scheduler/companyCrawlerScheduler');
+companyCrawlerScheduler.start();
+
 // 예기치 못한 에러 처리
 process.on('uncaughtException', (err) => {
     logger.error(`[UncaughtException] ${err.message}\n${err.stack}`);
