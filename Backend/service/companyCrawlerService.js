@@ -84,6 +84,10 @@ async function fetchFromKakao({ query = '회사', region = '서울', count = 50,
     const headers = { Authorization: `KakaoAK ${key}` };
     const results = [];
     const seen = new Set();
+    // 단계별 카운터: 원시 응답 → 카테고리 제외 → 중복 제외 후 채택
+    let rawCount = 0;
+    let excludedByCategory = 0;
+    let duplicateInBatch = 0;
 
     let searchPoints;
     if (lat && lng) {
@@ -101,7 +105,7 @@ async function fetchFromKakao({ query = '회사', region = '서울', count = 50,
     for (const point of searchPoints) {
         if (results.length >= count) break;
 
-        let page = Math.floor(Math.random() * 3) + 1;
+        let page = Math.floor(Math.random() * 5) + 1;
         const pointTarget = Math.min(countPerPoint, count - results.length);
         let pointCount = 0;
 
@@ -117,14 +121,17 @@ async function fetchFromKakao({ query = '회사', region = '서울', count = 50,
                     },
                 });
 
-                for (const d of (data.documents || [])) {
-                    if (seen.has(d.id)) continue;
+                const docs = data.documents || [];
+                rawCount += docs.length;
+
+                for (const d of docs) {
+                    if (seen.has(d.id)) { duplicateInBatch++; continue; }
                     seen.add(d.id);
 
                     // 카테고리에서 음식점/카페/병원 등 비회사 제외
                     const catPath = (d.category_name || '').toLowerCase();
                     const exclude = ['음식점', '카페', '숙박', '병원', '약국', '학교', '학원', '관광', '종교', '주차장', '주유소'];
-                    if (exclude.some(e => catPath.includes(e))) continue;
+                    if (exclude.some(e => catPath.includes(e))) { excludedByCategory++; continue; }
 
                     const typeRaw = (d.category_name || '').split(' > ');
                     results.push(normalizeToCompany({
@@ -153,7 +160,7 @@ async function fetchFromKakao({ query = '회사', region = '서울', count = 50,
         }
     }
 
-    logger.info(`[CompCrawler:Kakao] ${results.length}건 수집 완료 (거점 ${searchPoints.length}개)`);
+    logger.info(`[CompCrawler:Kakao] query="${query}" region="${region}" → API 원시 ${rawCount}건, 카테고리 제외 ${excludedByCategory}건, 배치내 중복 ${duplicateInBatch}건 → 최종 ${results.length}건 (거점 ${searchPoints.length}개)`);
     return results;
 }
 
@@ -173,8 +180,12 @@ async function fetchFromNaver({ query = '회사', region = '서울', count = 50 
 
     const results = [];
     const seen = new Set();
+    let rawCount = 0;
+    let excludedByCategory = 0;
+    let duplicateInBatch = 0;
     const maxPerRequest = 5;
-    let start = 1;
+    // 시작 오프셋 랜덤화 (0~100) — 매 실행마다 다른 결과 나오도록
+    let start = Math.floor(Math.random() * 20) * maxPerRequest + 1;
     const localQuery = `${region} ${query}`.trim();
 
     while (results.length < count && start <= 1000) {
@@ -185,6 +196,7 @@ async function fetchFromNaver({ query = '회사', region = '서울', count = 50 
             });
 
             if (!data.items || data.items.length === 0) break;
+            rawCount += data.items.length;
 
             for (const item of data.items) {
                 const cleanName = (item.title || '').replace(/<\/?b>/g, '');
@@ -202,10 +214,10 @@ async function fetchFromNaver({ query = '회사', region = '서울', count = 50 
                     '종교', '교회', '성당', '사찰',
                     '마트', '편의점', '백화점',
                 ];
-                if (exclude.some(e => rawCategory.includes(e))) continue;
+                if (exclude.some(e => rawCategory.includes(e))) { excludedByCategory++; continue; }
 
                 const key = `naver_${cleanName}_${item.address}`;
-                if (seen.has(key)) continue;
+                if (seen.has(key)) { duplicateInBatch++; continue; }
                 seen.add(key);
 
                 const coords = convertNaverCoords(item.mapx, item.mapy);
@@ -235,7 +247,7 @@ async function fetchFromNaver({ query = '회사', region = '서울', count = 50 
         }
     }
 
-    logger.info(`[CompCrawler:Naver] ${results.length}건 수집 완료`);
+    logger.info(`[CompCrawler:Naver] query="${localQuery}" → API 원시 ${rawCount}건, 카테고리 제외 ${excludedByCategory}건, 배치내 중복 ${duplicateInBatch}건 → 최종 ${results.length}건`);
     return results;
 }
 
@@ -433,19 +445,26 @@ async function crawlCompanies(options = {}) {
     stats.totalFetched = allResults.length;
     logger.info(`[CompCrawler] 총 ${allResults.length}건 수집, 소스별: ${JSON.stringify(stats.sources)}`);
 
-    // DB 기존 회사 제외 (compName 기준으로 필터)
-    const names = allResults.filter(x => x.compName).map(x => x.compName);
-    const existing = await CompInfo.findAll({
-        where: { compName: { [Op.in]: names }, compStatus: 1 },
-        attributes: ['compName', 'compAddr'],
-        raw: true,
-    });
-    const existingSet = new Set(existing.map(r => `${r.compName}_${r.compAddr}`));
-    const newResults = allResults.filter(item => !existingSet.has(`${item.compName}_${item.compAddr}`));
-
-    stats.alreadyInDB = allResults.length - newResults.length;
-    stats.duplicateSkipped = stats.alreadyInDB;
-    logger.info(`[CompCrawler] DB 기존 ${stats.alreadyInDB}건 제외, 신규 ${newResults.length}건`);
+    // dryRun이면 DB 중복 제외를 건너뛰고 API 원본을 그대로 노출 (디버깅/확인용)
+    let newResults;
+    if (dryRun) {
+        newResults = allResults;
+        stats.alreadyInDB = 0;
+        stats.duplicateSkipped = 0;
+        logger.info(`[CompCrawler] dryRun 모드 - DB 중복 제외 스킵 (${allResults.length}건 원본 반환)`);
+    } else {
+        const names = allResults.filter(x => x.compName).map(x => x.compName);
+        const existing = await CompInfo.findAll({
+            where: { compName: { [Op.in]: names }, compStatus: 1 },
+            attributes: ['compName', 'compAddr'],
+            raw: true,
+        });
+        const existingSet = new Set(existing.map(r => `${r.compName}_${r.compAddr}`));
+        newResults = allResults.filter(item => !existingSet.has(`${item.compName}_${item.compAddr}`));
+        stats.alreadyInDB = allResults.length - newResults.length;
+        stats.duplicateSkipped = stats.alreadyInDB;
+        logger.info(`[CompCrawler] DB 기존 ${stats.alreadyInDB}건 제외, 신규 ${newResults.length}건`);
+    }
 
     // 좌표 보정
     for (const item of newResults) {
@@ -460,7 +479,7 @@ async function crawlCompanies(options = {}) {
     }
 
     if (dryRun) {
-        logger.info(`[CompCrawler] dryRun - 신규 ${newResults.length}건 미리보기 (좌표보정: ${stats.coordFixed}건)`);
+        logger.info(`[CompCrawler] dryRun - ${newResults.length}건 미리보기 (좌표보정: ${stats.coordFixed}건)`);
         return { stats, data: newResults };
     }
 
