@@ -25,7 +25,8 @@ router.get('/comp/:compIdx', authenticateToken, isAdmin, compController.getCompD
 // 회사 데이터 삭제
 router.delete('/deleteComp/:compIdx', authenticateToken, isAdmin, compController.deleteComp);
 
-// 회사 데이터 수정
+// 회사 데이터 수정 (RESTful: /comp/:id, 레거시: /putCompData/:id)
+router.put('/comp/:compIdx', authenticateToken, isAdmin, compController.putCompData);
 router.put('/putCompData/:compIdx', authenticateToken, isAdmin, compController.putCompData);
 
 // 회사 상태 변경 (활성/비활성)

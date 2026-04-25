@@ -9,17 +9,63 @@ const { CompInfo } = require('../model/index');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 
+// ─── 주소 정규화 ─────────────────────────────────────────
+// 소스별로 "서울"(네이버) vs "서울특별시"(카카오) 등 prefix가 달라 dedup이 실패하는 문제 해결.
+// 시/도 prefix를 정식명(긴 형태)으로 통일 → compAddr는 정식 행정구역명 기반.
+const PROVINCE_LONG = {
+    '서울': '서울특별시', '서울시': '서울특별시', '서울특별시': '서울특별시',
+    '부산': '부산광역시', '부산시': '부산광역시', '부산광역시': '부산광역시',
+    '대구': '대구광역시', '대구시': '대구광역시', '대구광역시': '대구광역시',
+    '인천': '인천광역시', '인천시': '인천광역시', '인천광역시': '인천광역시',
+    '광주': '광주광역시', '광주시': '광주광역시', '광주광역시': '광주광역시',
+    '대전': '대전광역시', '대전시': '대전광역시', '대전광역시': '대전광역시',
+    '울산': '울산광역시', '울산시': '울산광역시', '울산광역시': '울산광역시',
+    '세종': '세종특별자치시', '세종시': '세종특별자치시', '세종특별자치시': '세종특별자치시',
+    '경기': '경기도', '경기도': '경기도',
+    '강원': '강원특별자치도', '강원도': '강원특별자치도', '강원특별자치도': '강원특별자치도',
+    '충북': '충청북도', '충청북도': '충청북도',
+    '충남': '충청남도', '충청남도': '충청남도',
+    '전북': '전북특별자치도', '전라북도': '전북특별자치도', '전북특별자치도': '전북특별자치도',
+    '전남': '전라남도', '전라남도': '전라남도',
+    '경북': '경상북도', '경상북도': '경상북도',
+    '경남': '경상남도', '경상남도': '경상남도',
+    '제주': '제주특별자치도', '제주도': '제주특별자치도', '제주특별자치도': '제주특별자치도',
+};
+// REGION_COORDS 키와 매칭되는 짧은 형태 (compLocate용)
+const PROVINCE_SHORT = {
+    '서울특별시': '서울', '부산광역시': '부산', '대구광역시': '대구', '인천광역시': '인천',
+    '광주광역시': '광주', '대전광역시': '대전', '울산광역시': '울산', '세종특별자치시': '세종',
+    '경기도': '경기', '강원특별자치도': '강원', '충청북도': '충북', '충청남도': '충남',
+    '전북특별자치도': '전북', '전라남도': '전남', '경상북도': '경북', '경상남도': '경남',
+    '제주특별자치도': '제주',
+};
+
+function normalizeAddress(rawAddr) {
+    if (!rawAddr || typeof rawAddr !== 'string') return '';
+    const trimmed = rawAddr.replace(/\s+/g, ' ').trim();
+    const firstToken = trimmed.split(' ')[0];
+    const longForm = PROVINCE_LONG[firstToken];
+    if (!longForm) return trimmed;
+    return (longForm + ' ' + trimmed.slice(firstToken.length).trimStart()).trim();
+}
+
+function extractLocate(normalizedAddr) {
+    const firstToken = (normalizedAddr || '').split(' ')[0];
+    return PROVINCE_SHORT[firstToken] || firstToken || '미정';
+}
+
 // ─── 공통 매핑 함수 ─────────────────────────────────────────
 function normalizeToCompany(raw) {
-    const addr = raw.addr || '';
-    // compLocate = 시/도 (최대 45자)
-    const locate = (raw.locate || addr.split(' ')[0] || '미정').slice(0, 45);
+    const addr = normalizeAddress(raw.addr || '');
+    const lotAddrRaw = normalizeAddress(raw.lotAddr || '');
+    // compLocate = 시/도 (짧은 형태, REGION_COORDS 키와 일치)
+    const locate = (raw.locate || extractLocate(addr) || '미정').slice(0, 45);
     // compLotAddr 는 스키마상 20자! (지번 주소) — 시/구 요약본만 저장
-    const lotAddr = (raw.lotAddr || addr.split(' ').slice(0, 2).join(' ') || '미정').slice(0, 20);
+    const lotAddr = (lotAddrRaw.split(' ').slice(0, 2).join(' ') || addr.split(' ').slice(0, 2).join(' ') || '미정').slice(0, 20);
     return {
         compName: (raw.name || '').slice(0, 60),
         compLocate: locate,
-        compType: (raw.type || '일반').slice(0, 45),
+        compType: (raw.type || '중소기업').slice(0, 45),
         compEstablish: (raw.established || '미정').slice(0, 45),
         compCEO: (raw.ceo || '미정').slice(0, 45),
         compIndustry: (raw.industry || '기타').slice(0, 45),
@@ -139,7 +185,7 @@ async function fetchFromKakao({ query = '회사', region = '서울', count = 50,
                         addr: d.road_address_name || d.address_name || '',
                         lotAddr: d.address_name || '',
                         industry: typeRaw[typeRaw.length - 1] || '기타',
-                        type: '일반',
+                        type: '중소기업',
                         lat: parseFloat(d.y),
                         lng: parseFloat(d.x),
                         url: d.place_url || '',
@@ -228,7 +274,7 @@ async function fetchFromNaver({ query = '회사', region = '서울', count = 50 
                     addr: item.roadAddress || item.address || '',
                     lotAddr: item.address || '',
                     industry,
-                    type: '일반',
+                    type: '중소기업',
                     lat: coords.lat,
                     lng: coords.lng,
                     url: item.link || '',
@@ -459,7 +505,8 @@ async function crawlCompanies(options = {}) {
             attributes: ['compName', 'compAddr'],
             raw: true,
         });
-        const existingSet = new Set(existing.map(r => `${r.compName}_${r.compAddr}`));
+        // DB 기존 주소도 정규화 후 비교 (예: 과거 "서울 강남구..." 저장본과 신규 "서울특별시 강남구..." 매칭)
+        const existingSet = new Set(existing.map(r => `${r.compName}_${normalizeAddress(r.compAddr)}`));
         newResults = allResults.filter(item => !existingSet.has(`${item.compName}_${item.compAddr}`));
         stats.alreadyInDB = allResults.length - newResults.length;
         stats.duplicateSkipped = stats.alreadyInDB;
@@ -489,7 +536,7 @@ async function crawlCompanies(options = {}) {
         .map(item => ({
             compName: item.compName,
             compLocate: item.compLocate || '미정',
-            compType: item.compType || '일반',
+            compType: item.compType || '중소기업',
             compEstablish: item.compEstablish || '미정',
             compCEO: item.compCEO || '미정',
             compIndustry: item.compIndustry || '기타',
