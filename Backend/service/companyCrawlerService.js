@@ -8,6 +8,7 @@ const axios = require('axios');
 const { CompInfo } = require('../model/index');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
+const { classifyCompType } = require('./conglomerateService');
 
 // ─── 주소 정규화 ─────────────────────────────────────────
 // 소스별로 "서울"(네이버) vs "서울특별시"(카카오) 등 prefix가 달라 dedup이 실패하는 문제 해결.
@@ -524,6 +525,22 @@ async function crawlCompanies(options = {}) {
             }
         }
     }
+
+    // 회사 유형 정밀 분류 (공정위 공시대상 → '대기업', OpenDart 상장사 → '중견기업').
+    // 매칭 실패 시 normalizeToCompany 단계에서 부여한 기본값('중소기업') 유지.
+    stats.classifiedAsLarge = 0;
+    stats.classifiedAsMid = 0;
+    for (const item of newResults) {
+        const classified = await classifyCompType(item.compName);
+        if (classified === '대기업') {
+            item.compType = '대기업';
+            stats.classifiedAsLarge++;
+        } else if (classified === '중견기업') {
+            item.compType = '중견기업';
+            stats.classifiedAsMid++;
+        }
+    }
+    logger.info(`[CompCrawler] compType 정밀분류 - 대기업 ${stats.classifiedAsLarge}건, 중견기업 ${stats.classifiedAsMid}건`);
 
     if (dryRun) {
         logger.info(`[CompCrawler] dryRun - ${newResults.length}건 미리보기 (좌표보정: ${stats.coordFixed}건)`);

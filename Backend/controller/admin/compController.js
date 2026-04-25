@@ -1,6 +1,41 @@
 const compService = require('../../service/admin/compService');
 const externalApiService = require('../../service/externalApiService');
+const businessRegistry = require('../../service/businessRegistryService');
 const logger = require('../../utils/logger');
+
+// 사업자번호 휴폐업·진위 검증 (어드민 등록폼에서 호출)
+exports.validateBusiness = async (req, res) => {
+    try {
+        const { bizNo, b_no, ceoName, p_nm, startDate, start_dt } = req.body || {};
+        const num = bizNo || b_no;
+        if (!num) {
+            return res.status(400).json({ status: 400, ok: false, message: '사업자번호(bizNo)가 필요합니다.' });
+        }
+
+        // 진위확인까지 원하면 ceoName + startDate 같이 보냄. 없으면 휴폐업만 체크.
+        if ((ceoName || p_nm) && (startDate || start_dt)) {
+            const [validateResult] = await businessRegistry.validateBusiness([{
+                b_no: num,
+                p_nm: ceoName || p_nm,
+                start_dt: startDate || start_dt,
+            }]);
+            const status = await businessRegistry.checkSingleBusiness(num);
+            return res.status(200).json({
+                status: 200,
+                ok: status.ok && validateResult?.valid === true,
+                businessStatus: status,
+                identityValidation: validateResult || null,
+            });
+        }
+
+        // 휴폐업만 체크 (어드민이 빠르게 차단 여부만 확인하는 케이스)
+        const result = await businessRegistry.checkSingleBusiness(num);
+        return res.status(200).json({ status: 200, ...result });
+    } catch (err) {
+        logger.error(`[validateBusiness] Error: ${err.message}`);
+        return res.status(500).json({ status: 500, ok: false, message: '서버 오류가 발생했습니다.' });
+    }
+};
 
 // 회사 생성
 exports.createComp = async (req, res, next) => {

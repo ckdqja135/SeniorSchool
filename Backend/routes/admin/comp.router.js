@@ -10,6 +10,9 @@ const { isAdmin, authenticateToken } = require('../../middlewares/authMiddleware
 // 회사 생성
 router.post('/createComp', authenticateToken, isAdmin, compController.createComp);
 
+// 사업자번호 검증 (등록 전 휴폐업/진위 체크)
+router.post('/validateBusiness', authenticateToken, isAdmin, compController.validateBusiness);
+
 // 회사 검색
 router.get('/searchComp', authenticateToken, isAdmin, compController.searchComp);
 
