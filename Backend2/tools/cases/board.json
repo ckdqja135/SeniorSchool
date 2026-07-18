@@ -1,0 +1,21 @@
+[
+  { "name": "legacy board list", "method": "GET", "path": "/board?univIdx=1" },
+  { "name": "legacy board list - no univIdx (400)", "method": "GET", "path": "/board" },
+  { "name": "legacy board list - title search", "method": "GET", "path": "/board?univIdx=1&title=test" },
+  { "name": "legacy board list - id search", "method": "GET", "path": "/board?univIdx=1&id=none_zzz" },
+  { "name": "legacy board detail - real (ignore hits race)", "method": "GET", "path": "/board/detail?boardIdx=1", "ignoreKeys": ["boardHits"] },
+  { "name": "legacy board detail - no param (400)", "method": "GET", "path": "/board/detail" },
+  { "name": "legacy board detail - missing (200 null)", "method": "GET", "path": "/board/detail?boardIdx=999999999" },
+  { "name": "legacy board recent", "method": "GET", "path": "/board/recent" },
+  { "name": "legacy board top-viewed", "method": "GET", "path": "/board/top-viewed" },
+  { "name": "legacy board like - no board (500 throwOnNotFound)", "method": "GET", "path": "/board/like/999999999" },
+  { "name": "legacy board like toggle - no boardIdx (400)", "method": "POST", "path": "/board/like", "body": {} },
+  { "name": "legacy board like toggle - bad isLiked (400)", "method": "POST", "path": "/board/like", "body": { "boardIdx": 1, "isLiked": "yes" } },
+  { "name": "legacy board insert - empty (500 notNull)", "method": "POST", "path": "/board/insert", "body": {} },
+  { "name": "legacy board correct - missing board (500)", "method": "PUT", "path": "/board/correct", "body": { "boardIdx": 999999999, "boardTitle": "t", "boardContent": "c", "writerPw": "x" } },
+  { "name": "legacy board delete - missing board (500)", "method": "DELETE", "path": "/board/delete", "body": { "boardIdx": 999999999, "writerPw": "x" } },
+  { "name": "legacy comment list", "method": "GET", "path": "/comment?boardIdx=1" },
+  { "name": "legacy comment list - no param (400)", "method": "GET", "path": "/comment" },
+  { "name": "legacy comment modify - missing (404)", "method": "PUT", "path": "/comment/modify", "body": { "commentPw": "x", "commentIdx": 999999999, "commentContent": "y" } },
+  { "name": "legacy comment delete - missing (404)", "method": "PUT", "path": "/comment/delete", "body": { "commentPw": "x", "commentIdx": 999999999 } }
+]

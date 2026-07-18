@@ -1,0 +1,87 @@
+[
+  {
+    "name": "restaurant search - no match (200 empty)",
+    "method": "GET",
+    "path": "/admin/restaurant/searchRestaurant?restaurantName=NONEXISTENTZZZ999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU4NTUxLCJleHAiOjIwOTk3MTg1NTF9.lYBOav2OiGUZGE5qvuEOUVvdNEAkH5lizNXO_rfVqzY"
+    }
+  },
+  {
+    "name": "restaurant detail - dead path (always 404)",
+    "method": "GET",
+    "path": "/admin/restaurant/restaurant",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU4NTUxLCJleHAiOjIwOTk3MTg1NTF9.lYBOav2OiGUZGE5qvuEOUVvdNEAkH5lizNXO_rfVqzY"
+    }
+  },
+  {
+    "name": "restaurant create - missing required (500)",
+    "method": "POST",
+    "path": "/admin/restaurant/createRestaurant",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU4NTUxLCJleHAiOjIwOTk3MTg1NTF9.lYBOav2OiGUZGE5qvuEOUVvdNEAkH5lizNXO_rfVqzY"
+    },
+    "body": {}
+  },
+  {
+    "name": "restaurant create - invalid rating (500)",
+    "method": "POST",
+    "path": "/admin/restaurant/createRestaurant",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU4NTUxLCJleHAiOjIwOTk3MTg1NTF9.lYBOav2OiGUZGE5qvuEOUVvdNEAkH5lizNXO_rfVqzY"
+    },
+    "body": {
+      "restaurantName": "x",
+      "restaurantLocation": "y",
+      "restaurantType": "z",
+      "restaurantRating": 9
+    }
+  },
+  {
+    "name": "restaurant update - not found (404)",
+    "method": "PUT",
+    "path": "/admin/restaurant/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU4NTUxLCJleHAiOjIwOTk3MTg1NTF9.lYBOav2OiGUZGE5qvuEOUVvdNEAkH5lizNXO_rfVqzY"
+    },
+    "body": {
+      "restaurantName": "x"
+    }
+  },
+  {
+    "name": "restaurant delete - not found (404)",
+    "method": "DELETE",
+    "path": "/admin/restaurant/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU4NTUxLCJleHAiOjIwOTk3MTg1NTF9.lYBOav2OiGUZGE5qvuEOUVvdNEAkH5lizNXO_rfVqzY"
+    }
+  },
+  {
+    "name": "request status - invalid status (400)",
+    "method": "PUT",
+    "path": "/admin/restaurant/request/1/status",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU4NTUxLCJleHAiOjIwOTk3MTg1NTF9.lYBOav2OiGUZGE5qvuEOUVvdNEAkH5lizNXO_rfVqzY"
+    },
+    "body": {
+      "requestStatus": "invalid"
+    }
+  },
+  {
+    "name": "request status - not found (404)",
+    "method": "PUT",
+    "path": "/admin/restaurant/request/999999999/status",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU4NTUxLCJleHAiOjIwOTk3MTg1NTF9.lYBOav2OiGUZGE5qvuEOUVvdNEAkH5lizNXO_rfVqzY"
+    },
+    "body": {
+      "requestStatus": "pending"
+    }
+  },
+  {
+    "name": "restaurant search - no auth (401)",
+    "method": "GET",
+    "path": "/admin/restaurant/searchRestaurant"
+  }
+]

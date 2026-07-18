@@ -1,0 +1,8 @@
+[
+  { "name": "requests recent - default", "method": "GET", "path": "/requests/recent" },
+  { "name": "requests recent - limit=3", "method": "GET", "path": "/requests/recent?limit=3" },
+  { "name": "requests recent - limit=1", "method": "GET", "path": "/requests/recent?limit=1" },
+  { "name": "requests recent - limit=50 (cap)", "method": "GET", "path": "/requests/recent?limit=50" },
+  { "name": "requests recent - limit=0 (min clamp to 1)", "method": "GET", "path": "/requests/recent?limit=0" },
+  { "name": "requests recent - limit=999 (cap 50)", "method": "GET", "path": "/requests/recent?limit=999" }
+]

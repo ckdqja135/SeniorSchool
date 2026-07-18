@@ -1,0 +1,22 @@
+[
+  { "name": "freeboard list - default", "method": "GET", "path": "/freeboard" },
+  { "name": "freeboard list - page/limit", "method": "GET", "path": "/freeboard?page=1&limit=5" },
+  { "name": "freeboard list - sort popular", "method": "GET", "path": "/freeboard?sort=popular" },
+  { "name": "freeboard list - sort oldest", "method": "GET", "path": "/freeboard?sort=oldest" },
+  { "name": "freeboard list - category filter", "method": "GET", "path": "/freeboard?category=none_zzz" },
+  { "name": "freeboard list - search", "method": "GET", "path": "/freeboard?search=none_zzz" },
+  { "name": "freeboard recent", "method": "GET", "path": "/freeboard/recent" },
+  { "name": "freeboard stats", "method": "GET", "path": "/freeboard/stats" },
+  { "name": "freeboard detail - real (ignore hits race)", "method": "GET", "path": "/freeboard/1", "ignoreKeys": ["boardHits"] },
+  { "name": "freeboard detail - missing (404)", "method": "GET", "path": "/freeboard/999999999" },
+  { "name": "freeboard bulk create - not array (400)", "method": "POST", "path": "/freeboard", "body": {} },
+  { "name": "freeboard bulk create - empty array (400)", "method": "POST", "path": "/freeboard", "body": [] },
+  { "name": "freeboard update - missing fields (400)", "method": "PUT", "path": "/freeboard/1", "body": {} },
+  { "name": "freeboard delete - missing fields (400)", "method": "DELETE", "path": "/freeboard/1", "body": {} },
+  { "name": "freeboard comment create - missing content (400)", "method": "POST", "path": "/freeboard/1/comments", "body": {} },
+  { "name": "freeboard comment update - missing fields (400)", "method": "PUT", "path": "/freeboard/comments/1", "body": {} },
+  { "name": "freeboard comment delete - missing fields (400)", "method": "DELETE", "path": "/freeboard/comments/1", "body": {} },
+  { "name": "freeboard board like - missing board (404)", "method": "POST", "path": "/freeboard/999999999/like", "body": {} },
+  { "name": "freeboard comment like - missing comment (404)", "method": "POST", "path": "/freeboard/comments/999999999/like", "body": {} },
+  { "name": "freeboard hit - missing board (200 no-op)", "method": "POST", "path": "/freeboard/999999999/hit" }
+]

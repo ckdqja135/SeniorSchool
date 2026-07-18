@@ -1,0 +1,4 @@
+[
+  { "name": "best-posts - top ranked (all boards)", "method": "GET", "path": "/best-posts/" },
+  { "name": "best-posts - no trailing slash", "method": "GET", "path": "/best-posts" }
+]

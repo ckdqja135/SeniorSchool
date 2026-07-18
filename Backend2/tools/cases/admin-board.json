@@ -1,0 +1,300 @@
+[
+  {
+    "name": "univboard list (authed)",
+    "method": "GET",
+    "path": "/admin/univboard",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "univboard list limit=3",
+    "method": "GET",
+    "path": "/admin/univboard?limit=3",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "univboard list page2",
+    "method": "GET",
+    "path": "/admin/univboard?page=2&limit=5",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "univboard create - missing fields (400)",
+    "method": "POST",
+    "path": "/admin/univboard",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {}
+  },
+  {
+    "name": "univboard update - not found (404)",
+    "method": "PUT",
+    "path": "/admin/univboard/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {
+      "boardTitle": "x",
+      "boardContent": "y"
+    }
+  },
+  {
+    "name": "univboard delete - not found (404)",
+    "method": "DELETE",
+    "path": "/admin/univboard/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "univboard list - no auth (401)",
+    "method": "GET",
+    "path": "/admin/univboard"
+  },
+  {
+    "name": "churchboard list (authed)",
+    "method": "GET",
+    "path": "/admin/churchboard",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "churchboard list limit=3",
+    "method": "GET",
+    "path": "/admin/churchboard?limit=3",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "churchboard list page2",
+    "method": "GET",
+    "path": "/admin/churchboard?page=2&limit=5",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "churchboard create - missing fields (400)",
+    "method": "POST",
+    "path": "/admin/churchboard",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {}
+  },
+  {
+    "name": "churchboard update - not found (404)",
+    "method": "PUT",
+    "path": "/admin/churchboard/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {
+      "boardTitle": "x",
+      "boardContent": "y"
+    }
+  },
+  {
+    "name": "churchboard delete - not found (404)",
+    "method": "DELETE",
+    "path": "/admin/churchboard/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "churchboard list - no auth (401)",
+    "method": "GET",
+    "path": "/admin/churchboard"
+  },
+  {
+    "name": "compboard list (authed)",
+    "method": "GET",
+    "path": "/admin/compboard",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "compboard list limit=3",
+    "method": "GET",
+    "path": "/admin/compboard?limit=3",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "compboard list page2",
+    "method": "GET",
+    "path": "/admin/compboard?page=2&limit=5",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "compboard create - missing fields (400)",
+    "method": "POST",
+    "path": "/admin/compboard",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {}
+  },
+  {
+    "name": "compboard update - not found (404)",
+    "method": "PUT",
+    "path": "/admin/compboard/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {
+      "boardTitle": "x",
+      "boardContent": "y"
+    }
+  },
+  {
+    "name": "compboard delete - not found (404)",
+    "method": "DELETE",
+    "path": "/admin/compboard/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "compboard list - no auth (401)",
+    "method": "GET",
+    "path": "/admin/compboard"
+  },
+  {
+    "name": "outsourceboard list (authed)",
+    "method": "GET",
+    "path": "/admin/outsourceboard",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "outsourceboard list limit=3",
+    "method": "GET",
+    "path": "/admin/outsourceboard?limit=3",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "outsourceboard list page2",
+    "method": "GET",
+    "path": "/admin/outsourceboard?page=2&limit=5",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "outsourceboard create - missing fields (400)",
+    "method": "POST",
+    "path": "/admin/outsourceboard",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {}
+  },
+  {
+    "name": "outsourceboard update - not found (404)",
+    "method": "PUT",
+    "path": "/admin/outsourceboard/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {
+      "boardTitle": "x",
+      "boardContent": "y"
+    }
+  },
+  {
+    "name": "outsourceboard delete - not found (404)",
+    "method": "DELETE",
+    "path": "/admin/outsourceboard/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "outsourceboard list - no auth (401)",
+    "method": "GET",
+    "path": "/admin/outsourceboard"
+  },
+  {
+    "name": "restaurantboard list (authed)",
+    "method": "GET",
+    "path": "/admin/restaurantboard",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "restaurantboard list limit=3",
+    "method": "GET",
+    "path": "/admin/restaurantboard?limit=3",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "restaurantboard list page2",
+    "method": "GET",
+    "path": "/admin/restaurantboard?page=2&limit=5",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "restaurantboard create - missing fields (400)",
+    "method": "POST",
+    "path": "/admin/restaurantboard",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {}
+  },
+  {
+    "name": "restaurantboard update - not found (404)",
+    "method": "PUT",
+    "path": "/admin/restaurantboard/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {
+      "boardTitle": "x",
+      "boardContent": "y"
+    }
+  },
+  {
+    "name": "restaurantboard delete - not found (404)",
+    "method": "DELETE",
+    "path": "/admin/restaurantboard/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "restaurantboard list - no auth (401)",
+    "method": "GET",
+    "path": "/admin/restaurantboard"
+  },
+  {
+    "name": "compboard includeDeleted",
+    "method": "GET",
+    "path": "/admin/compboard?includeDeleted=1",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  }
+]

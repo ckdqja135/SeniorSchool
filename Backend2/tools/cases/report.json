@@ -1,0 +1,7 @@
+[
+  { "name": "report - empty body (missing required)", "method": "POST", "path": "/report", "body": {} },
+  { "name": "report - missing serviceType", "method": "POST", "path": "/report", "body": { "boardIdx": 1, "reportReason": "부적절" } },
+  { "name": "report - missing reportReason", "method": "POST", "path": "/report", "body": { "boardIdx": 1, "serviceType": "univ" } },
+  { "name": "report - missing boardIdx", "method": "POST", "path": "/report", "body": { "serviceType": "univ", "reportReason": "부적절" } },
+  { "name": "report - invalid serviceType", "method": "POST", "path": "/report", "body": { "boardIdx": 1, "serviceType": "badtype", "reportReason": "부적절" } }
+]

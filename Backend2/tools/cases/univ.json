@@ -1,0 +1,16 @@
+[
+  { "name": "health", "method": "GET", "path": "/health", "ignoreKeys": ["timestamp"] },
+  { "name": "404 unknown route", "method": "GET", "path": "/no-such-route" },
+  { "name": "univ board list - no param", "method": "GET", "path": "/univ/board" },
+  { "name": "univ board list", "method": "GET", "path": "/univ/board?univIdx=1" },
+  { "name": "univ board list - title search", "method": "GET", "path": "/univ/board?univIdx=1&title=test" },
+  { "name": "univ board detail - missing", "method": "GET", "path": "/univ/board/detail?boardIdx=999999" },
+  { "name": "univ board detail - no param", "method": "GET", "path": "/univ/board/detail" },
+  { "name": "univ board like - no board", "method": "POST", "path": "/univ/board/like", "body": { "boardIdx": 999999, "isLiked": true } },
+  { "name": "univ board like - bad isLiked", "method": "POST", "path": "/univ/board/like", "body": { "boardIdx": 1, "isLiked": "yes" } },
+  { "name": "univ board like count", "method": "GET", "path": "/univ/board/like/999999" },
+  { "name": "univ comment list (로컬DB regDate 부재로 양쪽 500)", "method": "GET", "path": "/univ/comment?boardIdx=1" },
+  { "name": "univ comment list - no param", "method": "GET", "path": "/univ/comment" },
+  { "name": "profanity filter", "method": "POST", "path": "/univ/board/insert", "body": { "univIdx": 1, "boardTitle": "시발 테스트", "boardContent": "x", "boardID": "t", "boardPw": "1" } },
+  { "name": "xss filter (query)", "method": "GET", "path": "/univ/board?univIdx=1&title=%3Cscript%3E" }
+]

@@ -1,0 +1,17 @@
+[
+  { "name": "search auto - no keyword", "method": "GET", "path": "/search/auto" },
+  { "name": "search auto - keyword", "method": "GET", "path": "/search/auto?keyword=%EB%8C%80" },
+  { "name": "search top-viewed universities", "method": "GET", "path": "/search/top-viewed" },
+  { "name": "search school - no param", "method": "GET", "path": "/search/school" },
+  { "name": "search school - not found", "method": "GET", "path": "/search/school?univName=NOPE_NOTREAL_XYZ" },
+  { "name": "search comp - no param", "method": "GET", "path": "/search/comp" },
+  { "name": "search comp - by name", "method": "GET", "path": "/search/comp?compName=%EC%82%BC%EC%84%B1" },
+  { "name": "search comp detail - not found", "method": "GET", "path": "/search/comp/999999" },
+  { "name": "search church auto - no keyword", "method": "GET", "path": "/search/church/auto" },
+  { "name": "search church auto - keyword", "method": "GET", "path": "/search/church/auto?keyword=%EA%B5%90%ED%9A%8C" },
+  { "name": "search church info - no param", "method": "GET", "path": "/search/church/info" },
+  { "name": "search church info - not found", "method": "GET", "path": "/search/church/info?churchName=NOPE_NOTREAL_XYZ" },
+  { "name": "search church top-viewed", "method": "GET", "path": "/search/church/top-viewed" },
+  { "name": "search outsource auto - no keyword", "method": "GET", "path": "/search/outsource/auto" },
+  { "name": "search outsource auto - keyword", "method": "GET", "path": "/search/outsource/auto?keyword=%EC%8A%A4" }
+]

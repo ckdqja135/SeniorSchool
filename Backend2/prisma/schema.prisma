@@ -1,0 +1,667 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// NOTE: dynamic_<slug>_{entities,boards,comments,requests} 테이블은 런타임에 생성되는 동적 서비스 테이블이므로
+// 의도적으로 스키마에서 제외한다 (raw SQL 전용). `prisma db pull` 재실행 후에는 다시 삭제할 것.
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ChurchBoard {
+  boardIdx     BigInt  @id @default(autoincrement())
+  boardTitle   String  @db.VarChar(45)
+  boardContent String? @db.Text
+  churchIdx    BigInt?
+  boardRegDate String? @db.VarChar(45)
+  boardLike    BigInt  @default(0)
+  boardHits    BigInt  @default(0)
+  boardID      String  @db.VarChar(45)
+  boardPW      String  @db.VarChar(100)
+
+  @@index([churchIdx], map: "idx_church_board_churchIdx")
+  @@index([boardHits], map: "idx_church_board_hits")
+  @@index([boardRegDate], map: "idx_church_board_regDate")
+  @@map("tb_church_board")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ChurchComment {
+  commentIdx     BigInt   @id @default(autoincrement())
+  boardIdx       BigInt
+  commentLike    BigInt   @default(0)
+  commentDepth   BigInt?
+  writerId       String   @db.VarChar(45)
+  writerPw       String   @db.VarChar(100)
+  commentParent  BigInt?
+  commentContent String   @db.VarChar(200)
+  regDate        DateTime @default(now()) @db.DateTime(0)
+  modDate        DateTime @default(now()) @db.DateTime(0)
+
+  @@index([boardIdx], map: "idx_church_comment_boardIdx")
+  @@index([commentParent], map: "idx_church_comment_parent")
+  @@index([regDate], map: "idx_church_comment_regDate")
+  @@map("tb_church_comment")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ChurchInfo {
+  churchIdx         BigInt   @id @default(autoincrement())
+  churchName        String   @db.VarChar(60)
+  churchLocation    String   @db.VarChar(45)
+  churchType        String   @db.VarChar(45)
+  churchEstablished String   @db.VarChar(45)
+  churchPastor      String   @db.VarChar(45)
+  churchLatX        Float
+  churchLatY        Float
+  churchURL         String   @db.VarChar(200)
+  churchLotAddr     String   @db.VarChar(20)
+  churchAddr        String   @db.VarChar(200)
+  churchMapIMG      String?  @db.VarChar(200)
+  churchStatus      Int      @default(1) @db.TinyInt
+  churchViewCount   Int      @default(0)
+  createdAt         DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt         DateTime @default(now()) @map("updated_at") @db.DateTime(0)
+
+  @@map("tb_church_info")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ChurchRequest {
+  requestIdx    Int                 @id @default(autoincrement())
+  churchName    String              @db.VarChar(60)
+  churchPastor  String?             @db.VarChar(45)
+  churchType    String?             @db.VarChar(10)
+  churchAddr    String?             @db.VarChar(200)
+  requestStatus ChurchRequestStatus @default(pending)
+  requestDate   DateTime            @default(now()) @db.DateTime(0)
+  processedDate DateTime?           @db.DateTime(0)
+  adminNote     String?             @db.Text
+
+  @@index([requestDate], map: "idx_church_request_date")
+  @@index([requestStatus], map: "idx_church_request_status")
+  @@map("tb_church_request")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model OutsourceBoard {
+  boardIdx     BigInt  @id @default(autoincrement())
+  boardTitle   String  @db.VarChar(45)
+  boardContent String? @db.Text
+  outsourceIdx BigInt?
+  boardRegDate String? @db.VarChar(45)
+  boardLike    BigInt  @default(0)
+  boardHits    BigInt  @default(0)
+  boardID      String  @db.VarChar(45)
+  boardPW      String  @db.VarChar(100)
+
+  @@index([boardHits], map: "idx_outsource_board_hits")
+  @@index([outsourceIdx], map: "idx_outsource_board_outsourceIdx")
+  @@index([boardRegDate], map: "idx_outsource_board_regDate")
+  @@map("tb_outsource_board")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model OutsourceComment {
+  commentIdx     BigInt   @id @default(autoincrement())
+  boardIdx       BigInt
+  commentLike    BigInt   @default(0)
+  commentDepth   BigInt?
+  writerId       String   @db.VarChar(45)
+  writerPw       String   @db.VarChar(100)
+  commentParent  BigInt?
+  commentContent String   @db.VarChar(200)
+  regDate        DateTime @default(now()) @db.DateTime(0)
+  modDate        DateTime @default(now()) @db.DateTime(0)
+
+  @@index([boardIdx], map: "idx_outsource_comment_boardIdx")
+  @@index([commentParent], map: "idx_outsource_comment_parent")
+  @@index([regDate], map: "idx_outsource_comment_regDate")
+  @@map("tb_outsource_comment")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model OutsourceInfo {
+  outsourceIdx         BigInt   @id @default(autoincrement())
+  outsourceName        String   @db.VarChar(60)
+  outsourceLocation    String   @db.VarChar(45)
+  outsourceType        String   @db.VarChar(45)
+  outsourceEstablished String   @db.VarChar(45)
+  outsourceCEO         String   @db.VarChar(45)
+  outsourceLatX        Float
+  outsourceLatY        Float
+  outsourceURL         String   @db.VarChar(200)
+  outsourceLotAddr     String   @db.VarChar(20)
+  outsourceAddr        String   @db.VarChar(200)
+  outsourceMapIMG      String?  @db.VarChar(200)
+  outsourceStatus      Int      @default(1) @db.TinyInt
+  outsourceViewCount   Int      @default(0)
+  createdAt            DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt            DateTime @default(now()) @map("updated_at") @db.DateTime(0)
+
+  @@map("tb_outsource_info")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model OutsourceRequest {
+  requestIdx    Int                    @id @default(autoincrement())
+  outsourceName String                 @db.VarChar(60)
+  outsourceCEO  String?                @db.VarChar(45)
+  outsourceType String?                @db.VarChar(10)
+  outsourceAddr String?                @db.VarChar(200)
+  requestStatus OutsourceRequestStatus @default(pending)
+  requestDate   DateTime               @default(now()) @db.DateTime(0)
+  processedDate DateTime?              @db.DateTime(0)
+  adminNote     String?                @db.Text
+  requestData   String?                @db.LongText
+
+  @@index([requestDate], map: "idx_outsource_request_date")
+  @@index([requestStatus], map: "idx_outsource_request_status")
+  @@map("tb_outsource_request")
+}
+
+model UnivBoard {
+  boardIdx     BigInt  @id @default(autoincrement())
+  boardTitle   String  @db.VarChar(45)
+  boardContent String? @db.MediumText
+  univIdx      BigInt?
+  boardRegDate String? @db.VarChar(45)
+  boardLike    BigInt  @default(0)
+  boardHits    BigInt  @default(0)
+  boardID      String  @db.VarChar(45)
+  boardPW      String  @db.VarChar(100)
+
+  @@map("tb_univboard")
+}
+
+model UnivComment {
+  commentIdx     BigInt   @id @default(autoincrement())
+  boardIdx       BigInt
+  commentLike    BigInt   @default(0)
+  commentDepth   BigInt?
+  writerId       String   @db.VarChar(45)
+  writerPw       String   @db.VarChar(100)
+  commentPerent  BigInt?
+  commentContent String   @db.VarChar(200)
+  regDate        DateTime @default(now()) @db.DateTime(0)
+  modDate        DateTime @default(now()) @db.DateTime(0)
+
+  @@map("tb_univcomment")
+}
+
+model UniversityInfo {
+  univIdx       Int      @id @default(autoincrement())
+  univName      String   @db.VarChar(60)
+  univLocate    String   @db.VarChar(45)
+  univType      String   @db.VarChar(45)
+  univEstablish String   @db.VarChar(45)
+  univPresident String   @db.VarChar(45)
+  univCampos    String   @db.VarChar(45)
+  univLateX     Float
+  univLateY     Float
+  univURL       String   @db.VarChar(200)
+  univLotAddr   String   @db.VarChar(20)
+  univAddr      String   @db.VarChar(200)
+  univMapIMG    String?  @db.VarChar(200)
+  univStatus    Boolean  @default(true)
+  univViewCount Int      @default(0)
+  created_at    DateTime @default(now()) @db.DateTime(0)
+  updated_at    DateTime @default(now()) @db.DateTime(0)
+
+  @@map("tb_universityinfo")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model UnivRequest {
+  requestIdx    Int               @id @default(autoincrement())
+  univName      String            @db.VarChar(60)
+  univPresident String?           @db.VarChar(45)
+  univType      String?           @db.VarChar(10)
+  univAddr      String?           @db.VarChar(200)
+  requestStatus UnivRequestStatus @default(pending)
+  requestDate   DateTime          @default(now()) @db.DateTime(0)
+  processedDate DateTime?         @db.DateTime(0)
+  adminNote     String?           @db.Text
+
+  @@map("tb_univrequest")
+}
+
+model User {
+  userIdx     Int       @id @default(autoincrement())
+  userId      String    @unique(map: "id") @db.VarChar(200)
+  userPw      String    @db.VarChar(200)
+  userRole    String    @db.VarChar(50)
+  salt        String    @db.VarChar(200)
+  lastLogin   DateTime? @db.DateTime(0)
+  // DB는 tinyint(1)이지만 구 스택(Sequelize TINYINT)은 JSON에 1/0 숫자로 직렬화 → Int로 강제 (패리티)
+  userStatus  Int       @default(1) @db.TinyInt
+  accessToken String?   @db.VarChar(200)
+
+  @@map("tb_user")
+}
+
+model PageView {
+  pvIdx       BigInt   @id @default(autoincrement())
+  pvPath      String   @db.VarChar(500)
+  pvIp        String?  @db.VarChar(45)
+  pvUserAgent String?  @db.Text
+  pvReferer   String?  @db.VarChar(500)
+  createdAt   DateTime @default(now()) @db.DateTime(0)
+
+  @@map("page_views")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ServiceConfig {
+  serviceId    BigInt                    @id @default(autoincrement()) @map("service_id")
+  slug         String                    @unique(map: "uk_slug") @db.VarChar(30)
+  name         String                    @db.VarChar(60)
+  displayName  String?                   @map("display_name") @db.VarChar(60)
+  emoji        String?                   @db.VarChar(10)
+  color        String?                   @db.VarChar(20)
+  templateType ServiceConfigTemplateType @default(basic) @map("template_type")
+  status       ServiceConfigStatus       @default(active)
+  sortOrder    Int                       @default(0) @map("sort_order")
+  createdAt    DateTime                  @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt    DateTime                  @default(now()) @map("updated_at") @db.DateTime(0)
+
+  @@index([sortOrder], map: "idx_sort_order")
+  @@index([status], map: "idx_status")
+  @@map("service_configs")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ServiceFieldConfig {
+  fieldId      BigInt                      @id @default(autoincrement()) @map("field_id")
+  serviceId    BigInt                      @map("service_id")
+  fieldKey     String                      @map("field_key") @db.VarChar(60)
+  fieldLabel   String                      @map("field_label") @db.VarChar(60)
+  fieldType    ServiceFieldConfigFieldType @default(text) @map("field_type")
+  fieldLength  Int?                        @map("field_length")
+  isRequired   Int                         @default(0) @map("is_required") @db.TinyInt
+  isSearchable Int                         @default(0) @map("is_searchable") @db.TinyInt
+  showInList   Int                         @default(1) @map("show_in_list") @db.TinyInt
+  showInDetail Int                         @default(1) @map("show_in_detail") @db.TinyInt
+  showInAdmin  Int                         @default(1) @map("show_in_admin") @db.TinyInt
+  sortOrder    Int                         @default(0) @map("sort_order")
+  createdAt    DateTime                    @default(now()) @map("created_at") @db.DateTime(0)
+
+  @@unique([serviceId, fieldKey], map: "uk_service_field")
+  @@index([serviceId], map: "idx_service_id")
+  @@map("service_field_configs")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model CompBoard {
+  boardIdx      BigInt   @id @default(autoincrement())
+  boardTitle    String   @db.VarChar(45)
+  boardContent  String?  @db.Text
+  compIdx       BigInt?
+  boardRegDate  String?  @db.VarChar(45)
+  boardLike     BigInt   @default(0)
+  boardHits     BigInt   @default(0)
+  boardID       String   @db.VarChar(45)
+  boardPW       String   @db.VarChar(100)
+  boardCategory String?  @db.VarChar(20)
+  boardRating   Decimal? @db.Decimal(2, 1)
+  isDeleted     Int      @default(0) @db.TinyInt
+
+  @@index([boardCategory], map: "idx_comp_board_category")
+  @@index([compIdx], map: "idx_comp_board_comp")
+  @@index([compIdx, isDeleted, boardRegDate], map: "idx_comp_board_composite")
+  @@index([isDeleted], map: "idx_comp_board_deleted")
+  @@map("tb_comp_board")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model CompComment {
+  commentIdx     BigInt   @id @default(autoincrement())
+  boardIdx       BigInt
+  commentLike    BigInt   @default(0)
+  commentDepth   BigInt?
+  writerId       String   @db.VarChar(45)
+  writerPw       String   @db.VarChar(100)
+  commentParent  BigInt?
+  commentContent String   @db.VarChar(200)
+  regDate        DateTime @default(now()) @db.DateTime(0)
+  modDate        DateTime @default(now()) @db.DateTime(0)
+  isDeleted      Int      @default(0) @db.TinyInt
+
+  @@index([boardIdx], map: "idx_comp_comment_board")
+  @@index([boardIdx, isDeleted, regDate], map: "idx_comp_comment_composite")
+  @@index([isDeleted], map: "idx_comp_comment_deleted")
+  @@index([commentParent], map: "idx_comp_comment_parent")
+  @@map("tb_comp_comment")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model CompInfo {
+  compIdx              BigInt    @id @default(autoincrement())
+  compName             String    @db.VarChar(60)
+  compLocate           String    @db.VarChar(45)
+  compType             String    @db.VarChar(45)
+  compEstablish        String?   @db.VarChar(45)
+  compCEO              String    @db.VarChar(45)
+  compIndustry         String    @db.VarChar(45)
+  compLateX            Float
+  compLateY            Float
+  compURL              String?   @db.VarChar(200)
+  compLotAddr          String    @db.VarChar(20)
+  compAddr             String    @db.VarChar(200)
+  compMapIMG           String?   @db.VarChar(200)
+  compStatus           Int       @default(1) @db.TinyInt
+  compViewCount        Int       @default(0)
+  compEmployeeCount    Int?
+  compCapital          BigInt?
+  compSales            BigInt?
+  compAvgSalary        BigInt?
+  compAvgTenure        Decimal?  @db.Decimal(4, 1)
+  totalEmployees       Int?
+  newHires             Int?
+  resignations         Int?
+  compOperatingProfit  BigInt?
+  compNetIncome        BigInt?
+  compTotalAssets      BigInt?
+  compTotalLiabilities BigInt?
+  compTotalEquity      BigInt?
+  compCorpCode         String?   @db.VarChar(8)
+  compDataUpdatedAt    DateTime? @db.DateTime(0)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt            DateTime  @default(now()) @map("updated_at") @db.DateTime(0)
+
+  @@index([compCorpCode], map: "idx_comp_corp_code")
+  @@index([compDataUpdatedAt], map: "idx_comp_data_updated")
+  @@index([compIndustry], map: "idx_comp_industry")
+  @@index([compStatus, compType, compIndustry], map: "idx_comp_info_composite")
+  @@index([compLocate], map: "idx_comp_locate")
+  @@index([compName], map: "idx_comp_name")
+  @@index([compStatus], map: "idx_comp_status")
+  @@index([compType], map: "idx_comp_type")
+  @@map("tb_comp_info")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model CompInterview {
+  interviewIdx        BigInt    @id @default(autoincrement())
+  compIdx             BigInt
+  writerId            String    @db.VarChar(45)
+  writerPw            String    @db.VarChar(100)
+  interviewTitle      String    @db.VarChar(100)
+  interviewContent    String?   @db.Text
+  interviewDate       DateTime? @db.DateTime(0)
+  interviewResult     String?   @db.VarChar(20)
+  interviewDifficulty Int?
+  position            String?   @db.VarChar(50)
+  regDate             DateTime  @default(now()) @db.DateTime(0)
+  modDate             DateTime  @default(now()) @db.DateTime(0)
+  isDeleted           Int       @default(0) @db.TinyInt
+
+  @@index([compIdx], map: "idx_comp_interview_comp")
+  @@index([compIdx, isDeleted, regDate], map: "idx_comp_interview_composite")
+  @@index([isDeleted], map: "idx_comp_interview_deleted")
+  @@index([regDate], map: "idx_comp_interview_regDate")
+  @@map("tb_comp_interview")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model CompRequest {
+  requestIdx    BigInt            @id @default(autoincrement())
+  compName      String            @db.VarChar(60)
+  compCEO       String?           @db.VarChar(45)
+  compType      String?           @db.VarChar(20)
+  compIndustry  String?           @db.VarChar(45)
+  compAddr      String?           @db.VarChar(200)
+  requestStatus CompRequestStatus @default(pending)
+  requestDate   DateTime          @default(now()) @db.DateTime(0)
+  processedDate DateTime?         @db.DateTime(0)
+  adminNote     String?           @db.Text
+  requesterId   String?           @db.VarChar(45)
+
+  @@index([requestDate], map: "idx_comp_request_date")
+  @@index([requestStatus], map: "idx_comp_request_status")
+  @@map("tb_comp_request")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model CompSalary {
+  salaryIdx  BigInt   @id @default(autoincrement())
+  compIdx    BigInt
+  salary     BigInt
+  workYear   Int
+  department String   @db.VarChar(50)
+  regDate    DateTime @default(now()) @db.DateTime(0)
+  modDate    DateTime @default(now()) @db.DateTime(0)
+
+  @@index([compIdx], map: "idx_comp_salary_comp")
+  @@index([compIdx, regDate], map: "idx_comp_salary_composite")
+  @@index([regDate], map: "idx_comp_salary_regDate")
+  @@index([salary], map: "idx_comp_salary_salary")
+  @@map("tb_comp_salary")
+}
+
+model CrawlerKeyword {
+  keywordIdx     Int      @id @default(autoincrement())
+  keyword        String   @db.VarChar(100)
+  region         String   @default("서울") @db.VarChar(50)
+  usedCount      Int      @default(0)
+  discoveryCount Int      @default(0)
+  isActive       Int      @default(1) @db.TinyInt
+  createdAt      DateTime @default(now()) @map("created_at") @db.DateTime(0)
+
+  @@map("tb_crawler_keywords")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model FreeBoard {
+  boardIdx     BigInt    @id @default(autoincrement())
+  boardTitle   String    @db.VarChar(200)
+  boardContent String    @db.Text
+  boardRegDate DateTime  @default(now()) @db.DateTime(0)
+  boardModDate DateTime? @db.DateTime(0)
+  boardLike    BigInt    @default(0)
+  boardHits    BigInt    @default(0)
+  boardID      String    @db.VarChar(45)
+  boardPW      String    @db.VarChar(100)
+  category     String    @db.VarChar(50)
+  tags         String?   @db.LongText
+  isDeleted    Int       @default(0) @db.TinyInt
+
+  @@index([boardID], map: "idx_freeboard_boardid")
+  @@index([category], map: "idx_freeboard_category")
+  @@index([isDeleted, category, boardRegDate(sort: Desc)], map: "idx_freeboard_composite")
+  @@index([isDeleted], map: "idx_freeboard_deleted")
+  @@index([boardHits], map: "idx_freeboard_hits")
+  @@index([boardLike], map: "idx_freeboard_like")
+  @@index([boardRegDate], map: "idx_freeboard_regdate")
+  @@index([isDeleted, boardTitle, boardContent(length: 100)], map: "idx_freeboard_search")
+  @@map("tb_freeboard")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model FreeBoardComment {
+  commentIdx     BigInt    @id @default(autoincrement())
+  boardIdx       BigInt
+  commentLike    BigInt    @default(0)
+  commentDepth   BigInt    @default(0)
+  writerId       String    @db.VarChar(45)
+  writerPw       String    @db.VarChar(100)
+  commentParent  BigInt?
+  commentContent String    @db.Text
+  commentRegDate DateTime  @default(now()) @db.DateTime(0)
+  commentModDate DateTime? @db.DateTime(0)
+  isDeleted      Int       @default(0) @db.TinyInt
+
+  @@index([boardIdx], map: "idx_freeboard_comment_board")
+  @@index([boardIdx, isDeleted, commentRegDate], map: "idx_freeboard_comment_composite")
+  @@index([isDeleted], map: "idx_freeboard_comment_deleted")
+  @@index([commentLike], map: "idx_freeboard_comment_like")
+  @@index([commentParent], map: "idx_freeboard_comment_parent")
+  @@index([commentRegDate], map: "idx_freeboard_comment_regdate")
+  @@map("tb_freeboard_comment")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model FreeBoardStats {
+  statIdx     BigInt   @id @default(autoincrement())
+  category    String   @db.VarChar(50)
+  tag         String?  @db.VarChar(50)
+  count       BigInt   @default(1)
+  lastUpdated DateTime @default(now()) @db.DateTime(0)
+
+  @@unique([category, tag], map: "unique_category_tag")
+  @@index([category], map: "idx_freeboard_stats_category")
+  @@index([count], map: "idx_freeboard_stats_count")
+  @@index([tag], map: "idx_freeboard_stats_tag")
+  @@map("tb_freeboard_stats")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ReportBoard {
+  reportIdx    BigInt   @id @default(autoincrement())
+  boardIdx     BigInt
+  serviceType  String   @db.VarChar(20)
+  reportReason String?  @db.VarChar(255)
+  reportDate   DateTime @default(now()) @db.DateTime(0)
+  reportStatus String   @default("pending") @db.VarChar(20)
+  reportResult String?  @db.Text
+  reporterId   String?  @db.VarChar(45)
+  isDeleted    Boolean  @default(false)
+
+  @@map("tb_report_board")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model RestaurantBoard {
+  boardIdx      BigInt   @id @default(autoincrement())
+  boardTitle    String   @db.VarChar(45)
+  boardContent  String?  @db.Text
+  restaurantIdx BigInt?
+  boardRegDate  String?  @db.VarChar(45)
+  boardLike     BigInt   @default(0)
+  boardHits     BigInt   @default(0)
+  boardRating   Decimal? @db.Decimal(2, 1)
+  boardID       String   @db.VarChar(45)
+  boardPW       String   @db.VarChar(100)
+
+  @@index([boardHits], map: "idx_restaurant_board_hits")
+  @@index([boardRegDate], map: "idx_restaurant_board_regDate")
+  @@index([restaurantIdx], map: "idx_restaurant_board_restaurantIdx")
+  @@map("tb_restaurant_board")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model RestaurantComment {
+  commentIdx     BigInt   @id @default(autoincrement())
+  boardIdx       BigInt
+  commentLike    BigInt   @default(0)
+  commentDepth   BigInt?
+  writerId       String   @db.VarChar(45)
+  writerPw       String   @db.VarChar(100)
+  commentParent  BigInt?
+  commentContent String   @db.VarChar(200)
+  regDate        DateTime @default(now()) @db.DateTime(0)
+  modDate        DateTime @default(now()) @db.DateTime(0)
+
+  @@index([boardIdx], map: "idx_restaurant_comment_boardIdx")
+  @@index([commentParent], map: "idx_restaurant_comment_parent")
+  @@index([regDate], map: "idx_restaurant_comment_regDate")
+  @@map("tb_restaurant_comment")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model RestaurantInfo {
+  restaurantIdx         BigInt   @id @default(autoincrement())
+  restaurantName        String   @db.VarChar(60)
+  restaurantLocation    String   @db.VarChar(45)
+  restaurantType        String   @db.VarChar(45)
+  restaurantEstablished String   @db.VarChar(45)
+  restaurantOwner       String   @db.VarChar(45)
+  restaurantLatX        Float
+  restaurantLatY        Float
+  restaurantURL         String   @db.VarChar(200)
+  restaurantLotAddr     String   @db.VarChar(100)
+  restaurantAddr        String   @db.VarChar(200)
+  restaurantMapIMG      String?  @db.VarChar(200)
+  restaurantImage       String?  @db.VarChar(200)
+  restaurantRating      Decimal? @db.Decimal(2, 1)
+  restaurantMenu        String?  @db.Text
+  restaurantStatus      Int      @default(1) @db.TinyInt
+  restaurantViewCount   Int      @default(0)
+  createdAt             DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt             DateTime @default(now()) @map("updated_at") @db.DateTime(0)
+
+  @@unique([restaurantName, restaurantAddr], map: "uq_restaurant_name_addr")
+  @@map("tb_restaurant_info")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model RestaurantRequest {
+  requestIdx      Int                     @id @default(autoincrement())
+  restaurantName  String                  @db.VarChar(60)
+  restaurantOwner String?                 @db.VarChar(45)
+  restaurantType  String?                 @db.VarChar(10)
+  restaurantAddr  String?                 @db.VarChar(200)
+  requestStatus   RestaurantRequestStatus @default(pending)
+  requestDate     DateTime                @default(now()) @db.DateTime(0)
+  processedDate   DateTime?               @db.DateTime(0)
+  adminNote       String?                 @db.Text
+
+  @@index([requestDate], map: "idx_restaurant_request_date")
+  @@index([requestStatus], map: "idx_restaurant_request_status")
+  @@map("tb_restaurant_request")
+}
+
+enum ServiceFieldConfigFieldType {
+  text
+  number
+  date
+  url
+  image
+  rating
+  textarea
+}
+
+enum ChurchRequestStatus {
+  pending
+  completed
+  rejected
+}
+
+enum OutsourceRequestStatus {
+  pending
+  completed
+  rejected
+}
+
+enum RestaurantRequestStatus {
+  pending
+  completed
+  rejected
+}
+
+enum UnivRequestStatus {
+  pending
+  completed
+  rejected
+}
+
+enum ServiceConfigTemplateType {
+  basic
+  company
+  restaurant
+}
+
+enum CompRequestStatus {
+  pending
+  completed
+  rejected
+}
+
+enum ServiceConfigStatus {
+  active
+  inactive
+  deleted
+}

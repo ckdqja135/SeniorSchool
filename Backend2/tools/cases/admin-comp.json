@@ -1,0 +1,117 @@
+[
+  {
+    "name": "comp searchComp (authed)",
+    "method": "GET",
+    "path": "/admin/comp/searchComp",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "comp searchComp paged+filtered",
+    "method": "GET",
+    "path": "/admin/comp/searchComp?compName=%EC%A3%BC&page=1&rowsPerPage=5&compStatus=1",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "comp request list (authed)",
+    "method": "GET",
+    "path": "/admin/comp/request",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "comp request list filtered (status=pending)",
+    "method": "GET",
+    "path": "/admin/comp/request?status=pending&page=1&rowsPerPage=5",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "comp detail - not found (404)",
+    "method": "GET",
+    "path": "/admin/comp/comp/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "comp createComp - missing fields (500 throw / validation)",
+    "method": "POST",
+    "path": "/admin/comp/createComp",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {}
+  },
+  {
+    "name": "comp validateBusiness - missing bizNo (400)",
+    "method": "POST",
+    "path": "/admin/comp/validateBusiness",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {}
+  },
+  {
+    "name": "comp request status - not found (404)",
+    "method": "PUT",
+    "path": "/admin/comp/request/999999999/status",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {
+      "status": "pending"
+    }
+  },
+  {
+    "name": "comp putCompData (restful) - not found (404)",
+    "method": "PUT",
+    "path": "/admin/comp/comp/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {
+      "compName": "x"
+    }
+  },
+  {
+    "name": "comp putCompData (legacy alias) - not found (404)",
+    "method": "PUT",
+    "path": "/admin/comp/putCompData/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {
+      "compName": "x"
+    }
+  },
+  {
+    "name": "comp updateCompStatus - not found (404)",
+    "method": "PUT",
+    "path": "/admin/comp/comp/999999999/status",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {
+      "compStatus": 0
+    }
+  },
+  {
+    "name": "comp deleteComp - not found (404)",
+    "method": "DELETE",
+    "path": "/admin/comp/deleteComp/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "comp searchComp - no auth (401)",
+    "method": "GET",
+    "path": "/admin/comp/searchComp"
+  }
+]

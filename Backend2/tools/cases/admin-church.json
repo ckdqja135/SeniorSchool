@@ -1,0 +1,122 @@
+[
+  {
+    "name": "church search (authed)",
+    "method": "GET",
+    "path": "/admin/church/searchChurch",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "church search - status=1 rows=3",
+    "method": "GET",
+    "path": "/admin/church/searchChurch?churchStatus=1&rowsPerPage=3&page=1",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "church search - by name",
+    "method": "GET",
+    "path": "/admin/church/searchChurch?churchName=%EA%B5%90%ED%9A%8C&page=2&rowsPerPage=5",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "church detail - always 404 (route has no param)",
+    "method": "GET",
+    "path": "/admin/church/church",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "church stats overview",
+    "method": "GET",
+    "path": "/admin/church/stats/overview",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "church request list (authed)",
+    "method": "GET",
+    "path": "/admin/church/request",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "church request list - status=pending",
+    "method": "GET",
+    "path": "/admin/church/request?status=pending&page=1&rowsPerPage=5",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "church create - missing fields (throws -> 500)",
+    "method": "POST",
+    "path": "/admin/church/createChurch",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {}
+  },
+  {
+    "name": "church update - not found (404)",
+    "method": "PUT",
+    "path": "/admin/church/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {
+      "churchName": "x"
+    }
+  },
+  {
+    "name": "church delete - not found (404)",
+    "method": "DELETE",
+    "path": "/admin/church/999999999",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    }
+  },
+  {
+    "name": "church bulk delete - missing list (400)",
+    "method": "DELETE",
+    "path": "/admin/church/bulk",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {}
+  },
+  {
+    "name": "church request status - not found (404)",
+    "method": "PUT",
+    "path": "/admin/church/request/999999999/status",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJvcmkiLCJ1c2VyUm9sZSI6ImFkbWluIiwiaWF0IjoxNzg0MzU2OTQ5LCJleHAiOjE3ODQzNjA1NDl9.PC90phcrc4gT014BjHkDw60MIzYeWxRUocN00svLI0c"
+    },
+    "body": {
+      "status": "completed"
+    }
+  },
+  {
+    "name": "church request create - missing name (throws -> 500, public route)",
+    "method": "POST",
+    "path": "/admin/church/request",
+    "body": {}
+  },
+  {
+    "name": "church search - no auth (401)",
+    "method": "GET",
+    "path": "/admin/church/searchChurch"
+  },
+  {
+    "name": "church stats - no auth (401)",
+    "method": "GET",
+    "path": "/admin/church/stats/overview"
+  }
+]

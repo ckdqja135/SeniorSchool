@@ -1,0 +1,11 @@
+[
+  { "name": "signIn - missing fields (500)", "method": "POST", "path": "/admin/user/signIn", "body": {} },
+  { "name": "signIn - nonexistent user (500)", "method": "POST", "path": "/admin/user/signIn", "body": { "username": "nouser_zzz_parity", "password": "x" } },
+  { "name": "verify - no token (401)", "method": "GET", "path": "/admin/user/verify" },
+  { "name": "verify - bad token (401)", "method": "GET", "path": "/admin/user/verify?token=not.a.valid.token" },
+  { "name": "getAdminlist - no token (401)", "method": "GET", "path": "/admin/user/getAdminlist" },
+  { "name": "deleteAdmin - no token (401)", "method": "DELETE", "path": "/admin/user/deleteAdmin", "body": { "userIdx": [999999] } },
+  { "name": "createAdmin - no token (401)", "method": "POST", "path": "/admin/user/createAdmin", "body": { "userId": "x", "userPw": "y" } },
+  { "name": "patchAdmin - no token (401)", "method": "PATCH", "path": "/admin/user/patchAdmin", "body": { "masterId": "x", "userIdx": 1, "userStatus": 0 } },
+  { "name": "signOut - no token (401)", "method": "PATCH", "path": "/admin/user/signOut" }
+]
