@@ -156,31 +156,34 @@ export class RestaurantService {
     // 주변 식당 조회 (좌표 기반, 지도용) — Haversine 거리 계산을 JS로 재현
     async getNearbyRestaurants(lat: number, lng: number, radiusKm = 5, limit = 200) {
         try {
-            const restaurants = await this.prisma.restaurantInfo.findMany({
-                where: {
-                    restaurantStatus: 1,
-                    restaurantLatX: { not: 0 },
-                    restaurantLatY: { not: 0 },
-                },
+            // 원본(Sequelize)과 동일하게 Haversine 거리·반경 필터·정렬·LIMIT 을 전부 SQL 에서 처리한다.
+            // 이전 포팅은 전체 식당(약 7천 행, restaurantMenu 포함 7MB)을 매 호출마다 Node 로 가져와 JS 로 걸렀고,
+            // 지도가 카메라 이동마다 이 API 를 부르면 이벤트 루프가 수 초씩 막혀 다른 요청까지 지연됐다.
+            // acos 인자는 부동소수 오차로 1 을 살짝 넘을 수 있어(같은 좌표) LEAST/GREATEST 로 정의역을 고정한다.
+            const rows = await this.prisma.$queryRawUnsafe<any[]>(
+                `SELECT restaurantIdx, restaurantName, restaurantLocation, restaurantType, restaurantEstablished,
+                        restaurantOwner, restaurantLatX, restaurantLatY, restaurantURL, restaurantLotAddr, restaurantAddr,
+                        restaurantMapIMG, restaurantImage, restaurantRating, restaurantMenu, restaurantStatus,
+                        restaurantViewCount, created_at AS createdAt, updated_at AS updatedAt,
+                        (6371 * ACOS(LEAST(1, GREATEST(-1,
+                            COS(RADIANS(?)) * COS(RADIANS(restaurantLatX)) * COS(RADIANS(restaurantLatY) - RADIANS(?))
+                            + SIN(RADIANS(?)) * SIN(RADIANS(restaurantLatX)))))) AS distance
+                 FROM tb_restaurant_info
+                 WHERE restaurantStatus = 1
+                   AND restaurantLatX IS NOT NULL AND restaurantLatX <> 0
+                   AND restaurantLatY IS NOT NULL AND restaurantLatY <> 0
+                 HAVING distance <= ?
+                 ORDER BY distance ASC
+                 LIMIT ?`,
+                lat, lng, lat, radiusKm, limit,
+            );
+            const withDistance = rows.map((r) => {
+                const { distance, ...rest } = r;
+                return { r: rest, distance: Number(distance) };
             });
 
-            const toRad = (d: number) => (d * Math.PI) / 180;
-            const withDistance = restaurants
-                .map((r) => {
-                    const distance =
-                        6371 *
-                        Math.acos(
-                            Math.cos(toRad(lat)) * Math.cos(toRad(r.restaurantLatX)) * Math.cos(toRad(r.restaurantLatY) - toRad(lng)) +
-                            Math.sin(toRad(lat)) * Math.sin(toRad(r.restaurantLatX)),
-                        );
-                    return { r, distance };
-                })
-                .filter((x) => x.distance <= radiusKm)
-                .sort((a, b) => a.distance - b.distance)
-                .slice(0, limit);
-
             // 평균 평점 일괄 조회
-            const idxList = withDistance.map((x) => x.r.restaurantIdx);
+            const idxList = withDistance.map((x) => x.r.restaurantIdx as bigint);
             const ratings = idxList.length > 0
                 ? await this.prisma.restaurantBoard.groupBy({
                     by: ['restaurantIdx'],
