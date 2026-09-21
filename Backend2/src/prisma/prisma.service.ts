@@ -4,12 +4,18 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 function buildDatabaseUrl(): string {
-    const host = process.env.RDB_HOST || '127.0.0.1';
+    // 'localhost' 는 IPv6(::1) 우선 해석으로 새 커넥션 연결이 수십 초 지연될 수 있어 항상 IPv4 루프백으로 고정한다.
+    // (구 스택은 Sequelize 에 host 를 넘기지 않아 사실상 localhost/IPv4 로 붙었다)
+    const rawHost = process.env.RDB_HOST || '127.0.0.1';
+    const host = rawHost === 'localhost' ? '127.0.0.1' : rawHost;
     const port = process.env.RDB_PORT || '3306';
     const user = process.env.RDB_USERNAME || '';
     const pass = encodeURIComponent(process.env.RDB_PASSWORD || '');
     const db = process.env.RDB_DATABASE || '';
-    return `mysql://${user}:${pass}@${host}:${port}/${db}`;
+    // 커넥션 풀 크기: 기본(CPU*2+1)이 1~2 vCPU 서버에서는 3~5개라 동시 요청이 대기한다. RDB_POOL_MAX 로 조정(기본 10)
+    const poolMax = parseInt(process.env.RDB_POOL_MAX || '10', 10);
+    const poolTimeout = parseInt(process.env.RDB_POOL_TIMEOUT || '30', 10);
+    return `mysql://${user}:${pass}@${host}:${port}/${db}?connection_limit=${poolMax}&pool_timeout=${poolTimeout}`;
 }
 
 @Injectable()
