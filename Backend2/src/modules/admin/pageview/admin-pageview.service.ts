@@ -53,7 +53,8 @@ export class AdminPageViewService {
 
     // 일별 방문 수 (기본 최근 30일)
     async getDailyStats({ startDate, endDate }: any) {
-        let sql = "SELECT DATE(createdAt) AS date, COUNT(pvIdx) AS count FROM page_views WHERE pvIp NOT IN ('::1','127.0.0.1')";
+        // DATE()는 Prisma가 Date 객체로 돌려 JSON에서 ISO 문자열이 된다(원본 Sequelize는 'YYYY-MM-DD' 문자열). 패리티 위해 문자열로 포맷
+        let sql = "SELECT DATE_FORMAT(createdAt, '%Y-%m-%d') AS date, COUNT(pvIdx) AS count FROM page_views WHERE pvIp NOT IN ('::1','127.0.0.1')";
         const params: any[] = [];
         if (startDate || endDate) {
             sql = this.appendDateRange(sql, params, startDate, endDate);
