@@ -64,7 +64,8 @@ export class AdminPageViewService {
             sql += ' AND createdAt >= ?';
             params.push(thirtyDaysAgo);
         }
-        sql += ' GROUP BY DATE(createdAt) ORDER BY DATE(createdAt) ASC';
+        // only_full_group_by: SELECT 와 같은 식으로 묶어야 한다 (DATE() 와 DATE_FORMAT() 은 다른 식으로 취급)
+        sql += " GROUP BY DATE_FORMAT(createdAt, '%Y-%m-%d') ORDER BY DATE_FORMAT(createdAt, '%Y-%m-%d') ASC";
         return serializeRows(await this.prisma.$queryRawUnsafe<any[]>(sql, ...params));
     }
 
