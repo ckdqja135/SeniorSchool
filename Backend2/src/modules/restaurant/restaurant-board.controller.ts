@@ -5,6 +5,7 @@ import { Controller, Delete, Get, Post, Put, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { RestaurantBoardService } from './restaurant-board.service';
 import { logger } from '../../logger/winston.logger';
+import { safeJson } from '../../common/utils/secret-keys.util';
 
 @Controller('restaurant/boards')
 export class RestaurantBoardController {
@@ -71,7 +72,7 @@ export class RestaurantBoardController {
     async insertRestaurantBoard(@Req() req: Request, @Res() res: Response) {
         try {
             logger.info(`[insertRestaurantBoard Controller] Request received`);
-            logger.info(`[insertRestaurantBoard Controller] Request body: ${JSON.stringify(req.body)}`);
+            logger.info(`[insertRestaurantBoard Controller] Request body: ${safeJson(req.body)}`);
 
             const boardData = req.body;
 
@@ -95,7 +96,7 @@ export class RestaurantBoardController {
     async correctRestaurantBoard(@Req() req: Request, @Res() res: Response) {
         try {
             logger.info(`[correctRestaurantBoard Controller] Request received`);
-            logger.info(`[correctRestaurantBoard Controller] Request body: ${JSON.stringify(req.body)}`);
+            logger.info(`[correctRestaurantBoard Controller] Request body: ${safeJson(req.body)}`);
 
             const boardData = req.body;
 
@@ -119,7 +120,7 @@ export class RestaurantBoardController {
     async deleteRestaurantBoard(@Req() req: Request, @Res() res: Response) {
         try {
             logger.info(`[deleteRestaurantBoard Controller] Request received`);
-            logger.info(`[deleteRestaurantBoard Controller] Request body: ${JSON.stringify(req.body)}`);
+            logger.info(`[deleteRestaurantBoard Controller] Request body: ${safeJson(req.body)}`);
 
             const boardData = req.body;
 

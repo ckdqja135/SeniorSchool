@@ -7,6 +7,7 @@ import { BoardLikeHelperService } from '../../common/services/board-like-helper.
 import { hashPassword } from '../../common/utils/hash-password.util';
 import { buildBoardSearchConditions } from '../../common/utils/search-helper.util';
 import { logger } from '../../logger/winston.logger';
+import { safeJson, maskSecret } from '../../common/utils/secret-keys.util';
 
 @Injectable()
 export class OutsourceBoardService {
@@ -117,8 +118,8 @@ export class OutsourceBoardService {
                 const password = boardPW || boardPw;
 
                 // 디버깅을 위한 로그
-                logger.info(`[insertOutsourceBoard] Received data: ${JSON.stringify(boardData)}`);
-                logger.info(`[insertOutsourceBoard] Parsed fields - boardTitle: ${boardTitle}, boardContent: ${boardContent}, outsourceIdx: ${outsourceIdx}, boardID: ${boardID}, password: ${password}`);
+                logger.info(`[insertOutsourceBoard] Received data: ${safeJson(boardData)}`);
+                logger.info(`[insertOutsourceBoard] Parsed fields - boardTitle: ${boardTitle}, boardContent: ${boardContent}, outsourceIdx: ${outsourceIdx}, boardID: ${boardID}, password: ${maskSecret(password)}`);
 
                 if (!boardTitle || !boardContent || !outsourceIdx || !boardID || !password) {
                     logger.error(`[insertOutsourceBoard] Missing fields - boardTitle: ${!!boardTitle}, boardContent: ${!!boardContent}, outsourceIdx: ${!!outsourceIdx}, boardID: ${!!boardID}, password: ${!!password}`);

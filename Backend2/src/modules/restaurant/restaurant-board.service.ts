@@ -10,6 +10,7 @@ import { hashPassword } from '../../common/utils/hash-password.util';
 import { buildBoardSearchConditions } from '../../common/utils/search-helper.util';
 import { logger } from '../../logger/winston.logger';
 import { mapBoard, mapRestaurant } from './restaurant.util';
+import { safeJson, maskSecret } from '../../common/utils/secret-keys.util';
 
 @Injectable()
 export class RestaurantBoardService {
@@ -122,8 +123,8 @@ export class RestaurantBoardService {
                 // boardPW 또는 boardPw 둘 다 지원
                 const password = boardPW || boardPw;
 
-                logger.info(`[insertRestaurantBoard] Received data: ${JSON.stringify(boardData)}`);
-                logger.info(`[insertRestaurantBoard] Parsed fields - boardTitle: ${boardTitle}, boardContent: ${boardContent}, restaurantIdx: ${restaurantIdx}, boardID: ${boardID}, password: ${password}`);
+                logger.info(`[insertRestaurantBoard] Received data: ${safeJson(boardData)}`);
+                logger.info(`[insertRestaurantBoard] Parsed fields - boardTitle: ${boardTitle}, boardContent: ${boardContent}, restaurantIdx: ${restaurantIdx}, boardID: ${boardID}, password: ${maskSecret(password)}`);
 
                 if (!boardTitle || !boardContent || !restaurantIdx || !boardID || !password) {
                     logger.error(`[insertRestaurantBoard] Missing fields - boardTitle: ${!!boardTitle}, boardContent: ${!!boardContent}, restaurantIdx: ${!!restaurantIdx}, boardID: ${!!boardID}, password: ${!!password}`);

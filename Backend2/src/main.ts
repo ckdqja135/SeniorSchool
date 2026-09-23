@@ -15,6 +15,7 @@ import { contentFilterMiddleware } from './common/express/content-filter.middlew
 import { applySecurityMiddleware } from './common/express/security.middleware';
 import { applyRateLimit } from './common/express/rate-limit.middleware';
 import { logger, httpLogger } from './logger/winston.logger';
+import { SECRET_KEYS } from './common/utils/secret-keys.util';
 
 dotenv.config();
 
@@ -36,8 +37,11 @@ async function bootstrap() {
     const ex = app.getHttpAdapter().getInstance() as express.Express;
 
     // BigInt/Decimal 직렬화: 구 스택은 bigNumberStrings로 BIGINT를 문자열 반환 → 동일하게 유지
-    ex.set('json replacer', (key: string, value: any) =>
-        typeof value === 'bigint' ? value.toString() : value);
+    // 비밀번호 해시·salt 는 어떤 응답에도 내보내지 않는다
+    ex.set('json replacer', (key: string, value: any) => {
+        if (SECRET_KEYS.has(key)) return undefined;
+        return typeof value === 'bigint' ? value.toString() : value;
+    });
 
     // CORS 설정 (가장 먼저 설정)
     app.use(cors(corsOptions));

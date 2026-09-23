@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { hashPassword } from '../../common/utils/hash-password.util';
 import { logger } from '../../logger/winston.logger';
+import { maskSecret } from '../../common/utils/secret-keys.util';
 
 @Injectable()
 export class ChurchCommentService {
@@ -95,7 +96,7 @@ export class ChurchCommentService {
      * 교회 댓글 삭제
      */
     async deleteChurchComment({ commentPw, commentIdx }: { commentPw: string; commentIdx: number }) {
-        logger.info(`[deleteChurchComment] Start - commentIdx: ${commentIdx}, commentPw: ${commentPw}`);
+        logger.info(`[deleteChurchComment] Start - commentIdx: ${commentIdx}, commentPw: ${maskSecret(commentPw)}`);
 
         try {
             // 댓글을 데이터베이스에서 완전히 삭제

@@ -3,6 +3,7 @@ import { Controller, Delete, Get, Post, Put, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { OutsourceCommentService } from './outsource-comment.service';
 import { logger } from '../../logger/winston.logger';
+import { safeJson } from '../../common/utils/secret-keys.util';
 
 @Controller('outsource/comment')
 export class OutsourceCommentController {
@@ -69,7 +70,7 @@ export class OutsourceCommentController {
     async deleteOutsourceComment(@Req() req: Request, @Res() res: Response) {
         try {
             logger.info(`[deleteOutsourceComment Controller] Request received`);
-            logger.info(`[deleteOutsourceComment Controller] Request body: ${JSON.stringify(req.body)}`);
+            logger.info(`[deleteOutsourceComment Controller] Request body: ${safeJson(req.body)}`);
 
             const commentData = req.body;
 

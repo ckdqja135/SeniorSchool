@@ -4,6 +4,7 @@ import { Controller, Delete, Get, Post, Put, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { OutsourceBoardService } from './outsource-board.service';
 import { logger } from '../../logger/winston.logger';
+import { safeJson } from '../../common/utils/secret-keys.util';
 
 @Controller('outsource/boards')
 export class OutsourceBoardController {
@@ -57,7 +58,7 @@ export class OutsourceBoardController {
     async insertOutsourceBoard(@Req() req: Request, @Res() res: Response) {
         try {
             logger.info(`[insertOutsourceBoard Controller] Request received`);
-            logger.info(`[insertOutsourceBoard Controller] Request body: ${JSON.stringify(req.body)}`);
+            logger.info(`[insertOutsourceBoard Controller] Request body: ${safeJson(req.body)}`);
 
             const boardData = req.body;
 
@@ -81,7 +82,7 @@ export class OutsourceBoardController {
     async correctOutsourceBoard(@Req() req: Request, @Res() res: Response) {
         try {
             logger.info(`[correctOutsourceBoard Controller] Request received`);
-            logger.info(`[correctOutsourceBoard Controller] Request body: ${JSON.stringify(req.body)}`);
+            logger.info(`[correctOutsourceBoard Controller] Request body: ${safeJson(req.body)}`);
 
             const boardData = req.body;
 
@@ -105,7 +106,7 @@ export class OutsourceBoardController {
     async deleteOutsourceBoard(@Req() req: Request, @Res() res: Response) {
         try {
             logger.info(`[deleteOutsourceBoard Controller] Request received`);
-            logger.info(`[deleteOutsourceBoard Controller] Request body: ${JSON.stringify(req.body)}`);
+            logger.info(`[deleteOutsourceBoard Controller] Request body: ${safeJson(req.body)}`);
 
             const boardData = req.body;
 
