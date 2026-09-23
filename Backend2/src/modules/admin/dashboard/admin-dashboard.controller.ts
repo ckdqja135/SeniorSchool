@@ -1,12 +1,14 @@
 // Backend/routes/admin/dashboard.router.js + controller/admin/dashboardController.js 포팅.
-// 주의: 원본 dashboard.router에는 authenticateToken/isAdmin 가드가 전혀 없다(무가드).
-//   계약 보존을 위해 그대로 무가드로 둔다. (보안상 admin 가드가 필요하면 별도 결정 필요 — DEVIATIONS 참조)
-import { Controller, Get, Req, Res } from '@nestjs/common';
+// 원본 dashboard.router 는 무가드였으나, 어드민 API 이므로 다른 어드민 라우트와 같이 JwtAuthGuard + AdminGuard 를 건다.
+import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { AdminGuard } from '../../../common/guards/admin.guard';
 import { logger } from '../../../logger/winston.logger';
 import { AdminDashboardService } from './admin-dashboard.service';
 
 @Controller('admin/dashboard')
+@UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminDashboardController {
     constructor(private readonly service: AdminDashboardService) {}
 

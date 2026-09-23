@@ -2,21 +2,24 @@
  * 어드민 크롤러 컨트롤러 (/admin/crawler).
  * Backend/routes/admin/crawler.router.js + Backend/controller/admin/crawlerController.js 포팅.
  *
- * 가드: 구 crawler.router.js 및 상위 마운트(routes/admin/index.js, routes/index.js '/admin')에
- *       authenticateToken/isAdmin 미들웨어가 전혀 없다 → 전 라우트 무가드(@Public/@UseGuards 불필요).
+ * 가드: 구 crawler.router.js 는 무가드였으나, 어드민 API 이므로 JwtAuthGuard + AdminGuard 를 건다
+ *       (/admin/company-crawler 와 동일).
  *
  * 직렬화: 응답 값은 모두 숫자/문자열(카운트·통계·보강 결과)뿐이라 BigInt/DECIMAL 직렬화 이슈 없음.
  *         restaurantMenu 저장 시에는 구 Sequelize setter(JSON.stringify)를 재현한다.
  * @Req()/@Res() 패스스루로 각 메서드의 status/JSON/한글 메시지/에러 스타일을 원본 그대로 유지.
  */
 
-import { Controller, Get, Post, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { AdminGuard } from '../../../common/guards/admin.guard';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { logger } from '../../../logger/winston.logger';
 import { RestaurantCrawlerService } from './restaurant-crawler.service';
 
 @Controller('admin/crawler')
+@UseGuards(JwtAuthGuard, AdminGuard)
 export class RestaurantCrawlerController {
     constructor(
         private readonly crawlerService: RestaurantCrawlerService,

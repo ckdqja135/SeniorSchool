@@ -1,7 +1,7 @@
 // 어드민 트리거 라우트 포팅.
 //  1) Backend/routes/admin/companyDataScheduler.router.js (+ 인라인 컨트롤러)
 //     → mount: routes/admin/index.js 가 /scheduler 로 mount → @Controller('admin/scheduler').
-//     → 원본 라우트에 authenticateToken/isAdmin 미들웨어 없음 → 가드 없음(무가드).
+//     → 원본 라우트는 무가드였으나, 어드민 API 이므로 JwtAuthGuard + AdminGuard 를 건다.
 //  2) Backend/routes/admin/companyCrawler.router.js (+ controller/admin/companyCrawlerController.js)
 //     → mount: routes/admin/index.js 가 /company-crawler 로 mount → @Controller('admin/company-crawler').
 //     → 모든 라우트 authenticateToken + isAdmin → 클래스 레벨 @UseGuards(JwtAuthGuard, AdminGuard).
@@ -17,9 +17,10 @@ import { CompanyDataSchedulerService } from './company-data-scheduler.service';
 import { CompanyCrawlerService } from './company-crawler.service';
 
 // ─────────────────────────────────────────────────────────────
-// 회사 데이터 스케줄러 관리 API (/admin/scheduler) — 무가드 (원본과 동일)
+// 회사 데이터 스케줄러 관리 API (/admin/scheduler) — authenticateToken + isAdmin
 // ─────────────────────────────────────────────────────────────
 @Controller('admin/scheduler')
+@UseGuards(JwtAuthGuard, AdminGuard)
 export class CompanyDataSchedulerController {
     constructor(private readonly scheduler: CompanyDataSchedulerService) {}
 
