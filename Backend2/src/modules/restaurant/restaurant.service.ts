@@ -6,7 +6,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { serializeRows } from '../../common/utils/serialize-row.util';
 import { logger } from '../../logger/winston.logger';
-import { mapRestaurant } from './restaurant.util';
+import { mapRestaurant, parseCityDistrict, selectHotplaceRows } from './restaurant.util';
 
 @Injectable()
 export class RestaurantService {
@@ -483,25 +483,13 @@ export class RestaurantService {
                 select: { restaurantAddr: true },
             });
 
-            // 시/도명 정규화 (서울특별시/서울시/서울 → 서울)
-            const normalizeCity = (raw: string) => {
-                const s = raw.replace(/특별시|광역시|특별자치시|특별자치도/g, '').replace(/도$|시$/, '');
-                const map: Record<string, string> = { '서울': '서울', '부산': '부산', '대구': '대구', '인천': '인천', '광주': '광주', '대전': '대전', '울산': '울산', '세종': '세종', '경기': '경기', '강원': '강원', '충북': '충북', '충남': '충남', '전북': '전북', '전남': '전남', '경북': '경북', '경남': '경남', '제주': '제주' };
-                return map[s] || raw;
-            };
-
             // 주소에서 시/도 + 구/군 추출하여 집계
             const cityMap: Record<string, Record<string, number>> = {};
 
             for (const r of restaurants) {
-                const addr = (r.restaurantAddr || '').trim();
-                if (!addr) continue;
-
-                const parts = addr.split(' ');
-                const city = normalizeCity(parts[0] || '');
-                const district = parts[1] || '';
-
-                if (!city || !district) continue;
+                const parsed = parseCityDistrict(r.restaurantAddr);
+                if (!parsed) continue;
+                const { city, district } = parsed;
 
                 if (!cityMap[city]) cityMap[city] = {};
                 cityMap[city][district] = (cityMap[city][district] || 0) + 1;
@@ -522,6 +510,51 @@ export class RestaurantService {
             return result;
         } catch (error) {
             logger.error(`[getRestaurantLocations] Error: ${error.message}`);
+            throw error;
+        }
+    }
+
+    // 지역별 핫플레이스용 경량 목록 (맛잘알 메인)
+    // 메인이 GET /restaurant 전체(7천여 행·메뉴 포함 7MB)를 받아 지역별 TOP N 과 인기 후기 식당 좌표만 쓰던 것을,
+    // 필요한 컬럼만 조회하고 실제로 쓰이는 식당만 남겨 보낸다. 필드명·순서(restaurantName ASC)는 /restaurant 와 동일.
+    // 평점 필드는 넣지 않는다 — 프론트 도시별 정렬이 평점 우선이라, 넣으면 기존 목록 순서가 바뀐다.
+    async getHotplaces(limit = 10) {
+        try {
+            const [rows, topBoards] = await Promise.all([
+                this.prisma.restaurantInfo.findMany({
+                    where: { restaurantStatus: 1 },
+                    orderBy: { restaurantName: 'asc' },
+                    select: {
+                        restaurantIdx: true,
+                        restaurantName: true,
+                        restaurantType: true,
+                        restaurantAddr: true,
+                        restaurantLatX: true,
+                        restaurantLatY: true,
+                        restaurantViewCount: true,
+                    },
+                }),
+                // 인기 후기 TOP10 과 같은 기준 (getTopRestaurantComments)
+                this.prisma.restaurantBoard.findMany({
+                    select: { restaurantIdx: true },
+                    orderBy: [{ boardHits: 'desc' }, { boardIdx: 'asc' }],
+                    take: 10,
+                }),
+            ]);
+
+            // 지역 칩 후보 = 지역 목록(getRestaurantLocations)에 나오는 모든 도시
+            const cities = new Set<string>();
+            for (const r of rows) {
+                const parsed = parseCityDistrict(r.restaurantAddr);
+                if (parsed) cities.add(parsed.city);
+            }
+            const reviewIdx = topBoards.filter((b) => b.restaurantIdx != null).map((b) => String(b.restaurantIdx));
+
+            const result = selectHotplaceRows(rows, [...cities], limit, reviewIdx);
+            logger.info(`[getHotplaces] ${rows.length} → ${result.length} restaurants (cities=${cities.size}, limit=${limit})`);
+            return result;
+        } catch (error) {
+            logger.error(`[getHotplaces] Error: ${error.message}`);
             throw error;
         }
     }

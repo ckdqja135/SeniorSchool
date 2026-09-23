@@ -147,3 +147,10 @@
 - **수정**: `schema.prisma` UnivBoard/UnivComment @@index 추가. `Backend/DDL/ddl_add_univ_indexes.sql` 삭제(이관)
 - **최초 1회(운영)**: `npx prisma migrate resolve --applied 0_init` → `npx prisma migrate deploy` → `npx prisma generate`
 - **주의**: 운영 DB 에 `prisma migrate dev`/`db push` 금지(dynamic_* 테이블은 schema 밖). 롤백: 인덱스 DROP + `migrate resolve --rolled-back 20260923000000_add_univ_indexes`
+
+## 2026-09-23 | PERF: 맛잘알 메인 전체 식당 목록(GET /restaurant 7MB) 호출 제거
+- **원인**: 메인 진입마다 핫플 TOP10·후기 핀 좌표·룰렛(1km)을 위해 활성 식당 7,274행(메뉴 포함 7.27MB, 서버 약 0.7s) 전체를 받아 브라우저에서 거름
+- **백엔드**: `GET /restaurant/hotplaces` 신규 — 필요 컬럼만 조회 후 화면 규칙(전국/도시별 조회수순·원래순 TOP N, 인기 후기 식당)에 쓰이는 행만 반환(운영 기준 119행, 약 24K자). `/restaurant` 는 그대로. 지역 집계 파싱을 `restaurant.util` 로 분리(동작 동일)
+- **프론트(SeniorSchool-front)**: 핫플 fetch → `/restaurant/hotplaces`, 룰렛 → `/restaurant/nearby?radius=1.05&limit=1000`(기존 1km 필터 유지)
+- **검증**: 운영 데이터로 13개 지역×탐색/카드 탭 목록·후기 핀 좌표·룰렛 후보(6개 지점) 동일. 동명 식당 동률 순서만 바뀔 수 있음(표시 집합 불변)
+- **배포 순서**: 백엔드 먼저 → 프론트. **롤백**: 프론트 커밋 revert 만으로 원복(신규 API 는 남아도 무해)

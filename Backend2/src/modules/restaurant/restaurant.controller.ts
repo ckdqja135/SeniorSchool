@@ -72,6 +72,19 @@ export class RestaurantController {
         }
     }
 
+    // 지역별 핫플레이스용 경량 목록 (맛잘알 메인 핫플·후기 지도 이동)
+    @Get('hotplaces')
+    async getHotplaces(@Req() req: Request, @Res() res: Response) {
+        try {
+            const limit = parseInt((req.query as Record<string, string>).limit, 10);
+            const result = await this.restaurantService.getHotplaces(limit > 0 ? Math.min(limit, 50) : 10);
+            res.status(200).json(result);
+        } catch (error) {
+            logger.error(`[getHotplaces] Error: ${error.message}`);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
+
     // 식당 조회수 TOP10 조회
     @Get('top-viewed')
     async getTopViewedRestaurants(@Req() req: Request, @Res() res: Response) {
