@@ -1,5 +1,5 @@
-// Backend/utils/contentFilter.js의 verbatim 포팅.
-// 주의: JAUM_PATTERNS의 'gi' 플래그 + .test() 조합(lastIndex 상태 유지)까지 원본 동작 그대로 보존한다.
+// 글·댓글 공통 콘텐츠 필터: 욕설 / 음담패설(성적 표현) / XSS 를 한 곳에서 검사한다.
+// validateUserInput(body) 가 요청 본문의 사용자 입력 필드를 모두 검사하고, contentFilterMiddleware 가 이것만 호출한다.
 
 // ── 자음 욕설 패턴 (공백/특수문자 삽입 우회 방지) ──
 const SEP = '[\\s.\\-_!@#$%^&*()]*'; // 자음 사이 허용 구분자
@@ -13,7 +13,7 @@ const JAUM_PATTERNS = [
   `ㅗ${SEP}ㅣ`,           // 가운뎃손가락 이모티콘 형태
   `ㄲ${SEP}ㅈ`,           // ㄲㅈ
   `ㅅ${SEP}ㅂ${SEP}ㄴ`,  // ㅅㅂㄴ
-].map(p => new RegExp(p, 'gi'));
+].map(p => new RegExp(p, 'i')); // 'g' 를 붙이면 .test() 가 lastIndex 를 기억해 번갈아 매칭을 놓친다
 
 // ── 완성형 욕설 (한글 사이 공백 제거 후 매칭) ──
 const PROFANITY_WORDS = [
@@ -50,6 +50,8 @@ const XSS_PATTERNS = [
   /<\/script>/i,
   /javascript\s*:/i,
   /on(?:load|error|click|mouseover|focus|blur|change|submit)\s*=/i,
+  /<[^>]*\son[a-z]+\s*=/i,           // 태그 안의 모든 on* 이벤트 핸들러 (onmouseenter, onanimationstart 등)
+  /data\s*:\s*text\/html/i,
   /<iframe[\s>]/i,
   /<embed[\s>]/i,
   /<object[\s>]/i,
@@ -109,4 +111,31 @@ export function validateContent(text: string): ContentValidationResult {
   }
 
   return { isClean: true };
+}
+
+// 글·댓글 작성/수정에서 사용자가 직접 입력하는 텍스트 필드 (비밀번호 제외)
+export const USER_TEXT_FIELDS = [
+  'boardTitle', 'boardContent',            // 후기·자유게시판·동적 서비스 글
+  'commentContent',                        // 댓글
+  'interviewTitle', 'interviewContent',    // 회사 면접 후기
+  'boardID', 'writerId', 'commentWriter',  // 작성자 이름
+  'tags', 'position', 'department',        // 태그·직무·부서
+];
+
+/**
+ * 요청 본문의 사용자 입력 필드를 모두 검사한다. 문제가 있으면 첫 필드와 결과를, 없으면 null 을 돌려준다.
+ * 배열 필드(tags 등)는 원소마다 검사한다.
+ */
+export function validateUserInput(body: Record<string, any> | null | undefined): { field: string; result: ContentValidationResult } | null {
+  if (!body || typeof body !== 'object') return null;
+  for (const field of USER_TEXT_FIELDS) {
+    const value = body[field];
+    const texts = Array.isArray(value) ? value : [value];
+    for (const text of texts) {
+      if (!text || typeof text !== 'string') continue;
+      const result = validateContent(text);
+      if (!result.isClean) return { field, result };
+    }
+  }
+  return null;
 }

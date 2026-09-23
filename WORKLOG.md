@@ -170,3 +170,10 @@
 
 ## 2026-09-23 | 코드 원복
 - `PageTracker.tsx` 원복 (프론트 `57765fa`)
+
+## 2026-09-23 | SECURITY: 어드민 가드 보강 + 글·댓글 호출 제한 + 콘텐츠 필터 통합
+- **가드**: 무가드였던 `/admin/dashboard`, `/admin/crawler`, `/admin/scheduler` 에 JwtAuthGuard + AdminGuard (어드민 화면은 이미 Bearer 토큰 전송)
+- **호출 제한**: 각 오빠 서비스 글·댓글 작성/수정/삭제 56개 경로에 IP당 30초 10회(합산, 성공 포함). 키는 CF-Connecting-IP → XFF 첫 값 → req.ip. 좋아요·조회수·요청·신고 제외
+- **콘텐츠 필터**: `validateUserInput` 하나로 제목·본문·댓글·면접 후기·작성자명·태그·직무·부서를 욕설/성적 표현/XSS 검사. 자음 욕설 정규식 'g' 플래그로 번갈아 놓치던 버그 수정, XSS 에 태그 내 on* 전체·data:text/html 추가
+- **검증**: 빌드·타입 검사, 필터 21건, 제한(11번째 429·IP 분리·제외 경로), 가드(401/403/어드민 통과) 테스트 통과
+- **롤백**: `git revert <commit>`
