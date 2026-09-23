@@ -140,3 +140,10 @@
 - **신규**: `Backend/DDL/ddl_add_univ_indexes.sql` (tb_univboard/tb_univcomment 인덱스, 운영 DB 미적용 — SHOW INDEX 확인 후 수동 적용)
 - **영향**: 응답/쿼리/흐름 변경 없음. 임계 초과 시에만 WARN 로그
 - **롤백**: `git revert <commit>` 또는 두 env 를 0 으로 설정. 인덱스는 DDL 파일 하단 DROP 문
+
+## 2026-09-23 | CHORE: Backend2 Prisma migrate 도입(baseline) + 학교 게시판 인덱스 마이그레이션
+- **배경**: `prisma migrate deploy` 로 DDL 을 적용하려 했으나 Backend2 에 migrations 이력이 없었음. Backend/ 는 더 이상 작업하지 않음
+- **신규**: `Backend2/prisma/migrations/0_init`(현 schema 기준 baseline), `20260923000000_add_univ_indexes`(tb_univboard 3개·tb_univcomment 1개), `migration_lock.toml`
+- **수정**: `schema.prisma` UnivBoard/UnivComment @@index 추가. `Backend/DDL/ddl_add_univ_indexes.sql` 삭제(이관)
+- **최초 1회(운영)**: `npx prisma migrate resolve --applied 0_init` → `npx prisma migrate deploy` → `npx prisma generate`
+- **주의**: 운영 DB 에 `prisma migrate dev`/`db push` 금지(dynamic_* 테이블은 schema 밖). 롤백: 인덱스 DROP + `migrate resolve --rolled-back 20260923000000_add_univ_indexes`
