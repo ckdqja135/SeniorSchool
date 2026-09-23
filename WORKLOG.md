@@ -154,3 +154,17 @@
 - **프론트(SeniorSchool-front)**: 핫플 fetch → `/restaurant/hotplaces`, 룰렛 → `/restaurant/nearby?radius=1.05&limit=1000`(기존 1km 필터 유지)
 - **검증**: 운영 데이터로 13개 지역×탐색/카드 탭 목록·후기 핀 좌표·룰렛 후보(6개 지점) 동일. 동명 식당 동률 순서만 바뀔 수 있음(표시 집합 불변)
 - **배포 순서**: 백엔드 먼저 → 프론트. **롤백**: 프론트 커밋 revert 만으로 원복(신규 API 는 남아도 무해)
+
+## 2026-09-23 | BUGFIX(front): 모든 페이지 첫 진입 시 API·방문 기록이 2번씩 호출되던 문제
+- **원인**: `SeniorSchool-front/src/components/common/ThemeProvider` 가 마운트 전 `<>{children}</>`, 후 `<Provider>{children}</Provider>` 를 반환 → 요소 타입이 바뀌어 페이지 트리 전체가 재마운트, 모든 useEffect 2회 실행
+- **수정**: Provider 를 항상 렌더하고 테마 토글만 `mounted` 후 표시 (1개 파일)
+- **검증**: 로컬 프로덕션 빌드에서 맛잘알 진입 API 10건 → 5건, 다크모드 저장·복원·토글, 홈 사이드바 토글 숨김 운영과 동일
+- **영향**: `/api/track` 방문 기록도 첫 진입당 2건 → 1건. 어드민 방문 통계가 배포 시점부터 낮아 보일 수 있음(과거 데이터는 중복 포함)
+- **롤백**: 프론트 커밋 revert
+
+## 2026-09-23 | FEATURE/BUGFIX(front): 맛잘알 지도 — 주변 목록 클릭 시 지도 이동 + 핀 이름표 깜빡임
+- **목록 이동**: `ExploreShell` 에 `handleListSelect` 추가 — 입체는 핀 클릭과 같은 정면 카메라(focusRequest), 지도·위성은 현재 확대 유지 flyTo. 선택 동작은 기존과 동일
+- **깜빡임 원인**: `cityScene/dioramaScene.updatePins` 가 겹침 판정에 라벨 offsetWidth 를 쓰는데, compact 로 숨긴 라벨은 0 으로 읽혀 매 프레임 full↔compact 반복
+- **수정**: 핀별 마지막 측정 라벨 너비를 캐시해 판정 (2개 파일, 각 3줄)
+- **검증**: 입체 모드 목록 클릭 → 카메라 이동·선택 확인(로컬), 겹침 판정 시뮬레이션 수정 전 fcfc… → 수정 후 고정. 카카오 모드는 로컬 지도 키 없어 미확인
+- **롤백**: 프론트 커밋 revert
