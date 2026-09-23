@@ -69,6 +69,47 @@ export const applyRateLimit = (app: Express) => {
         }
     });
 
+    // 각 오빠 서비스 글·댓글 작성/수정/삭제: IP당 30초 10회 (성공 요청 포함 전부 카운트, 대상 전체 합산)
+    const writeLimiter = rateLimit({
+        windowMs: 30 * 1000,
+        max: 10,
+        message: {
+            status: 429,
+            message: '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
+        },
+        standardHeaders: true,
+        legacyHeaders: false,
+        // Cloudflare → Nginx 경유라 req.ip 는 프록시 IP 일 수 있어 원 클라이언트 IP 헤더를 우선한다
+        keyGenerator: (req) => {
+            const cf = req.headers['cf-connecting-ip'];
+            if (typeof cf === 'string' && cf) return cf;
+            const xff = req.headers['x-forwarded-for'];
+            const first = (Array.isArray(xff) ? xff[0] : xff)?.split(',')[0]?.trim();
+            return first || req.ip || '';
+        },
+    });
+
+    const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+    const WRITE_PATHS = [
+        /^\/((univ|church|comp|outsource|restaurant)\/)?boards?\/(insert|correct|delete)\/?$/,  // 후기 작성/수정/삭제
+        /^\/((univ|church|comp|outsource|restaurant)\/)?comment\/(insert|modify|delete)\/?$/,   // 댓글 작성/수정/삭제
+        /^\/freeboard\/?$/,                                   // 자유게시판 작성
+        /^\/freeboard\/[^/]+\/?$/,                            // 자유게시판 수정/삭제
+        /^\/freeboard\/[^/]+\/comments\/?$/,                  // 자유게시판 댓글 작성
+        /^\/freeboard\/comments\/[^/]+\/?$/,                  // 자유게시판 댓글 수정/삭제
+        /^\/comp\/(interviews|salaries)(\/[^/]+)?\/?$/,       // 면접·연봉 후기 작성/수정/삭제
+        /^\/(church|outsource)\/\d+\/?$/,                     // 교회·외주 정보 수정/삭제
+        /^\/services\/[^/]+\/boards\/insert\/?$/,             // 동적 서비스 후기 작성
+        /^\/services\/[^/]+\/comments(\/[^/]+)?\/?$/,         // 동적 서비스 댓글 작성/삭제
+    ];
+    const isWriteRequest = (req: Request) =>
+        WRITE_METHODS.includes(req.method) && WRITE_PATHS.some((re) => re.test(req.path));
+
+    app.use((req: Request, res: Response, next: NextFunction) => {
+        if (!isWriteRequest(req)) return next();
+        return writeLimiter(req, res, next);
+    });
+
     // 로그인 엔드포인트에 별도 제한 적용 (성공한 요청은 카운트하지 않음)
     // 다른 limiter보다 먼저 적용하여 우선순위 확보
     app.use('/admin/user/signIn', loginLimiter);
