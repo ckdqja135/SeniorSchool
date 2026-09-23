@@ -2,6 +2,10 @@
 // (.env의 DATABASE_URL은 Prisma CLI 전용)
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { logger } from '../logger/winston.logger';
+
+// 슬로우 쿼리 임계값(ms). 0 이면 비활성화. 측정 전용 — 쿼리/응답에는 영향 없음
+const SLOW_QUERY_MS = parseInt(process.env.PRISMA_SLOW_QUERY_MS || '500', 10);
 
 function buildDatabaseUrl(): string {
     // 'localhost' 는 IPv6(::1) 우선 해석으로 새 커넥션 연결이 수십 초 지연될 수 있어 항상 IPv4 루프백으로 고정한다.
@@ -23,7 +27,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     constructor() {
         super({
             datasources: { db: { url: buildDatabaseUrl() } },
+            ...(SLOW_QUERY_MS > 0 ? { log: [{ emit: 'event' as const, level: 'query' as const }] } : {}),
         });
+
+        // 임계값을 넘은 쿼리만 SQL(파라미터 제외)과 소요시간을 남긴다
+        if (SLOW_QUERY_MS > 0) {
+            (this as any).$on('query', (e: any) => {
+                if (e.duration >= SLOW_QUERY_MS) {
+                    logger.warn(`[SlowQuery] ${e.duration}ms ${String(e.query).replace(/\s+/g, ' ').slice(0, 1000)}`);
+                }
+            });
+        }
     }
 
     async onModuleInit() {

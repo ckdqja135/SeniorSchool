@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
+import { monitorEventLoopDelay } from 'perf_hooks';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { xssMiddleware } from './common/express/xss.middleware';
@@ -81,6 +82,20 @@ async function bootstrap() {
     process.on('unhandledRejection', (reason) => {
         logger.error(`[UnhandledRejection] ${reason}`);
     });
+
+    // 이벤트 루프 지연 측정 (측정 전용). 10초 구간 최대 지연이 임계값(ms)을 넘으면 경고. 0 이면 비활성화
+    const loopLagWarnMs = parseInt(process.env.EVENT_LOOP_LAG_WARN_MS || '200', 10);
+    if (loopLagWarnMs > 0) {
+        const loopDelay = monitorEventLoopDelay({ resolution: 20 });
+        loopDelay.enable();
+        setInterval(() => {
+            const maxMs = Math.round(loopDelay.max / 1e6);
+            if (maxMs >= loopLagWarnMs) {
+                logger.warn(`[EventLoopLag] max=${maxMs}ms p99=${Math.round(loopDelay.percentile(99) / 1e6)}ms (10s window)`);
+            }
+            loopDelay.reset();
+        }, 10000).unref();
+    }
 
     const port = process.env.PORT || '3000';
     await app.listen(port);

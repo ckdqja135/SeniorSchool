@@ -133,3 +133,10 @@
 - **환경변수(기존 재사용)**: `KAKAO_REST_API_KEY`, `NAVER_CLIENT_ID/SECRET`. `PUBLIC_DATA_API_KEY`는 placeholder — 실엔드포인트 연결 미완.
 - **검증**: `/admin/company-crawler/sources` 상태, `/admin/company-crawler/stats` 수치, 미리보기→저장 플로우, `/enrich/stream` NDJSON 진행률, 관리 탭 검색/편집.
 - **롤백**: `git revert <commit>` (신규 6파일 삭제, index.js/app.js/Sidebar 3파일 원복).
+
+## 2026-09-23 | PERF: Backend2 병목 측정 로그 추가 + 학교 게시판 인덱스 DDL(미적용)
+- **배경**: 네트워크 경로 정상 확인 후 앱 내부(DB/이벤트 루프) 지연 구분 필요. 코드 분석 결과 대용량 응답(best-posts 전체, /restaurant 무제한)·LIKE '%kw%' 자동완성이 유력 후보
+- **수정**: `prisma.service.ts` 슬로우 쿼리 경고(`PRISMA_SLOW_QUERY_MS`, 기본 500ms, 0=off), `main.ts` 이벤트 루프 지연 경고(`EVENT_LOOP_LAG_WARN_MS`, 기본 200ms, 0=off)
+- **신규**: `Backend/DDL/ddl_add_univ_indexes.sql` (tb_univboard/tb_univcomment 인덱스, 운영 DB 미적용 — SHOW INDEX 확인 후 수동 적용)
+- **영향**: 응답/쿼리/흐름 변경 없음. 임계 초과 시에만 WARN 로그
+- **롤백**: `git revert <commit>` 또는 두 env 를 0 으로 설정. 인덱스는 DDL 파일 하단 DROP 문
