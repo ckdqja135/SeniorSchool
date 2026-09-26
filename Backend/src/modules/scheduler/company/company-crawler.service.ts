@@ -11,47 +11,8 @@ import { ConglomerateService } from './conglomerate.service';
 // ─── 주소 정규화 ─────────────────────────────────────────
 // 소스별로 "서울"(네이버) vs "서울특별시"(카카오) 등 prefix가 달라 dedup이 실패하는 문제 해결.
 // 시/도 prefix를 정식명(긴 형태)으로 통일 → compAddr는 정식 행정구역명 기반.
-const PROVINCE_LONG: Record<string, string> = {
-    '서울': '서울특별시', '서울시': '서울특별시', '서울특별시': '서울특별시',
-    '부산': '부산광역시', '부산시': '부산광역시', '부산광역시': '부산광역시',
-    '대구': '대구광역시', '대구시': '대구광역시', '대구광역시': '대구광역시',
-    '인천': '인천광역시', '인천시': '인천광역시', '인천광역시': '인천광역시',
-    '광주': '광주광역시', '광주시': '광주광역시', '광주광역시': '광주광역시',
-    '대전': '대전광역시', '대전시': '대전광역시', '대전광역시': '대전광역시',
-    '울산': '울산광역시', '울산시': '울산광역시', '울산광역시': '울산광역시',
-    '세종': '세종특별자치시', '세종시': '세종특별자치시', '세종특별자치시': '세종특별자치시',
-    '경기': '경기도', '경기도': '경기도',
-    '강원': '강원특별자치도', '강원도': '강원특별자치도', '강원특별자치도': '강원특별자치도',
-    '충북': '충청북도', '충청북도': '충청북도',
-    '충남': '충청남도', '충청남도': '충청남도',
-    '전북': '전북특별자치도', '전라북도': '전북특별자치도', '전북특별자치도': '전북특별자치도',
-    '전남': '전라남도', '전라남도': '전라남도',
-    '경북': '경상북도', '경상북도': '경상북도',
-    '경남': '경상남도', '경상남도': '경상남도',
-    '제주': '제주특별자치도', '제주도': '제주특별자치도', '제주특별자치도': '제주특별자치도',
-};
-// REGION_COORDS 키와 매칭되는 짧은 형태 (compLocate용)
-const PROVINCE_SHORT: Record<string, string> = {
-    '서울특별시': '서울', '부산광역시': '부산', '대구광역시': '대구', '인천광역시': '인천',
-    '광주광역시': '광주', '대전광역시': '대전', '울산광역시': '울산', '세종특별자치시': '세종',
-    '경기도': '경기', '강원특별자치도': '강원', '충청북도': '충북', '충청남도': '충남',
-    '전북특별자치도': '전북', '전라남도': '전남', '경상북도': '경북', '경상남도': '경남',
-    '제주특별자치도': '제주',
-};
-
-function normalizeAddress(rawAddr: any): string {
-    if (!rawAddr || typeof rawAddr !== 'string') return '';
-    const trimmed = rawAddr.replace(/\s+/g, ' ').trim();
-    const firstToken = trimmed.split(' ')[0];
-    const longForm = PROVINCE_LONG[firstToken];
-    if (!longForm) return trimmed;
-    return (longForm + ' ' + trimmed.slice(firstToken.length).trimStart()).trim();
-}
-
-function extractLocate(normalizedAddr: any): string {
-    const firstToken = (normalizedAddr || '').split(' ')[0];
-    return PROVINCE_SHORT[firstToken] || firstToken || '미정';
-}
+// 식당 크롤러도 같은 처리가 필요해 common/utils/address.util.ts 로 옮겼다.
+import { normalizeAddress, extractLocate } from '../../../common/utils/address.util';
 
 // ─── 공통 매핑 함수 ─────────────────────────────────────────
 function normalizeToCompany(raw: any): any {

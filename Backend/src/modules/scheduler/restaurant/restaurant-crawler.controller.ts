@@ -49,6 +49,7 @@ export class RestaurantCrawlerController {
                 lat, lng, radius,  // 좌표 + 반경
                 countPerSource,    // 소스당 수집 건수
                 dryRun,            // true면 수집만 (저장 X)
+                runId,             // 클라이언트가 만든 진행 상황 조회 키 (선택)
             } = req.body;
 
             logger.info(`[CrawlerController:runCrawl] 요청 - sources: ${sources}, region: ${region}, dryRun: ${dryRun}`);
@@ -63,6 +64,7 @@ export class RestaurantCrawlerController {
                 countPerSource: countPerSource ? parseInt(countPerSource) : undefined,
                 saveToDB: !dryRun,
                 dryRun: !!dryRun,
+                runId,
             });
 
             return res.status(200).json({
@@ -75,6 +77,47 @@ export class RestaurantCrawlerController {
         } catch (error) {
             logger.error(`[CrawlerController:runCrawl] ${error.message}`);
             return res.status(500).json({ success: false, message: `크롤링 실패: ${error.message || 'Internal Server Error'}` });
+        }
+    }
+
+    // 크롤링 진행 상황 조회 (폴링).
+    // run 요청이 블로킹으로 떠 있는 동안 같은 runId 로 물어보면 단계별 상황을 돌려준다.
+    @Get('progress/:runId')
+    async getProgress(@Req() req: Request, @Res() res: Response) {
+        try {
+            const runId = (req.params as any).runId;
+            const progress = this.crawlerService.getProgress(runId);
+            if (!progress) {
+                // 아직 시작 전이거나 이미 정리된 경우
+                return res.status(200).json({ success: true, found: false });
+            }
+            return res.status(200).json({ success: true, found: true, ...progress });
+        } catch (error) {
+            logger.error(`[CrawlerController:getProgress] ${error.message}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
+
+    // 미리보기에서 고른 행만 저장.
+    // 기존 run(dryRun=false) 은 크롤링을 다시 돌려서 검토한 목록과 저장분이 달라질 수 있었다.
+    @Post('save')
+    async saveSelected(@Req() req: Request, @Res() res: Response) {
+        try {
+            const { items } = req.body;
+            if (!Array.isArray(items) || items.length === 0) {
+                return res.status(400).json({ success: false, message: '저장할 항목이 없습니다.' });
+            }
+            logger.info(`[CrawlerController:saveSelected] 요청 ${items.length}건`);
+            const result = await this.crawlerService.saveSelected(items);
+            return res.status(200).json({
+                success: true,
+                message: `${result.stats.saved}건 저장 완료` +
+                    (result.stats.skipped > 0 ? ` (좌표·이름 누락 ${result.stats.skipped}건 제외)` : ''),
+                ...result,
+            });
+        } catch (error) {
+            logger.error(`[CrawlerController:saveSelected] ${error.message}`);
+            return res.status(500).json({ success: false, message: `저장 실패: ${error.message || 'Internal Server Error'}` });
         }
     }
 

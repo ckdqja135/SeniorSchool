@@ -14,12 +14,18 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { normalizeAddress, extractRegionLabel, dedupKey, isNearby } from '../../../common/utils/address.util';
 import { logger } from '../../../logger/winston.logger';
 
 // ─── 공통 매핑 함수 ─────────────────────────────────────────
+// 주소는 저장 전에 시/도 표기를 정식명으로 통일한다.
+// 카카오 "서울 동작구 …" 와 네이버 "서울특별시 동작구 …" 가 같은 문자열이 돼야
+// 이름+주소 중복 판정과 uq_restaurant_name_addr 유니크가 제대로 걸린다.
 function normalizeToRestaurant(raw: any): any {
-    const addr = raw.addr || '';
-    const location = addr ? addr.split(' ').slice(0, 2).join(' ') : '';
+    const addr = normalizeAddress(raw.addr || '');
+    const lotAddr = normalizeAddress(raw.lotAddr || '');
+    // "서울 동작구" 형태 — 앞 두 토큰이라는 기존 형태를 유지하되 시/도 표기만 통일
+    const location = extractRegionLabel(addr);
     return {
         restaurantName: (raw.name || '').slice(0, 60),
         restaurantLocation: location.slice(0, 45),
@@ -29,7 +35,7 @@ function normalizeToRestaurant(raw: any): any {
         restaurantLatX: raw.lat || 0,       // 위도
         restaurantLatY: raw.lng || 0,       // 경도
         restaurantURL: (raw.url || '').slice(0, 200),
-        restaurantLotAddr: (raw.lotAddr || '').slice(0, 100),
+        restaurantLotAddr: lotAddr.slice(0, 100),
         restaurantAddr: addr.slice(0, 200),
         restaurantMapIMG: null,
         restaurantImage: raw.image || null,
@@ -96,6 +102,40 @@ function convertNaverCoords(mapx: any, mapy: any): { lat: number; lng: number } 
 @Injectable()
 export class RestaurantCrawlerService {
     constructor(private readonly prisma: PrismaService) {}
+
+    // ─── 진행 상황 (폴링용) ─────────────────────────────────────
+    // 크롤링은 한 번의 블로킹 요청이라 끝나기 전에는 화면에 아무것도 보이지 않는다.
+    // 클라이언트가 만든 runId 로 진행 상황을 여기에 쌓아 두고, 같은 runId 를 폴링하게 한다.
+    // 잡 테이블이나 SSE 없이 되고 nginx 버퍼링 설정도 건드릴 필요가 없다.
+    private readonly runProgress = new Map<string, any>();
+
+    getProgress(runId: string): any {
+        return this.runProgress.get(runId) ?? null;
+    }
+
+    private setProgress(runId: string | undefined, patch: any): void {
+        if (!runId) return;
+        const cur = this.runProgress.get(runId) ?? { startedAt: Date.now(), sources: {}, done: false };
+        this.runProgress.set(runId, { ...cur, ...patch, updatedAt: Date.now() });
+    }
+
+    /** 소스 하나가 끝났을 때 진행 상황에 반영 */
+    private markSource(runId: string | undefined, source: string, status: 'done' | 'error', fetched: number, error?: string): void {
+        if (!runId) return;
+        const cur = this.runProgress.get(runId);
+        if (!cur) return;
+        const sources = { ...(cur.sources ?? {}), [source]: { status, fetched, ...(error ? { error } : {}) } };
+        const totalFetched = Object.values(sources).reduce((a: number, s: any) => a + (s.fetched ?? 0), 0);
+        this.setProgress(runId, { sources, totalFetched });
+    }
+
+    /** 완료 표시 후 일정 시간 뒤 정리 (메모리 누수 방지) */
+    private finishProgress(runId: string | undefined, patch: any): void {
+        if (!runId) return;
+        this.setProgress(runId, { ...patch, done: true });
+        const timer = setTimeout(() => this.runProgress.delete(runId), 10 * 60 * 1000);
+        if (typeof (timer as any).unref === 'function') (timer as any).unref();
+    }
 
     // ─── 1) 카카오 Local API ─────────────────────────────────────
     async fetchFromKakao({ query = '맛집', lat, lng, radius = 20000, count = 50, region = '' }: any): Promise<any[]> {
@@ -752,9 +792,18 @@ export class RestaurantCrawlerService {
             countPerSource = 50,
             saveToDB = true,
             dryRun = false,
+            runId,
         } = options;
 
         logger.info(`[Crawler] 크롤링 시작 - sources: ${sources.join(',')}, query: ${query}, region: ${region}, count/src: ${countPerSource}`);
+        this.setProgress(runId, {
+            phase: 'fetching',
+            message: `${sources.join(', ')} 에서 수집 중…`,
+            region, query, dryRun,
+            startedAt: Date.now(),
+            sources: Object.fromEntries(sources.map((s: string) => [s, { status: 'pending', fetched: 0 }])),
+            done: false,
+        });
 
         const allResults: any[] = [];
         const stats: any = {
@@ -772,32 +821,32 @@ export class RestaurantCrawlerService {
         if (sources.includes('kakao')) {
             fetchPromises.push(
                 this.fetchFromKakao({ query: `${region} ${query}`, ...(lat && lng ? { lat, lng } : {}), radius, count: countPerSource, region })
-                    .then(r => { stats.sources.kakao = r.length; return r; })
-                    .catch(e => { logger.error(`[Crawler] 카카오 실패: ${e.message}`); stats.sources.kakao = 0; return []; })
+                    .then(r => { stats.sources.kakao = r.length; this.markSource(runId, 'kakao', 'done', r.length); return r; })
+                    .catch(e => { logger.error(`[Crawler] 카카오 실패: ${e.message}`); stats.sources.kakao = 0; this.markSource(runId, 'kakao', 'error', 0, e.message); return []; })
             );
         }
 
         if (sources.includes('naver')) {
             fetchPromises.push(
                 this.fetchFromNaver({ query: `${region} ${query}`, count: countPerSource })
-                    .then(r => { stats.sources.naver = r.length; return r; })
-                    .catch(e => { logger.error(`[Crawler] 네이버 실패: ${e.message}`); stats.sources.naver = 0; return []; })
+                    .then(r => { stats.sources.naver = r.length; this.markSource(runId, 'naver', 'done', r.length); return r; })
+                    .catch(e => { logger.error(`[Crawler] 네이버 실패: ${e.message}`); stats.sources.naver = 0; this.markSource(runId, 'naver', 'error', 0, e.message); return []; })
             );
         }
 
         if (sources.includes('google')) {
             fetchPromises.push(
                 this.fetchFromGoogle({ query: `${query} in ${region}`, lat, lng, radius, count: countPerSource })
-                    .then(r => { stats.sources.google = r.length; return r; })
-                    .catch(e => { logger.error(`[Crawler] 구글 실패: ${e.message}`); stats.sources.google = 0; return []; })
+                    .then(r => { stats.sources.google = r.length; this.markSource(runId, 'google', 'done', r.length); return r; })
+                    .catch(e => { logger.error(`[Crawler] 구글 실패: ${e.message}`); stats.sources.google = 0; this.markSource(runId, 'google', 'error', 0, e.message); return []; })
             );
         }
 
         if (sources.includes('siksin')) {
             fetchPromises.push(
                 this.fetchFromSiksin({ region, count: countPerSource, query })
-                    .then(r => { stats.sources.siksin = r.length; return r; })
-                    .catch(e => { logger.error(`[Crawler] 식신 실패: ${e.message}`); stats.sources.siksin = 0; return []; })
+                    .then(r => { stats.sources.siksin = r.length; this.markSource(runId, 'siksin', 'done', r.length); return r; })
+                    .catch(e => { logger.error(`[Crawler] 식신 실패: ${e.message}`); stats.sources.siksin = 0; this.markSource(runId, 'siksin', 'error', 0, e.message); return []; })
             );
         }
 
@@ -807,9 +856,12 @@ export class RestaurantCrawlerService {
         }
 
         stats.totalFetched = allResults.length;
+        this.setProgress(runId, { phase: 'dedup', message: `수집 ${allResults.length}건 — 중복 확인 중…`, totalFetched: allResults.length });
         logger.info(`[Crawler] 총 ${allResults.length}건 수집 완료, 소스별: ${JSON.stringify(stats.sources)}`);
 
-        // DB에 이미 존재하는 식당 제외
+        // ── DB 기존 건 표시 ──
+        // 비교 전에 DB 주소도 정규화한다. 과거에 "서울 동작구 …" 로 저장된 행이
+        // 새로 들어온 "서울특별시 동작구 …" 와 같은 가게로 잡히게 하기 위함.
         const existingNames = allResults
             .filter(item => item.restaurantName)
             .map(item => item.restaurantName);
@@ -819,15 +871,66 @@ export class RestaurantCrawlerService {
                 restaurantName: { in: existingNames },
                 restaurantStatus: 1,
             },
-            select: { restaurantName: true, restaurantAddr: true },
+            select: { restaurantIdx: true, restaurantName: true, restaurantAddr: true, restaurantLatX: true, restaurantLatY: true },
         });
 
-        const existingSet = new Set(existingRecords.map(r => `${r.restaurantName}_${r.restaurantAddr}`));
-        const newResults = allResults.filter(item => !existingSet.has(`${item.restaurantName}_${item.restaurantAddr}`));
+        const existingByKey = new Map<string, any>();
+        for (const r of existingRecords) {
+            existingByKey.set(dedupKey(r.restaurantName, r.restaurantAddr), r);
+        }
+
+        for (const item of allResults) {
+            const hit =
+                existingByKey.get(dedupKey(item.restaurantName, item.restaurantAddr)) ??
+                // 주소 표기가 많이 다를 때를 위한 좌표 보조 판정 (약 50m)
+                existingRecords.find(
+                    r => r.restaurantName === item.restaurantName &&
+                        isNearby(item.restaurantLatX, item.restaurantLatY, r.restaurantLatX, r.restaurantLatY),
+                );
+            item._existsInDb = hit ? Number(hit.restaurantIdx) : null;
+        }
+
+        // ── 같은 실행 안에서 소스끼리 겹치는 건 표시 ──
+        // 자동으로 지우지 않는다. 어드민이 보고 고르도록 대표 인덱스만 달아 준다.
+        const seenKey = new Map<string, number>();
+        for (let i = 0; i < allResults.length; i++) {
+            const item = allResults[i];
+            // 이름이나 주소가 비면 판정 근거가 없다. 빈 값끼리 같은 키가 돼
+            // 무관한 행이 한 덩어리로 묶이는 걸 막는다 (저장 단계에서 어차피 걸러진다)
+            if (!item.restaurantName || !item.restaurantAddr) {
+                item._duplicateOf = null;
+                continue;
+            }
+            const key = dedupKey(item.restaurantName, item.restaurantAddr);
+            const byKey = seenKey.get(key);
+            const byCoord = byKey === undefined
+                ? allResults.findIndex(
+                    (o, j) => j < i && o.restaurantName === item.restaurantName &&
+                        isNearby(item.restaurantLatX, item.restaurantLatY, o.restaurantLatX, o.restaurantLatY),
+                )
+                : -1;
+            const first = byKey !== undefined ? byKey : (byCoord >= 0 ? byCoord : undefined);
+            if (first === undefined) {
+                seenKey.set(key, i);
+                item._duplicateOf = null;
+            } else {
+                item._duplicateOf = first;   // 이 행과 같은 가게로 보이는 앞선 행의 인덱스
+            }
+        }
+
+        const newResults = allResults.filter(item => !item._existsInDb);
 
         stats.alreadyInDB = allResults.length - newResults.length;
+        stats.crossSourceDuplicate = allResults.filter(i => i._duplicateOf !== null && i._duplicateOf !== undefined).length;
         stats.duplicateSkipped = stats.alreadyInDB;
-        logger.info(`[Crawler] DB 기존 ${stats.alreadyInDB}건 제외, 신규 ${newResults.length}건`);
+        logger.info(`[Crawler] DB 기존 ${stats.alreadyInDB}건, 소스간 중복 의심 ${stats.crossSourceDuplicate}건, 신규 ${newResults.length}건`);
+
+        this.setProgress(runId, {
+            phase: 'geocoding',
+            message: `좌표 보정 중… (기존 ${stats.alreadyInDB}건, 중복 의심 ${stats.crossSourceDuplicate}건)`,
+            alreadyInDB: stats.alreadyInDB,
+            crossSourceDuplicate: stats.crossSourceDuplicate,
+        });
 
         // 좌표 보정
         for (const item of newResults) {
@@ -842,8 +945,11 @@ export class RestaurantCrawlerService {
         }
 
         if (dryRun) {
-            logger.info(`[Crawler] dryRun 모드 - 신규 ${newResults.length}건 미리보기 (좌표보정: ${stats.coordFixed}건)`);
-            return { stats, data: newResults };
+            logger.info(`[Crawler] dryRun 모드 - 수집 ${allResults.length}건 미리보기 (신규 ${newResults.length}, 좌표보정 ${stats.coordFixed})`);
+            this.finishProgress(runId, { phase: 'preview', message: `미리보기 ${allResults.length}건`, saved: 0 });
+            // 미리보기는 기존 건도 함께 돌려준다. 어드민이 _existsInDb / _duplicateOf 를 보고
+            // 저장할 행을 직접 고르기 때문에 여기서 거르지 않는다.
+            return { stats, data: allResults };
         }
 
         // bulkCreate로 일괄 insert/update (이름+주소 unique 기준)
@@ -868,6 +974,8 @@ export class RestaurantCrawlerService {
             }));
 
         const savedList: string[] = [];
+
+        this.setProgress(runId, { phase: 'saving', message: `${bulkData.length}건 저장 중…` });
 
         if (saveToDB && bulkData.length > 0) {
             try {
@@ -936,7 +1044,99 @@ export class RestaurantCrawlerService {
         }
 
         logger.info(`[Crawler] 완료 - 처리: ${stats.saved}, 좌표보정: ${stats.coordFixed}, 실패: ${stats.failed}`);
+        this.finishProgress(runId, {
+            phase: stats.failed > 0 ? 'error' : 'done',
+            message: stats.failed > 0 ? `저장 실패 ${stats.failed}건` : `저장 완료 ${stats.saved}건`,
+            saved: stats.saved, failed: stats.failed,
+        });
 
+        return { stats, saved: savedList };
+    }
+
+    /**
+     * 미리보기에서 어드민이 고른 행만 저장한다.
+     *
+     * 기존 "DB 저장" 버튼은 같은 크롤링을 dryRun=false 로 다시 돌려서, 방금 검토한 목록과
+     * 실제 저장분이 달라질 수 있었다. 이 경로는 넘어온 행 그대로를 저장한다.
+     * 주소는 여기서도 정규화해, 화면을 거치며 표기가 흐트러져도 유니크 키가 흔들리지 않게 한다.
+     */
+    async saveSelected(items: any[]): Promise<any> {
+        const stats = { requested: Array.isArray(items) ? items.length : 0, saved: 0, skipped: 0, failed: 0 };
+        if (!Array.isArray(items) || items.length === 0) {
+            return { stats, saved: [] };
+        }
+
+        const rows = items
+            .map((item) => {
+                const addr = normalizeAddress(item.restaurantAddr || '');
+                return {
+                    restaurantName: (item.restaurantName || '').slice(0, 60),
+                    restaurantLocation: (item.restaurantLocation || extractRegionLabel(addr) || '미정').slice(0, 45),
+                    restaurantType: (item.restaurantType || '음식점').slice(0, 45),
+                    restaurantEstablished: (item.restaurantEstablished || '미정').slice(0, 45),
+                    restaurantOwner: (item.restaurantOwner || '미정').slice(0, 45),
+                    restaurantLatX: Number(item.restaurantLatX) || 0,
+                    restaurantLatY: Number(item.restaurantLatY) || 0,
+                    restaurantURL: (item.restaurantURL || '').slice(0, 200),
+                    restaurantLotAddr: normalizeAddress(item.restaurantLotAddr || '').slice(0, 100),
+                    restaurantAddr: addr.slice(0, 200),
+                    restaurantMapIMG: item.restaurantMapIMG || null,
+                    restaurantImage: item.restaurantImage || null,
+                    restaurantMenu: item.restaurantMenu || null,
+                };
+            })
+            // 이름·좌표가 없는 행은 기존 저장 경로와 같은 기준으로 거른다
+            .filter((r) => r.restaurantName && r.restaurantLatX && r.restaurantLatY);
+
+        stats.skipped = rows.length < stats.requested ? stats.requested - rows.length : 0;
+        if (rows.length === 0) return { stats, saved: [] };
+
+        const savedList: string[] = [];
+        try {
+            const result = await this.prisma.$transaction(
+                rows.map((item) => this.prisma.restaurantInfo.upsert({
+                    where: {
+                        restaurantName_restaurantAddr: {
+                            restaurantName: item.restaurantName,
+                            restaurantAddr: item.restaurantAddr,
+                        },
+                    },
+                    update: {
+                        restaurantURL: item.restaurantURL,
+                        restaurantType: item.restaurantType,
+                        restaurantLatX: item.restaurantLatX,
+                        restaurantLatY: item.restaurantLatY,
+                    },
+                    create: {
+                        ...item,
+                        restaurantMenu: item.restaurantMenu ? JSON.stringify(item.restaurantMenu) : null,
+                        restaurantStatus: 1,
+                        restaurantViewCount: 0,
+                    },
+                })),
+            );
+            stats.saved = result.length;
+            result.forEach((r: any) => savedList.push(r.restaurantName));
+
+            // 메뉴·이미지는 값이 있을 때만 덮어쓴다 (null 로 기존 값을 지우지 않도록)
+            for (const item of rows) {
+                const updates: any = {};
+                if (item.restaurantMenu) updates.restaurantMenu = JSON.stringify(item.restaurantMenu);
+                if (item.restaurantImage) updates.restaurantImage = item.restaurantImage;
+                if (Object.keys(updates).length > 0) {
+                    await this.prisma.restaurantInfo.updateMany({
+                        where: { restaurantName: item.restaurantName, restaurantAddr: item.restaurantAddr, restaurantStatus: 1 },
+                        data: updates,
+                    });
+                }
+            }
+        } catch (err: any) {
+            stats.failed = rows.length;
+            logger.error(`[Crawler] 선택 저장 실패: ${err.message}`);
+            throw err;
+        }
+
+        logger.info(`[Crawler] 선택 저장 완료 - 요청 ${stats.requested}, 저장 ${stats.saved}, 제외 ${stats.skipped}`);
         return { stats, saved: savedList };
     }
 
