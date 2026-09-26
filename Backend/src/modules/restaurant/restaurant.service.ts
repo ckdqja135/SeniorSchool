@@ -17,7 +17,7 @@ export class RestaurantService {
         try {
             const whereClause: Record<string, any> = { restaurantStatus: 1 }; // 활성화된 식당만
 
-            const { name, type, location, limit } = searchParams;
+            const { name, type, location, limit, offset, missing } = searchParams;
 
             if (name && name.trim() !== '') {
                 whereClause.restaurantName = { contains: name.trim() };
@@ -34,14 +34,26 @@ export class RestaurantService {
                 logger.info(`[getRestaurants] Location search applied: "${location.trim()}"`);
             }
 
+            // 보강 화면처럼 '값이 비어 있는 것만' 추려야 할 때 쓴다.
+            // 예전에는 전체를 내려받아 클라이언트에서 걸렀는데 7천 건 7MB 라 감당이 안 됐다.
+            // restaurantURL 은 NOT NULL 이라 null 비교가 불가능하다 (빈 문자열만 가능)
+            if (missing === 'menu') whereClause.OR = [{ restaurantMenu: null }, { restaurantMenu: '' }];
+            else if (missing === 'image') whereClause.OR = [{ restaurantImage: null }, { restaurantImage: '' }];
+            else if (missing === 'url') whereClause.restaurantURL = '';
+
             const queryOptions: any = {
                 where: whereClause,
-                orderBy: { restaurantName: 'asc' }, // 식당명 순 정렬
+                // 페이지를 넘겨도 순서가 흔들리지 않게 이름이 같을 때는 idx 로 확정한다
+                orderBy: [{ restaurantName: 'asc' }, { restaurantIdx: 'asc' }],
             };
 
             if (limit && !isNaN(parseInt(limit))) {
                 queryOptions.take = parseInt(limit);
                 logger.info(`[getRestaurants] Limit applied: ${limit}`);
+            }
+
+            if (offset && !isNaN(parseInt(offset))) {
+                queryOptions.skip = parseInt(offset);
             }
 
             const restaurants = await this.prisma.restaurantInfo.findMany(queryOptions);

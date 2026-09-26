@@ -14,13 +14,15 @@ export class RestaurantController {
     @Get()
     async getRestaurants(@Req() req: Request, @Res() res: Response) {
         try {
-            const { name, type, location, limit } = req.query as Record<string, string>;
+            const { name, type, location, limit, offset, missing } = req.query as Record<string, string>;
 
             const searchParams: Record<string, string> = {};
             if (name) searchParams.name = name;
             if (type) searchParams.type = type;
             if (location) searchParams.location = location;
             if (limit) searchParams.limit = limit;
+            if (offset) searchParams.offset = offset;
+            if (missing) searchParams.missing = missing;
 
             const restaurants = await this.restaurantService.getRestaurants(searchParams);
             res.status(200).json(restaurants);

@@ -178,11 +178,14 @@ export class RestaurantCrawlerController {
         try {
             const total = await this.prisma.restaurantInfo.count({ where: { restaurantStatus: 1 } });
 
+            // nullable 여부를 같이 들고 간다.
+            // restaurantURL·restaurantLotAddr 은 NOT NULL 이라 null 로 비교하면 Prisma 가 던진다
+            // (이 때문에 이 엔드포인트는 계속 500 이었다).
             const fields = [
-                { key: 'restaurantMenu', label: '메뉴' },
-                { key: 'restaurantImage', label: '이미지' },
-                { key: 'restaurantURL', label: 'URL' },
-                { key: 'restaurantLotAddr', label: '지번주소' },
+                { key: 'restaurantMenu', label: '메뉴', nullable: true },
+                { key: 'restaurantImage', label: '이미지', nullable: true },
+                { key: 'restaurantURL', label: 'URL', nullable: false },
+                { key: 'restaurantLotAddr', label: '지번주소', nullable: false },
             ];
 
             const stats: any[] = [];
@@ -190,7 +193,9 @@ export class RestaurantCrawlerController {
                 const missing = await this.prisma.restaurantInfo.count({
                     where: {
                         restaurantStatus: 1,
-                        OR: [{ [f.key]: null }, { [f.key]: '' }],
+                        ...(f.nullable
+                            ? { OR: [{ [f.key]: null }, { [f.key]: '' }] }
+                            : { [f.key]: '' }),
                     } as any,
                 });
                 stats.push({ key: f.key, label: f.label, total, missing, filled: total - missing });
