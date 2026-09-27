@@ -6,6 +6,7 @@ import { RestaurantCrawlerController } from './restaurant-crawler.controller';
 import { RestaurantCrawlerService } from './restaurant-crawler.service';
 import { CrawlerKeywordService } from './crawler-keyword.service';
 import { RestaurantCrawlerSchedulerService } from './restaurant-crawler-scheduler.service';
+import { RestaurantEnrichService } from './restaurant-enrich.service';
 
 @Module({
     controllers: [RestaurantCrawlerController],
@@ -13,6 +14,7 @@ import { RestaurantCrawlerSchedulerService } from './restaurant-crawler-schedule
         RestaurantCrawlerService,
         CrawlerKeywordService,
         RestaurantCrawlerSchedulerService,
+        RestaurantEnrichService,
     ],
 })
 export class RestaurantCrawlerModule {}

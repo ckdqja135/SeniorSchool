@@ -1,6 +1,7 @@
 /**
  * 식당 크롤러 주간 스케줄러
- * 매주 월요일 새벽 3시에 AI 키워드 생성 + 자동 크롤링 실행
+ * 매주 월요일 새벽 3시에 AI 키워드 생성 + 자동 크롤링 실행,
+ * 이어서 메뉴·이미지·URL 이 빈 식당 보강(RestaurantEnrichService — 실행당 최대 2시간, 커서로 이어 감)
  *
  * Backend/scheduler/restaurantCrawlerScheduler.js의 1:1 포팅.
  *  - node-cron cron.schedule('0 3 * * 1', ...) → @Cron('0 3 * * 1') (동일 표현식).
@@ -13,6 +14,7 @@ import { Cron } from '@nestjs/schedule';
 import { logger } from '../../../logger/winston.logger';
 import { CrawlerKeywordService } from './crawler-keyword.service';
 import { RestaurantCrawlerService } from './restaurant-crawler.service';
+import { RestaurantEnrichService } from './restaurant-enrich.service';
 
 @Injectable()
 export class RestaurantCrawlerSchedulerService implements OnModuleInit {
@@ -23,12 +25,13 @@ export class RestaurantCrawlerSchedulerService implements OnModuleInit {
     constructor(
         private readonly crawlerKeywordService: CrawlerKeywordService,
         private readonly restaurantCrawlerService: RestaurantCrawlerService,
+        private readonly restaurantEnrichService: RestaurantEnrichService,
     ) {}
 
     // 구 app.js가 부트 시 scheduler.start()를 호출해 남기던 시작 로그를 재현.
     // (@Cron 등록은 데코레이터가 자동 처리하므로 여기서는 로그만 남긴다.)
     onModuleInit() {
-        logger.info('[RestaurantCrawlerScheduler] 스케줄러 시작 (매주 월요일 03:00)');
+        logger.info('[RestaurantCrawlerScheduler] 스케줄러 시작 (매주 월요일 03:00 — 수집 후 빈 필드 보강)');
     }
 
     // 매주 월요일 새벽 3시
@@ -95,11 +98,20 @@ export class RestaurantCrawlerSchedulerService implements OnModuleInit {
                 }
             }
 
-            this.lastStats = stats;
-            logger.info(`[RestaurantCrawlerScheduler] ========== 완료 - 키워드: ${stats.keywordsGenerated}개, 저장: ${stats.totalSaved}건, 실패: ${stats.failed}건 ==========`);
+            logger.info(`[RestaurantCrawlerScheduler] 수집 완료 - 키워드: ${stats.keywordsGenerated}개, 저장: ${stats.totalSaved}건, 실패: ${stats.failed}건`);
         } catch (err) {
             logger.error(`[RestaurantCrawlerScheduler] 오류: ${err.message}`);
+        }
+
+        // 6) 메뉴·이미지·URL 이 빈 식당 보강. 위 수집이 실패해도 보강은 따로 돈다
+        try {
+            logger.info('[RestaurantCrawlerScheduler] 6) 빈 필드 보강');
+            stats.enrich = await this.restaurantEnrichService.enrichMissing();
+        } catch (err) {
+            logger.error(`[RestaurantCrawlerScheduler] 보강 오류: ${err.message}`);
         } finally {
+            this.lastStats = stats;
+            logger.info('[RestaurantCrawlerScheduler] ========== 주간 작업 종료 ==========');
             this.isRunning = false;
         }
     }
