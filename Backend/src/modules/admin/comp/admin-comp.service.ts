@@ -280,7 +280,7 @@ export class AdminCompService {
     // 회사 검색 (관리자용). 원본 service/admin/compService.searchComp
     async searchComp(searchParams: any) {
         try {
-            const { compName, compLocate, compType, compIndustry, compStatus, rowsPerPage = 20, page = 1 } = searchParams;
+            const { compName, compLocate, compType, compIndustry, compStatus, rowsPerPage = 20, page = 1, missing, limit: rawLimit, offset: rawOffset } = searchParams;
 
             const whereClause: Record<string, any> = {};
             if (compName) whereClause.compName = { contains: compName };
@@ -289,8 +289,19 @@ export class AdminCompService {
             if (compIndustry) whereClause.compIndustry = { contains: compIndustry };
             if (compStatus !== undefined) whereClause.compStatus = Number(compStatus);
 
-            const limit = parseInt(rowsPerPage);
-            const offset = (parseInt(page) - 1) * limit;
+            // 보강 화면용 누락 필터. 빈 값 판정은 missing-stats 와 같은 기준을 쓴다
+            // (compCEO 는 '미정', compIndustry 는 '기타' 를 비어 있는 것으로 본다).
+            const MISSING_CONDITION: Record<string, any> = {
+                // compURL 만 nullable — 나머지는 NOT NULL 이라 null 비교를 넣으면 Prisma 가 던진다
+                url: { OR: [{ compURL: null }, { compURL: '' }] },
+                ceo: { OR: [{ compCEO: '' }, { compCEO: '미정' }] },
+                industry: { OR: [{ compIndustry: '' }, { compIndustry: '기타' }] },
+            };
+            if (missing && MISSING_CONDITION[missing]) Object.assign(whereClause, MISSING_CONDITION[missing]);
+
+            // 보강 화면은 limit/offset 으로, 기존 관리 화면은 page/rowsPerPage 로 부른다. 둘 다 받는다.
+            const limit = rawLimit !== undefined ? parseInt(rawLimit) : parseInt(rowsPerPage);
+            const offset = rawOffset !== undefined ? parseInt(rawOffset) : (parseInt(page) - 1) * limit;
 
             logger.info(`[searchComp] Search conditions: ${JSON.stringify(whereClause)}`);
             logger.info(`[searchComp] Pagination: limit=${limit}, offset=${offset}`);
@@ -317,8 +328,9 @@ export class AdminCompService {
                     totalPages: totalPages,
                     currentPage: parseInt(page),
                     rowsPerPage: limit,
-                    hasNextPage: parseInt(page) < totalPages,
-                    hasPrevPage: parseInt(page) > 1,
+                    // offset 으로 부른 경우 page 는 늘 1 이라 offset 기준으로 판단한다
+                    hasNextPage: offset + companies.length < totalCount,
+                    hasPrevPage: offset > 0,
                 },
             };
         } catch (error: any) {

@@ -12,7 +12,7 @@ import { ConglomerateService } from './conglomerate.service';
 // 소스별로 "서울"(네이버) vs "서울특별시"(카카오) 등 prefix가 달라 dedup이 실패하는 문제 해결.
 // 시/도 prefix를 정식명(긴 형태)으로 통일 → compAddr는 정식 행정구역명 기반.
 // 식당 크롤러도 같은 처리가 필요해 common/utils/address.util.ts 로 옮겼다.
-import { normalizeAddress, extractLocate } from '../../../common/utils/address.util';
+import { normalizeAddress, extractLocate, dedupKey, isNearby } from '../../../common/utils/address.util';
 
 // ─── 공통 매핑 함수 ─────────────────────────────────────────
 function normalizeToCompany(raw: any): any {
@@ -409,6 +409,40 @@ export class CompanyCrawlerService {
         private readonly conglomerate: ConglomerateService,
     ) {}
 
+    // ─── 진행 상황 (폴링용) ─────────────────────────────────────
+    // 크롤링은 한 번의 블로킹 요청이라 끝나기 전에는 화면에 아무것도 보이지 않는다.
+    // 클라이언트가 만든 runId 로 진행 상황을 여기에 쌓아 두고, 같은 runId 를 폴링하게 한다.
+    // 식당 크롤러(restaurant-crawler.service.ts)와 같은 구조다.
+    private readonly runProgress = new Map<string, any>();
+
+    getProgress(runId: string): any {
+        return this.runProgress.get(runId) ?? null;
+    }
+
+    private setProgress(runId: string | undefined, patch: any): void {
+        if (!runId) return;
+        const cur = this.runProgress.get(runId) ?? { startedAt: Date.now(), sources: {}, done: false };
+        this.runProgress.set(runId, { ...cur, ...patch, updatedAt: Date.now() });
+    }
+
+    /** 소스 하나가 끝났을 때 진행 상황에 반영 */
+    private markSource(runId: string | undefined, source: string, status: 'done' | 'error', fetched: number, error?: string): void {
+        if (!runId) return;
+        const cur = this.runProgress.get(runId);
+        if (!cur) return;
+        const sources = { ...(cur.sources ?? {}), [source]: { status, fetched, ...(error ? { error } : {}) } };
+        const totalFetched = Object.values(sources).reduce((a: number, s: any) => a + (s.fetched ?? 0), 0);
+        this.setProgress(runId, { sources, totalFetched });
+    }
+
+    /** 완료 표시 후 일정 시간 뒤 정리 (메모리 누수 방지) */
+    private finishProgress(runId: string | undefined, patch: any): void {
+        if (!runId) return;
+        this.setProgress(runId, { ...patch, done: true });
+        const timer = setTimeout(() => this.runProgress.delete(runId), 10 * 60 * 1000);
+        if (typeof (timer as any).unref === 'function') (timer as any).unref();
+    }
+
     // 원본 module.exports 계약 유지 (컨트롤러/스케줄러에서 사용)
     getAvailableSources(): any[] {
         return getAvailableSources();
@@ -442,9 +476,17 @@ export class CompanyCrawlerService {
             countPerSource = 50,
             saveToDB = true,
             dryRun = false,
+            runId,
         } = options;
 
         logger.info(`[CompCrawler] 시작 - sources: ${sources.join(',')}, query: ${query}, region: ${region}, count/src: ${countPerSource}`);
+
+        this.setProgress(runId, {
+            phase: 'fetching',
+            message: `${sources.join(', ')} 에서 수집 중…`,
+            sources: Object.fromEntries(sources.map((s: string) => [s, { status: 'running', fetched: 0 }])),
+            done: false,
+        });
 
         const allResults: any[] = [];
         const stats: any = {
@@ -460,22 +502,22 @@ export class CompanyCrawlerService {
         if (sources.includes('kakao')) {
             fetchPromises.push(
                 fetchFromKakao({ query: `${query}`, region, ...(lat && lng ? { lat, lng } : {}), radius, count: countPerSource })
-                    .then((r) => { stats.sources.kakao = r.length; return r; })
-                    .catch((e) => { logger.error(`[CompCrawler] 카카오 실패: ${e.message}`); stats.sources.kakao = 0; return []; })
+                    .then((r) => { stats.sources.kakao = r.length; this.markSource(runId, 'kakao', 'done', r.length); return r; })
+                    .catch((e) => { logger.error(`[CompCrawler] 카카오 실패: ${e.message}`); stats.sources.kakao = 0; this.markSource(runId, 'kakao', 'error', 0, e.message); return []; })
             );
         }
         if (sources.includes('naver')) {
             fetchPromises.push(
                 fetchFromNaver({ query, region, count: countPerSource })
-                    .then((r) => { stats.sources.naver = r.length; return r; })
-                    .catch((e) => { logger.error(`[CompCrawler] 네이버 실패: ${e.message}`); stats.sources.naver = 0; return []; })
+                    .then((r) => { stats.sources.naver = r.length; this.markSource(runId, 'naver', 'done', r.length); return r; })
+                    .catch((e) => { logger.error(`[CompCrawler] 네이버 실패: ${e.message}`); stats.sources.naver = 0; this.markSource(runId, 'naver', 'error', 0, e.message); return []; })
             );
         }
         if (sources.includes('publicData')) {
             fetchPromises.push(
                 fetchFromPublicData({ query, region, count: countPerSource })
-                    .then((r) => { stats.sources.publicData = r.length; return r; })
-                    .catch((e) => { logger.error(`[CompCrawler] 공공데이터 실패: ${e.message}`); stats.sources.publicData = 0; return []; })
+                    .then((r) => { stats.sources.publicData = r.length; this.markSource(runId, 'publicData', 'done', r.length); return r; })
+                    .catch((e) => { logger.error(`[CompCrawler] 공공데이터 실패: ${e.message}`); stats.sources.publicData = 0; this.markSource(runId, 'publicData', 'error', 0, e.message); return []; })
             );
         }
 
@@ -485,26 +527,78 @@ export class CompanyCrawlerService {
         stats.totalFetched = allResults.length;
         logger.info(`[CompCrawler] 총 ${allResults.length}건 수집, 소스별: ${JSON.stringify(stats.sources)}`);
 
-        // dryRun이면 DB 중복 제외를 건너뛰고 API 원본을 그대로 노출 (디버깅/확인용)
-        let newResults: any[];
-        if (dryRun) {
-            newResults = allResults;
-            stats.alreadyInDB = 0;
-            stats.duplicateSkipped = 0;
-            logger.info(`[CompCrawler] dryRun 모드 - DB 중복 제외 스킵 (${allResults.length}건 원본 반환)`);
-        } else {
-            const names = allResults.filter((x) => x.compName).map((x) => x.compName);
-            const existing = await this.prisma.compInfo.findMany({
+        // ── DB 기존 건 판정 ──
+        // dryRun 에서도 똑같이 검사한다. 예전에는 건너뛰어서 미리보기 숫자가 실제 저장 결과와 달랐다.
+        // 행을 버리지 않고 _existsInDb 를 달아 두면, 어드민이 보고 저장할 행을 직접 고를 수 있다.
+        this.setProgress(runId, { phase: 'dedup', message: '기존 데이터와 대조 중…' });
+
+        const names = allResults.filter((x) => x.compName).map((x) => x.compName);
+        const existingRecords = names.length
+            ? await this.prisma.compInfo.findMany({
                 where: { compName: { in: names }, compStatus: 1 },
-                select: { compName: true, compAddr: true },
-            });
-            // DB 기존 주소도 정규화 후 비교 (예: 과거 "서울 강남구..." 저장본과 신규 "서울특별시 강남구..." 매칭)
-            const existingSet = new Set(existing.map((r) => `${r.compName}_${normalizeAddress(r.compAddr)}`));
-            newResults = allResults.filter((item) => !existingSet.has(`${item.compName}_${item.compAddr}`));
-            stats.alreadyInDB = allResults.length - newResults.length;
-            stats.duplicateSkipped = stats.alreadyInDB;
-            logger.info(`[CompCrawler] DB 기존 ${stats.alreadyInDB}건 제외, 신규 ${newResults.length}건`);
+                select: { compIdx: true, compName: true, compAddr: true, compLateX: true, compLateY: true },
+            })
+            : [];
+
+        // DB 기존 주소도 정규화 후 비교 (과거 "서울 강남구…" 저장본과 신규 "서울특별시 강남구…" 매칭)
+        const existingByKey = new Map<string, any>();
+        for (const r of existingRecords) {
+            existingByKey.set(dedupKey(r.compName, normalizeAddress(r.compAddr)), r);
         }
+
+        for (const item of allResults) {
+            const hit =
+                existingByKey.get(dedupKey(item.compName, item.compAddr)) ??
+                // 주소 표기가 많이 다를 때를 위한 좌표 보조 판정 (약 50m)
+                existingRecords.find(
+                    (r) => r.compName === item.compName &&
+                        isNearby(item.compLateX, item.compLateY, r.compLateX, r.compLateY),
+                );
+            item._existsInDb = hit ? Number(hit.compIdx) : null;
+        }
+
+        // ── 같은 실행 안에서 소스끼리 겹치는 건 표시 ──
+        // 자동으로 지우지 않는다. 어드민이 보고 고르도록 대표 인덱스만 달아 준다.
+        const seenKey = new Map<string, number>();
+        for (let i = 0; i < allResults.length; i++) {
+            const item = allResults[i];
+            // 이름이나 주소가 비면 판정 근거가 없다. 빈 값끼리 같은 키가 돼 무관한 행이 묶이는 걸 막는다
+            if (!item.compName || !item.compAddr) {
+                item._duplicateOf = null;
+                continue;
+            }
+            const key = dedupKey(item.compName, item.compAddr);
+            const byKey = seenKey.get(key);
+            const byCoord = byKey === undefined
+                ? allResults.findIndex(
+                    (o, j) => j < i && o.compName === item.compName &&
+                        isNearby(item.compLateX, item.compLateY, o.compLateX, o.compLateY),
+                )
+                : -1;
+            const first = byKey !== undefined ? byKey : (byCoord >= 0 ? byCoord : undefined);
+            if (first === undefined) {
+                seenKey.set(key, i);
+                item._duplicateOf = null;
+            } else {
+                item._duplicateOf = first;   // 이 행과 같은 회사로 보이는 앞선 행의 인덱스
+            }
+        }
+
+        // 미리보기는 기존 건도 함께 돌려준다 (어드민이 _existsInDb / _duplicateOf 를 보고 고른다).
+        // 자동 저장 경로에서만 기존 건을 뺀다.
+        const newResults = dryRun ? allResults : allResults.filter((item) => !item._existsInDb);
+
+        stats.alreadyInDB = allResults.filter((i) => i._existsInDb).length;
+        stats.crossSourceDuplicate = allResults.filter((i) => i._duplicateOf !== null && i._duplicateOf !== undefined).length;
+        stats.duplicateSkipped = stats.alreadyInDB;
+        logger.info(`[CompCrawler] DB 기존 ${stats.alreadyInDB}건, 소스간 중복 의심 ${stats.crossSourceDuplicate}건, 신규 ${allResults.length - stats.alreadyInDB}건`);
+
+        this.setProgress(runId, {
+            phase: 'geocoding',
+            message: `좌표 보정 중… (기존 ${stats.alreadyInDB}건, 중복 의심 ${stats.crossSourceDuplicate}건)`,
+            alreadyInDB: stats.alreadyInDB,
+            crossSourceDuplicate: stats.crossSourceDuplicate,
+        });
 
         // 좌표 보정
         for (const item of newResults) {
@@ -536,8 +630,11 @@ export class CompanyCrawlerService {
 
         if (dryRun) {
             logger.info(`[CompCrawler] dryRun - ${newResults.length}건 미리보기 (좌표보정: ${stats.coordFixed}건)`);
+            this.finishProgress(runId, { phase: 'preview', message: `${newResults.length}건 미리보기`, totalFetched: stats.totalFetched });
             return { stats, data: newResults };
         }
+
+        this.setProgress(runId, { phase: 'saving', message: '저장 중…' });
 
         // NOT NULL 필수 필드 누락(좌표/이름/주소) 제외
         const bulkData = newResults
@@ -575,6 +672,91 @@ export class CompanyCrawlerService {
         }
 
         logger.info(`[CompCrawler] 완료 - 저장: ${stats.saved}, 좌표보정: ${stats.coordFixed}, 실패: ${stats.failed}`);
+        this.finishProgress(runId, { phase: 'done', message: `저장 ${stats.saved}건`, saved: stats.saved, failed: stats.failed });
+        return { stats, saved: savedList };
+    }
+
+    /**
+     * 화면에서 고른 행만 저장한다.
+     *
+     * 예전 '저장' 버튼은 같은 크롤링을 dryRun=false 로 다시 돌렸다. 그래서 어드민이 검토한 목록과
+     * 실제 저장분이 달라질 수 있었다. 이 경로는 넘어온 행 그대로를 저장한다.
+     * 주소는 여기서도 정규화해, 화면을 거치며 표기가 흐트러져도 중복 판정이 흔들리지 않게 한다.
+     *
+     * tb_comp_info 에는 아직 (compName, compAddr) 유니크 키가 없어 upsert 를 쓸 수 없다.
+     * 저장 직전에 다시 조회해 이미 있는 건은 갱신하고 없는 건만 만든다.
+     */
+    async saveSelected(items: any[]): Promise<any> {
+        const stats = { requested: Array.isArray(items) ? items.length : 0, saved: 0, updated: 0, skipped: 0, failed: 0 };
+        if (!Array.isArray(items) || items.length === 0) {
+            return { stats, saved: [] };
+        }
+
+        const rows = items
+            .map((item) => {
+                const addr = normalizeAddress(item.compAddr || '');
+                const lotAddr = normalizeAddress(item.compLotAddr || '');
+                return {
+                    compName: (item.compName || '').slice(0, 60),
+                    compLocate: (item.compLocate || extractLocate(addr) || '미정').slice(0, 45),
+                    compType: (item.compType || '중소기업').slice(0, 45),
+                    compEstablish: (item.compEstablish || '미정').slice(0, 45),
+                    compCEO: (item.compCEO || '미정').slice(0, 45),
+                    compIndustry: (item.compIndustry || '기타').slice(0, 45),
+                    compLateX: Number(item.compLateX) || 0,
+                    compLateY: Number(item.compLateY) || 0,
+                    compURL: item.compURL || null,
+                    // compLotAddr 는 스키마상 20자 — 시/구 요약본만 저장
+                    compLotAddr: ((lotAddr.split(' ').slice(0, 2).join(' ') || addr.split(' ').slice(0, 2).join(' ')) || '미정').slice(0, 20),
+                    compAddr: addr.slice(0, 200),
+                    compMapIMG: item.compMapIMG || null,
+                };
+            })
+            // 이름·좌표·주소가 없는 행은 기존 저장 경로와 같은 기준으로 거른다 (NOT NULL 컬럼)
+            .filter((r) => r.compName && r.compLateX && r.compLateY && r.compAddr);
+
+        stats.skipped = rows.length < stats.requested ? stats.requested - rows.length : 0;
+        if (rows.length === 0) return { stats, saved: [] };
+
+        const existing = await this.prisma.compInfo.findMany({
+            where: { compName: { in: rows.map((r) => r.compName) }, compStatus: 1 },
+            select: { compIdx: true, compName: true, compAddr: true },
+        });
+        const existingByKey = new Map<string, bigint>();
+        for (const r of existing) existingByKey.set(dedupKey(r.compName, normalizeAddress(r.compAddr)), r.compIdx);
+
+        // 같은 요청 안에 같은 회사가 두 번 들어와도 두 번 만들지 않게 기록해 둔다
+        const createdKeys = new Set<string>();
+        const savedList: string[] = [];
+        for (const row of rows) {
+            try {
+                const key = dedupKey(row.compName, row.compAddr);
+                if (createdKeys.has(key)) {
+                    stats.skipped++;
+                    continue;
+                }
+                const hit = existingByKey.get(key);
+                if (hit !== undefined) {
+                    // 이미 있는 회사는 비어 있던 항목만 채운다 (기존 값을 지우지 않는다)
+                    const patch: any = { compLateX: row.compLateX, compLateY: row.compLateY, compType: row.compType };
+                    if (row.compURL) patch.compURL = row.compURL;
+                    if (row.compCEO && row.compCEO !== '미정') patch.compCEO = row.compCEO;
+                    if (row.compIndustry && row.compIndustry !== '기타') patch.compIndustry = row.compIndustry;
+                    await this.prisma.compInfo.update({ where: { compIdx: hit }, data: patch });
+                    stats.updated++;
+                } else {
+                    await this.prisma.compInfo.create({ data: { ...row, compStatus: 1, compViewCount: 0 } as any });
+                    stats.saved++;
+                    createdKeys.add(key);
+                }
+                savedList.push(row.compName);
+            } catch (err: any) {
+                stats.failed++;
+                logger.error(`[CompCrawler] saveSelected 실패 (${row.compName}): ${err.message}`);
+            }
+        }
+
+        logger.info(`[CompCrawler] 선택 저장 - 신규 ${stats.saved}건, 갱신 ${stats.updated}건, 제외 ${stats.skipped}건, 실패 ${stats.failed}건`);
         return { stats, saved: savedList };
     }
 }

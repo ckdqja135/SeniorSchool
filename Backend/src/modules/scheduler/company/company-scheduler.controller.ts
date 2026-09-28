@@ -104,17 +104,19 @@ export class CompanyCrawlerController {
                 },
             });
 
+            // compCEO·compIndustry 는 NOT NULL 이라 not: null 로 비교하면 Prisma 가 던진다
+            // (이 때문에 stats 가 계속 500 이었다). 빈 문자열과 플레이스홀더만 걸러낸다.
             const withCEO = await this.prisma.compInfo.count({
                 where: {
                     compStatus: 1,
-                    AND: [{ compCEO: { not: null } }, { compCEO: { not: '' } }, { compCEO: { not: '미정' } }],
+                    AND: [{ compCEO: { not: '' } }, { compCEO: { not: '미정' } }],
                 },
             });
 
             const withIndustry = await this.prisma.compInfo.count({
                 where: {
                     compStatus: 1,
-                    AND: [{ compIndustry: { not: null } }, { compIndustry: { not: '' } }, { compIndustry: { not: '기타' } }],
+                    AND: [{ compIndustry: { not: '' } }, { compIndustry: { not: '기타' } }],
                 },
             });
 
@@ -157,11 +159,13 @@ export class CompanyCrawlerController {
         try {
             const total = await this.prisma.compInfo.count({ where: { compStatus: 1 } });
 
+            // compURL 만 nullable 이다. 나머지는 NOT NULL 이라 null 로 비교하면 Prisma 가 던진다
+            // (이 때문에 missing-stats 가 계속 500 이었다 — 식당 쪽과 같은 문제).
             const fields: any[] = [
                 { key: 'compURL', label: '홈페이지', condition: { OR: [{ compURL: null }, { compURL: '' }] } },
-                { key: 'compCEO', label: '대표이사', condition: { OR: [{ compCEO: null }, { compCEO: '' }, { compCEO: '미정' }] } },
-                { key: 'compIndustry', label: '업종', condition: { OR: [{ compIndustry: null }, { compIndustry: '' }, { compIndustry: '기타' }] } },
-                { key: 'compAddr', label: '도로명주소', condition: { OR: [{ compAddr: null }, { compAddr: '' }] } },
+                { key: 'compCEO', label: '대표이사', condition: { OR: [{ compCEO: '' }, { compCEO: '미정' }] } },
+                { key: 'compIndustry', label: '업종', condition: { OR: [{ compIndustry: '' }, { compIndustry: '기타' }] } },
+                { key: 'compAddr', label: '도로명주소', condition: { compAddr: '' } },
             ];
 
             const stats: any[] = [];
@@ -375,6 +379,7 @@ export class CompanyCrawlerController {
                 lat, lng, radius,
                 countPerSource,
                 dryRun,
+                runId,
             } = req.body;
 
             logger.info(`[CompCrawlerController:runCrawl] 요청 - sources: ${sources}, region: ${region}, dryRun: ${dryRun}`);
@@ -389,6 +394,7 @@ export class CompanyCrawlerController {
                 countPerSource: countPerSource ? parseInt(countPerSource) : undefined,
                 saveToDB: !dryRun,
                 dryRun: !!dryRun,
+                runId,
             });
 
             return res.status(200).json({
@@ -401,6 +407,49 @@ export class CompanyCrawlerController {
         } catch (error: any) {
             logger.error(`[CompCrawlerController:runCrawl] ${error.message}`);
             return res.status(500).json({ success: false, message: `크롤링 실패: ${error.message || 'Internal Server Error'}` });
+        }
+    }
+
+    // 크롤링 진행 상황 조회 (폴링).
+    // run 요청이 블로킹으로 떠 있는 동안 같은 runId 로 물어보면 단계별 상황을 돌려준다.
+    @Get('progress/:runId')
+    async getProgress(@Req() req: Request, @Res() res: Response) {
+        try {
+            const runId = (req.params as any).runId;
+            const progress = this.crawlerService.getProgress(runId);
+            if (!progress) {
+                // 아직 시작 전이거나 이미 정리된 경우
+                return res.status(200).json({ success: true, found: false });
+            }
+            return res.status(200).json({ success: true, found: true, ...progress });
+        } catch (error: any) {
+            logger.error(`[CompCrawlerController:getProgress] ${error.message}`);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    }
+
+    // 미리보기에서 고른 행만 저장.
+    // 기존 run(dryRun=false) 은 크롤링을 다시 돌려서 검토한 목록과 저장분이 달라질 수 있었다.
+    @Post('save')
+    async saveSelected(@Req() req: Request, @Res() res: Response) {
+        try {
+            const { items } = req.body;
+            if (!Array.isArray(items) || items.length === 0) {
+                return res.status(400).json({ success: false, message: '저장할 항목이 없습니다.' });
+            }
+            logger.info(`[CompCrawlerController:saveSelected] 요청 ${items.length}건`);
+            const result = await this.crawlerService.saveSelected(items);
+            const { saved, updated, skipped } = result.stats;
+            return res.status(200).json({
+                success: true,
+                message: `${saved}건 저장 완료` +
+                    (updated > 0 ? `, ${updated}건 갱신` : '') +
+                    (skipped > 0 ? ` (좌표·이름·주소 누락 ${skipped}건 제외)` : ''),
+                ...result,
+            });
+        } catch (error: any) {
+            logger.error(`[CompCrawlerController:saveSelected] ${error.message}`);
+            return res.status(500).json({ success: false, message: `저장 실패: ${error.message || 'Internal Server Error'}` });
         }
     }
 
