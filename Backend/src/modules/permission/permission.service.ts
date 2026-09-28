@@ -56,6 +56,108 @@ type MenuRow = {
 export class PermissionService {
     constructor(private readonly prisma: PrismaService) {}
 
+    /**
+     * 그룹 코드 → 그 그룹에 켜져 있는 메뉴 경로 목록.
+     * MenuAccessGuard 가 어드민 요청마다 부르므로 짧게 캐시한다.
+     * 권한을 고치면 즉시 비우고, 다른 서버 인스턴스는 TTL 만큼 늦게 반영된다.
+     */
+    private accessCache: {
+        at: number;
+        /** 그룹 코드 → 그 그룹에 켜진 menuIdx 들 */
+        byGroup: Map<string, Set<number>>;
+        /** 메뉴 경로 → menuIdx 들 (경로가 겹치는 메뉴가 있어 배열이다) */
+        byPath: Map<string, number[]>;
+        childrenOf: Map<number, number[]>;
+    } | null = null;
+    private static readonly ACCESS_TTL_MS = 10_000;
+
+    private invalidateAccessCache() {
+        this.accessCache = null;
+    }
+
+    private async accessSnapshot() {
+        const now = Date.now();
+        if (this.accessCache && now - this.accessCache.at < PermissionService.ACCESS_TTL_MS) {
+            return this.accessCache;
+        }
+
+        const [rows, groups] = await Promise.all([
+            this.prisma.adminMenu.findMany({
+                select: { menuIdx: true, parentIdx: true, menuPath: true, rolePermissions: true },
+            }),
+            this.prisma.adminGroup.findMany({ select: { groupCode: true } }),
+        ]);
+
+        const byGroup = new Map<string, Set<number>>();
+        for (const g of groups) byGroup.set(g.groupCode, new Set());
+
+        const byPath = new Map<string, number[]>();
+        const childrenOf = new Map<number, number[]>();
+
+        for (const r of rows) {
+            if (r.parentIdx != null) {
+                const list = childrenOf.get(r.parentIdx) ?? [];
+                list.push(r.menuIdx);
+                childrenOf.set(r.parentIdx, list);
+            }
+            if (r.menuPath) {
+                const list = byPath.get(r.menuPath) ?? [];
+                list.push(r.menuIdx);
+                byPath.set(r.menuPath, list);
+            }
+            if (r.menuPath && MASTER_ONLY_PATHS.includes(r.menuPath)) continue;
+            for (const [code, on] of Object.entries(this.permsOf(r))) {
+                if (on === true && byGroup.has(code)) byGroup.get(code)!.add(r.menuIdx);
+            }
+        }
+
+        this.accessCache = { at: now, byGroup, byPath, childrenOf };
+        return this.accessCache;
+    }
+
+    /**
+     * 이 계정이 requiredPath 메뉴(또는 그 하위 메뉴)를 볼 수 있는지.
+     *
+     * 하위까지 인정하는 이유: '맛잘알 오빠 > 크롤러 관리' 만 켜 준 그룹도 크롤러 화면이
+     * 쓰는 /admin/restaurant 계열 API 를 불러야 한다.
+     *
+     * 하위 판정은 반드시 '메뉴 트리' 기준이어야 한다. 경로 문자열 접두사로 하면
+     * Dashboard(/myoriadmin)가 모든 메뉴 경로의 접두사라서, 메뉴 하나만 가진 그룹에도
+     * 전 서비스 집계인 대시보드가 열려 버린다.
+     */
+    async canAccessMenuPath(user: any, requiredPath: string): Promise<boolean> {
+        if (user?.userRole === 'master') return true;
+        if (user?.groupIdx == null) return false;
+
+        const group = await this.prisma.adminGroup.findUnique({
+            where: { groupIdx: user.groupIdx },
+            select: { groupCode: true },
+        });
+        if (!group) return false;
+
+        const snap = await this.accessSnapshot();
+        const visible = snap.byGroup.get(group.groupCode);
+        if (!visible || visible.size === 0) return false;
+
+        const roots = snap.byPath.get(requiredPath);
+        if (!roots || roots.length === 0) {
+            logger.warn(`[PermissionService] 메뉴에 없는 경로로 권한을 물었다: ${requiredPath}`);
+            return false;
+        }
+
+        // 자신 또는 하위 중 하나라도 보이면 통과
+        const stack = [...roots];
+        const seen = new Set<number>();
+        while (stack.length > 0) {
+            const idx = stack.pop()!;
+            if (seen.has(idx)) continue;
+            seen.add(idx);
+            if (visible.has(idx)) return true;
+            stack.push(...(snap.childrenOf.get(idx) ?? []));
+        }
+        return false;
+    }
+
     // ─── 조회 ────────────────────────────────────────────────
 
     /**
@@ -170,6 +272,7 @@ export class PermissionService {
             },
         });
 
+        this.invalidateAccessCache();
         logger.info(`[PermissionService:createMenu] ${created.menuIdx} ${menuName} (parent=${parentIdx})`);
         return created.menuIdx;
     }
@@ -187,6 +290,7 @@ export class PermissionService {
         if (Object.keys(data).length === 0) throw new Error('수정할 내용이 없습니다.');
 
         await this.prisma.adminMenu.update({ where: { menuIdx }, data });
+        this.invalidateAccessCache();
         logger.info(`[PermissionService:updateMenu] ${menuIdx} ${JSON.stringify(data)}`);
     }
 
@@ -200,6 +304,7 @@ export class PermissionService {
 
         const doomed = this.collectSubtree(rows, menuIdx);
         await this.prisma.adminMenu.delete({ where: { menuIdx } });
+        this.invalidateAccessCache();
 
         logger.info(`[PermissionService:deleteMenu] ${menuIdx} (하위 포함 ${doomed.length}건)`);
         return doomed.length;
@@ -282,6 +387,7 @@ export class PermissionService {
             ),
         );
 
+        this.invalidateAccessCache();
         logger.info(`[PermissionService:saveMenus] ${parsed.length}건 갱신`);
         return parsed.length;
     }
@@ -307,6 +413,7 @@ export class PermissionService {
             data: { groupCode, groupName, isBuiltIn: 0, sortOrder: last ? last.sortOrder + 1 : 0 },
         });
 
+        this.invalidateAccessCache();
         logger.info(`[PermissionService:createGroup] ${created.groupIdx} ${groupCode}/${groupName}`);
         return { groupIdx: created.groupIdx, groupCode, groupName };
     }
@@ -343,6 +450,7 @@ export class PermissionService {
             this.prisma.adminGroup.delete({ where: { groupIdx } }),
         ]);
 
+        this.invalidateAccessCache();
         logger.info(`[PermissionService:deleteGroup] ${groupIdx} ${group.groupCode} (메뉴 ${dirty.length}건 정리)`);
     }
 

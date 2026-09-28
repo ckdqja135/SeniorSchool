@@ -11,6 +11,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { MenuAccessGuard } from '../../../common/guards/menu-access.guard';
 import { RestaurantImageUploadInterceptor } from '../../../common/interceptors/restaurant-image-upload.interceptor';
 import { logger } from '../../../logger/winston.logger';
 import { AdminRestaurantService } from './admin-restaurant.service';
@@ -50,7 +51,7 @@ function saveBase64Image(base64String: string, uploadDir: string): string {
 }
 
 @Controller('admin/restaurant')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class AdminRestaurantController {
     constructor(private readonly service: AdminRestaurantService) {}
 

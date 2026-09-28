@@ -14,12 +14,13 @@ import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { MenuAccessGuard } from '../../../common/guards/menu-access.guard';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { logger } from '../../../logger/winston.logger';
 import { RestaurantCrawlerService } from './restaurant-crawler.service';
 
 @Controller('admin/crawler')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class RestaurantCrawlerController {
     constructor(
         private readonly crawlerService: RestaurantCrawlerService,

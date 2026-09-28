@@ -11,11 +11,12 @@ import { Controller, Get, Post, Put, Delete, Param, Req, Res, UseGuards } from '
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { MenuAccessGuard } from '../../../common/guards/menu-access.guard';
 import { logger } from '../../../logger/winston.logger';
 import { AdminCompService } from './admin-comp.service';
 
 @Controller('admin/comp')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class AdminCompController {
     constructor(private readonly service: AdminCompService) {}
 

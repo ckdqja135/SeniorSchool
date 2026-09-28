@@ -9,11 +9,12 @@ import { DynamicBoardService } from './dynamic-board.service';
 import { DynamicRequestService } from './dynamic-request.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
+import { MenuAccessGuard } from '../../common/guards/menu-access.guard';
 import { SlugResolverGuard } from './slug-resolver.guard';
 import { logger } from '../../logger/winston.logger';
 
 @Controller('admin/services/:slug')
-@UseGuards(JwtAuthGuard, AdminGuard, SlugResolverGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard, SlugResolverGuard)
 export class AdminDynamicController {
     constructor(
         private readonly entityService: DynamicEntityService,

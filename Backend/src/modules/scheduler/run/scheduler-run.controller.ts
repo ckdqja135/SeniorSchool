@@ -6,11 +6,12 @@ import { Controller, Get, Post, Delete, Param, Req, Res, UseGuards } from '@nest
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { MenuAccessGuard } from '../../../common/guards/menu-access.guard';
 import { logger } from '../../../logger/winston.logger';
 import { SchedulerRunService } from './scheduler-run.service';
 
 @Controller('admin/scheduler-run')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class SchedulerRunController {
     constructor(private readonly service: SchedulerRunService) {}
 

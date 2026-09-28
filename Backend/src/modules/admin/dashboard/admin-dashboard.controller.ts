@@ -4,11 +4,12 @@ import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { MenuAccessGuard } from '../../../common/guards/menu-access.guard';
 import { logger } from '../../../logger/winston.logger';
 import { AdminDashboardService } from './admin-dashboard.service';
 
 @Controller('admin/dashboard')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class AdminDashboardController {
     constructor(private readonly service: AdminDashboardService) {}
 

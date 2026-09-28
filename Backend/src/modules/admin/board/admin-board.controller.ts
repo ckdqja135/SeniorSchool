@@ -5,6 +5,7 @@ import { Controller, Get, Post, Put, Delete, Param, Req, Res, UseGuards } from '
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { MenuAccessGuard } from '../../../common/guards/menu-access.guard';
 import { logger } from '../../../logger/winston.logger';
 import {
     AdminBoardBaseService,
@@ -54,7 +55,7 @@ async function handleDelete(service: AdminBoardBaseService, tag: string, boardId
 }
 
 @Controller('admin/univboard')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class AdminUnivBoardController {
     constructor(private readonly service: AdminUnivBoardService) {}
     @Get() getPosts(@Req() req: Request, @Res() res: Response) { return handleList(this.service, 'univboard', req, res); }
@@ -64,7 +65,7 @@ export class AdminUnivBoardController {
 }
 
 @Controller('admin/churchboard')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class AdminChurchBoardController {
     constructor(private readonly service: AdminChurchBoardService) {}
     @Get() getPosts(@Req() req: Request, @Res() res: Response) { return handleList(this.service, 'churchboard', req, res); }
@@ -74,7 +75,7 @@ export class AdminChurchBoardController {
 }
 
 @Controller('admin/compboard')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class AdminCompBoardController {
     constructor(private readonly service: AdminCompBoardService) {}
     @Get() getPosts(@Req() req: Request, @Res() res: Response) { return handleList(this.service, 'compboard', req, res); }
@@ -84,7 +85,7 @@ export class AdminCompBoardController {
 }
 
 @Controller('admin/outsourceboard')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class AdminOutsourceBoardController {
     constructor(private readonly service: AdminOutsourceBoardService) {}
     @Get() getPosts(@Req() req: Request, @Res() res: Response) { return handleList(this.service, 'outsourceboard', req, res); }
@@ -94,7 +95,7 @@ export class AdminOutsourceBoardController {
 }
 
 @Controller('admin/restaurantboard')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class AdminRestaurantBoardController {
     constructor(private readonly service: AdminRestaurantBoardService) {}
     @Get() getPosts(@Req() req: Request, @Res() res: Response) { return handleList(this.service, 'restaurantboard', req, res); }

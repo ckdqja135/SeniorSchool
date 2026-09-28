@@ -11,6 +11,7 @@ import { Controller, Get, Post, Param, Req, Res, UseGuards } from '@nestjs/commo
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { MenuAccessGuard } from '../../../common/guards/menu-access.guard';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { logger } from '../../../logger/winston.logger';
 import { CompanyDataSchedulerService } from './company-data-scheduler.service';
@@ -20,7 +21,7 @@ import { CompanyCrawlerService } from './company-crawler.service';
 // 회사 데이터 스케줄러 관리 API (/admin/scheduler) — authenticateToken + isAdmin
 // ─────────────────────────────────────────────────────────────
 @Controller('admin/scheduler')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class CompanyDataSchedulerController {
     constructor(private readonly scheduler: CompanyDataSchedulerService) {}
 
@@ -84,7 +85,7 @@ export class CompanyDataSchedulerController {
 // 회사 크롤러 어드민 API (/admin/company-crawler) — authenticateToken + isAdmin
 // ─────────────────────────────────────────────────────────────
 @Controller('admin/company-crawler')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class CompanyCrawlerController {
     constructor(
         private readonly crawlerService: CompanyCrawlerService,

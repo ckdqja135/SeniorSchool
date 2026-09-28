@@ -5,12 +5,13 @@ import { Controller, Get, Post, Put, Delete, Req, Res, UseGuards } from '@nestjs
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { MenuAccessGuard } from '../../../common/guards/menu-access.guard';
 import { Public } from '../../../common/decorators/public.decorator';
 import { logger } from '../../../logger/winston.logger';
 import { AdminReportService } from './admin-report.service';
 
 @Controller('admin/report')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class AdminReportController {
     constructor(private readonly service: AdminReportService) {}
 

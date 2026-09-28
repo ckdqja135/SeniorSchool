@@ -5,10 +5,11 @@ import { Request, Response } from 'express';
 import { ServiceConfigService } from './service-config.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
+import { MenuAccessGuard } from '../../common/guards/menu-access.guard';
 import { logger } from '../../logger/winston.logger';
 
 @Controller('admin/services')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class AdminServiceConfigController {
     constructor(private readonly serviceConfigService: ServiceConfigService) {}
 

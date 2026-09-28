@@ -4,11 +4,12 @@ import { Controller, Get, Post, Put, Delete, Param, Req, Res, UseGuards } from '
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { MenuAccessGuard } from '../../../common/guards/menu-access.guard';
 import { logger } from '../../../logger/winston.logger';
 import { AdminFreeBoardService } from './admin-freeboard.service';
 
 @Controller('admin/freeboard')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class AdminFreeBoardController {
     constructor(private readonly service: AdminFreeBoardService) {}
 

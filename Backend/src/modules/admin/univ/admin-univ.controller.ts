@@ -11,12 +11,13 @@ import { Controller, Get, Post, Put, Delete, Param, Req, Res, UseGuards } from '
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../../common/guards/admin.guard';
+import { MenuAccessGuard } from '../../../common/guards/menu-access.guard';
 import { Public } from '../../../common/decorators/public.decorator';
 import { logger } from '../../../logger/winston.logger';
 import { AdminUnivService } from './admin-univ.service';
 
 @Controller('admin/univ')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwtAuthGuard, AdminGuard, MenuAccessGuard)
 export class AdminUnivController {
     constructor(private readonly univService: AdminUnivService) {}
 
