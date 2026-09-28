@@ -15,6 +15,7 @@ import { ReportModule } from './modules/report/report.module';
 import { SearchModule } from './modules/search/search.module';
 import { DynamicModule } from './modules/dynamic/dynamic.module';
 import { UserModule } from './modules/user/user.module';
+import { PermissionModule } from './modules/permission/permission.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 
@@ -36,6 +37,7 @@ import { SchedulerModule } from './modules/scheduler/scheduler.module';
         SearchModule,
         DynamicModule,
         UserModule,
+        PermissionModule,
         AdminModule,
         SchedulerModule,
     ],

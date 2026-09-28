@@ -238,13 +238,53 @@ model User {
   userId      String    @unique(map: "id") @db.VarChar(200)
   userPw      String    @db.VarChar(200)
   userRole    String    @db.VarChar(50)
+  // 속한 권한 그룹 (메뉴 노출용). userRole 과 별개이며, 그룹이 삭제되면 NULL 로 떨어진다
+  groupIdx    Int?      @db.UnsignedInt
   salt        String    @db.VarChar(200)
   lastLogin   DateTime? @db.DateTime(0)
   // DB는 tinyint(1)이지만 구 스택(Sequelize TINYINT)은 JSON에 1/0 숫자로 직렬화 → Int로 강제 (패리티)
   userStatus  Int       @default(1) @db.TinyInt
   accessToken String?   @db.VarChar(200)
 
+  group AdminGroup? @relation(fields: [groupIdx], references: [groupIdx], onDelete: SetNull, onUpdate: Cascade, map: "fk_user_admin_group")
+
   @@map("tb_user")
+}
+
+// 어드민 권한 그룹. groupCode 가 AdminMenu.rolePermissions 의 키가 된다.
+// master/admin 두 개는 붙박이(isBuiltIn=1)라 이름 변경·삭제가 막혀 있다.
+model AdminGroup {
+  groupIdx  Int      @id @default(autoincrement()) @db.UnsignedInt
+  groupCode String   @unique(map: "uq_admin_group_code") @db.VarChar(50)
+  groupName String   @db.VarChar(100)
+  isBuiltIn Int      @default(0) @db.TinyInt
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now()) @db.DateTime(0)
+
+  users User[]
+
+  @@map("tb_admin_group")
+}
+
+// 어드민 사이드바 메뉴 트리 + 그룹별 노출 여부.
+// menuPath 가 NULL 이면 클릭 이동이 없는 묶음 메뉴다(예: 시스템 관리).
+model AdminMenu {
+  menuIdx   Int     @id @default(autoincrement()) @db.UnsignedInt
+  parentIdx Int?    @db.UnsignedInt
+  menuName  String  @db.VarChar(100)
+  menuPath  String? @db.VarChar(200)
+  menuIcon  String? @db.VarChar(20)
+  sortOrder Int     @default(0)
+  // {"<groupCode>": true} — 키가 없으면 노출 안 함으로 본다
+  rolePermissions Json
+  createdAt       DateTime @default(now()) @db.DateTime(0)
+  updatedAt       DateTime @default(now()) @updatedAt @db.DateTime(0)
+
+  parent   AdminMenu?  @relation("AdminMenuChildren", fields: [parentIdx], references: [menuIdx], onDelete: Cascade, onUpdate: Cascade, map: "fk_admin_menu_parent")
+  children AdminMenu[] @relation("AdminMenuChildren")
+
+  @@index([parentIdx, sortOrder], map: "idx_admin_menu_parent")
+  @@map("tb_admin_menu")
 }
 
 model PageView {

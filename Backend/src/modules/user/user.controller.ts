@@ -61,7 +61,8 @@ export class UserController {
     @Delete('deleteAdmin')
     @UseGuards(JwtAuthGuard, MasterGuard)
     async deleteAdmin(@Req() req: Request, @Res() res: Response) {
-        const result = await this.userService.deleteAdmin(req.body);
+        // 호출자를 넘긴다 — 본인 계정·마지막 master 삭제를 서비스에서 막는다
+        const result = await this.userService.deleteAdmin(req.body, (req as any).user);
         return res.status(200).json(result);
     }
 
@@ -77,7 +78,7 @@ export class UserController {
     @Patch('patchAdmin')
     @UseGuards(JwtAuthGuard, MasterGuard)
     async patchAdmin(@Req() req: Request, @Res() res: Response) {
-        const result = await this.userService.patchAdmin(req.body);
+        const result = await this.userService.patchAdmin(req.body, (req as any).user);
         return res.status(200).json(result);
     }
 
