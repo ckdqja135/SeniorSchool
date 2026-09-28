@@ -4,7 +4,6 @@
 //  네이버/카카오 소스로 비상장사 보강.)
 // node-cron → @nestjs/schedule 의 @Cron 으로 대체 (원본 .start()의 cron 표현식 그대로 유지).
 import { Injectable } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { logger } from '../../../logger/winston.logger';
 import { CompanyCrawlerService } from './company-crawler.service';
 
@@ -25,14 +24,8 @@ export class CompanyCrawlerSchedulerService {
 
     constructor(private readonly crawlerService: CompanyCrawlerService) {}
 
-    /**
-     * 스케줄러 등록 (원본: cron.schedule('0 4 * * 1', () => this.run()))
-     * 매주 월요일 04:00. @nestjs/schedule 이 모듈 로드시 자동 등록한다.
-     */
-    @Cron('0 4 * * 1')
-    async handleCron(): Promise<void> {
-        await this.run();
-    }
+    // 크론 등록은 SchedulerRunService 로 옮겼다 (수동·정기 실행이 같은 경로를 타며 실행 기록이 남도록).
+    // 표현식은 그대로 '0 4 * * 1'.
 
     async runNow(): Promise<void> {
         logger.info('[CompanyCrawlerScheduler] 수동 실행');

@@ -5,7 +5,6 @@
 // BigInt 컬럼 주의: 구 스택 Sequelize 는 BIGINT 컬럼에 number 를 그대로 저장했으나, Prisma 는
 // BigInt 필드에 number 를 허용하지 않는다 → 저장값 동일성을 위해 number 를 BigInt 로 변환한다.
 import { Injectable } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { logger } from '../../../logger/winston.logger';
 import { ExternalApiService } from './external-api.service';
@@ -36,23 +35,21 @@ export class CompanyDataSchedulerService {
      * 스케줄러 등록 (원본: cron.schedule('0 0 * * *', () => this.runUpdate()))
      * @nestjs/schedule 이 모듈 로드시 자동 등록한다 (.start() 호출 불필요).
      */
-    @Cron('0 0 * * *')
-    async handleCron(): Promise<void> {
-        await this.runUpdate();
-    }
+    // 크론 등록은 SchedulerRunService 로 옮겼다 (수동·정기 실행이 같은 경로를 타며 실행 기록이 남도록).
+    // 표현식은 그대로 '0 0 * * *'.
 
     /**
      * 즉시 업데이트 실행 (테스트용) — admin 컨트롤러가 호출
      */
-    async runUpdateNow(): Promise<void> {
-        logger.info('[CompanyDataScheduler] Manual update triggered');
-        await this.runUpdate();
+    async runUpdateNow(year?: number): Promise<void> {
+        logger.info(`[CompanyDataScheduler] Manual update triggered${year ? ` (대상 연도: ${year})` : ''}`);
+        await this.runUpdate(year);
     }
 
     /**
      * 회사 정보 업데이트 실행
      */
-    async runUpdate(): Promise<void> {
+    async runUpdate(year?: number): Promise<void> {
         if (this.isRunning) {
             logger.warn('[CompanyDataScheduler] Update already running, skipping...');
             return;
@@ -97,7 +94,8 @@ export class CompanyDataSchedulerService {
                     logger.info(`${progress} Processing: ${company.compName} (compIdx: ${company.compIdx})`);
 
                     // OpenDart에서 데이터 조회 (DB에 corpCode가 있으면 바로 사용)
-                    const currentYear = new Date().getFullYear() - 1; // 전년도 데이터
+                    // 대상 연도를 받으면 그 연도로, 아니면 전년도 (기존 동작)
+                    const currentYear = year || new Date().getFullYear() - 1;
                     const openDartData = await this.externalApiService.getCompanyDataFromOpenDart(
                         company.compName,
                         null,

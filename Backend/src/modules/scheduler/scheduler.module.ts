@@ -4,11 +4,14 @@
 import { Module } from '@nestjs/common';
 import { CompanySchedulerModule } from './company/company-scheduler.module';
 import { RestaurantCrawlerModule } from './restaurant/restaurant-crawler.module';
+import { SchedulerRunModule } from './run/scheduler-run.module';
 
 @Module({
     imports: [
         CompanySchedulerModule,
         RestaurantCrawlerModule,
+        // 수동 실행 화면 + 크론 등록 (/admin/scheduler-run)
+        SchedulerRunModule,
     ],
 })
 export class SchedulerModule {}

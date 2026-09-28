@@ -10,7 +10,6 @@
  */
 
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { logger } from '../../../logger/winston.logger';
 import { CrawlerKeywordService } from './crawler-keyword.service';
 import { RestaurantCrawlerService } from './restaurant-crawler.service';
@@ -34,11 +33,8 @@ export class RestaurantCrawlerSchedulerService implements OnModuleInit {
         logger.info('[RestaurantCrawlerScheduler] 스케줄러 시작 (매주 월요일 03:00 — 수집 후 빈 필드 보강)');
     }
 
-    // 매주 월요일 새벽 3시
-    @Cron('0 3 * * 1')
-    async handleCron() {
-        await this.run();
-    }
+    // 크론 등록은 SchedulerRunService 로 옮겼다 (수동·정기 실행이 같은 경로를 타며 실행 기록이 남도록).
+    // 표현식은 그대로 '0 3 * * 1'.
 
     async runNow() {
         logger.info('[RestaurantCrawlerScheduler] 수동 실행');

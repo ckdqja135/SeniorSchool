@@ -22,6 +22,9 @@ import { CompanyDataSchedulerController, CompanyCrawlerController } from './comp
         ExternalApiService,
         ConglomerateService,
         CompanyCrawlerService,
+        // 스케줄러 수동 실행 화면(SchedulerRunModule)이 주입받는다
+        CompanyDataSchedulerService,
+        CompanyCrawlerSchedulerService,
     ],
 })
 export class CompanySchedulerModule {}

@@ -16,5 +16,7 @@ import { RestaurantEnrichService } from './restaurant-enrich.service';
         RestaurantCrawlerSchedulerService,
         RestaurantEnrichService,
     ],
+    // 스케줄러 수동 실행 화면(SchedulerRunModule)이 주입받는다
+    exports: [RestaurantCrawlerSchedulerService],
 })
 export class RestaurantCrawlerModule {}
