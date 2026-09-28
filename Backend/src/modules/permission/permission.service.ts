@@ -19,6 +19,16 @@ const MAX_DEPTH = 3;
 /** 붙박이 그룹 코드 — 새 그룹이 가져갈 수 없다 */
 const RESERVED_CODES = ['master', 'admin'];
 
+/**
+ * master 전용 화면의 경로.
+ *
+ * 이 메뉴들은 권한 JSON 과 무관하게 master 에게만 보인다.
+ * 해당 API 가 MasterGuard 로 잠겨 있어서 다른 그룹에 켜 줘도 화면은 '권한 없음' 만 뜬다 —
+ * 그럴 바에는 사이드바에 아예 내보내지 않는다.
+ * (화면 자체는 그대로 둔다. 주소를 직접 치면 안내 문구가 나온다)
+ */
+const MASTER_ONLY_PATHS = ['/myoriadmin/admin'];
+
 export interface MenuNode {
     menuIdx: number;
     menuName: string;
@@ -28,6 +38,8 @@ export interface MenuNode {
     children: MenuNode[];
     /** 관리자 편집용 조회에만 실린다 */
     rolePermissions?: Record<string, boolean>;
+    /** master 전용 화면이라 다른 그룹에는 켤 수 없는 메뉴 (편집용 조회에만 실린다) */
+    masterOnly?: boolean;
 }
 
 type MenuRow = {
@@ -71,7 +83,10 @@ export class PermissionService {
             return { menus: [], totalMenus, hasGroup: false };
         }
 
-        const visible = rows.filter((r) => this.permsOf(r)[group.groupCode] === true);
+        // master 전용 메뉴는 권한 체크와 무관하게 제외한다
+        const visible = rows.filter(
+            (r) => this.permsOf(r)[group.groupCode] === true && !this.isMasterOnly(r),
+        );
         return { menus: this.pruneEmptyContainers(this.buildTree(visible)), totalMenus, hasGroup: true };
     }
 
@@ -355,6 +370,11 @@ export class PermissionService {
         return { ...(v as Record<string, boolean>) };
     }
 
+    /** master 전용 화면으로 가는 메뉴인지 */
+    private isMasterOnly(row: { menuPath: string | null }): boolean {
+        return row.menuPath !== null && MASTER_ONLY_PATHS.includes(row.menuPath);
+    }
+
     private buildTree(rows: MenuRow[], withPerms = false, parentIdx: number | null = null): MenuNode[] {
         return rows
             .filter((r) => r.parentIdx === parentIdx)
@@ -367,7 +387,10 @@ export class PermissionService {
                     sortOrder: r.sortOrder,
                     children: this.buildTree(rows, withPerms, r.menuIdx),
                 };
-                if (withPerms) node.rolePermissions = this.permsOf(r);
+                if (withPerms) {
+                    node.rolePermissions = this.permsOf(r);
+                    node.masterOnly = this.isMasterOnly(r);
+                }
                 return node;
             });
     }
