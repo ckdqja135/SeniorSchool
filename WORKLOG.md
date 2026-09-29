@@ -183,3 +183,10 @@
 - **수정**: `common/utils/secret-keys.util.ts`(SECRET_KEYS, safeJson) 신규 — main.ts 전역 json replacer 가 비밀 키를 응답에서 제거(동적 서비스 snake_case 포함), 로그 12곳은 safeJson/maskSecret 으로 비밀번호를 `***` 로 가림
 - **검증**: 빌드·타입 검사, 중첩·raw SQL·관리자 목록·로그인 토큰 유지 테스트. 프론트는 응답 비밀번호 필드를 읽지 않음(검색 확인)
 - **롤백**: `git revert <commit>` (기존 로그 파일에 남은 평문 비밀번호는 별도 정리 필요)
+
+## 2026-09-29 | BUGFIX: 맛잘알 지역별 핫플레이스 별점이 항상 비어 있던 문제
+- **원인**: `/restaurant/hotplaces` 가 후기 평점(averageRating·ratingCount)을 응답하지 않아 카드·탐색 탭 별점이 모두 0% (이전 `/restaurant` 도 동일)
+- **수정**: `restaurant.service.getHotplaces` 에 후기 평점 groupBy 를 붙여 응답, `selectHotplaceRows` 의 도시별 선택 기준을 화면 정렬(카드: 평점→후기 수, 탐색: 평점→후기 수→조회수)과 동일하게
+- **영향**: 도시별 탭 순서가 원래 의도대로 평점순이 됨(전국 탭은 조회수순 그대로)
+- **검증**: 빌드·타입 검사, 운영 데이터 + 무작위 평점 30회 × 13지역 × 2탭 780건 선택 결과 일치
+- **롤백**: `git revert <commit>`

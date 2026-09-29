@@ -529,10 +529,10 @@ export class RestaurantService {
     // 지역별 핫플레이스용 경량 목록 (맛잘알 메인)
     // 메인이 GET /restaurant 전체(7천여 행·메뉴 포함 7MB)를 받아 지역별 TOP N 과 인기 후기 식당 좌표만 쓰던 것을,
     // 필요한 컬럼만 조회하고 실제로 쓰이는 식당만 남겨 보낸다. 필드명·순서(restaurantName ASC)는 /restaurant 와 동일.
-    // 평점 필드는 넣지 않는다 — 프론트 도시별 정렬이 평점 우선이라, 넣으면 기존 목록 순서가 바뀐다.
+    // 별점 표시·도시별 평점순 정렬을 위해 후기 평균 평점(averageRating)·평점 수(ratingCount)를 붙인다 (/nearby 와 같은 계산).
     async getHotplaces(limit = 10) {
         try {
-            const [rows, topBoards] = await Promise.all([
+            const [infoRows, topBoards, ratings] = await Promise.all([
                 this.prisma.restaurantInfo.findMany({
                     where: { restaurantStatus: 1 },
                     orderBy: { restaurantName: 'asc' },
@@ -552,7 +552,25 @@ export class RestaurantService {
                     orderBy: [{ boardHits: 'desc' }, { boardIdx: 'asc' }],
                     take: 10,
                 }),
+                this.prisma.restaurantBoard.groupBy({
+                    by: ['restaurantIdx'],
+                    where: { restaurantIdx: { not: null }, boardRating: { not: null } },
+                    _avg: { boardRating: true },
+                    _count: { boardRating: true },
+                }),
             ]);
+
+            const ratingMap = new Map(ratings.map((r) => [String(r.restaurantIdx), r]));
+            const rows = infoRows.map((r) => {
+                const rating = ratingMap.get(String(r.restaurantIdx));
+                return {
+                    ...r,
+                    averageRating: rating && rating._avg.boardRating != null
+                        ? parseFloat(Number(rating._avg.boardRating).toFixed(1))
+                        : null,
+                    ratingCount: rating ? Number(rating._count.boardRating) : 0,
+                };
+            });
 
             // 지역 칩 후보 = 지역 목록(getRestaurantLocations)에 나오는 모든 도시
             const cities = new Set<string>();

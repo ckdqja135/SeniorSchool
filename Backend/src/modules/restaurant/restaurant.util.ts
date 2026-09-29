@@ -76,11 +76,11 @@ function addrMatchesCity(addr: string, city: string): boolean {
  * 각 화면 규칙의 상위 limit 개를 모두 포함하고 원래 순서를 유지하므로,
  * 결과에 프론트의 기존 필터·안정 정렬·slice 를 적용하면 전체 목록에 적용한 것과 같은 결과가 나온다.
  *  - 전국: 조회수순 limit
- *  - 도시별(탐색 탭): 주소 매칭 후 조회수순 limit
- *  - 도시별(카드 탭): 주소 매칭 후 원래 순서 앞 limit (평점 필드가 없어 정렬 키가 모두 0)
+ *  - 도시별(탐색 탭): 주소 매칭 후 평점 → 후기 수 → 조회수순 limit
+ *  - 도시별(카드 탭): 주소 매칭 후 평점 → 후기 수 순(동률은 원래 순서) limit
  *  - extraIdx: 인기 후기의 식당 (후기 탭 지도 이동 버튼이 좌표를 찾는 용도)
  */
-export function selectHotplaceRows<T extends { restaurantIdx: any; restaurantAddr: string | null; restaurantViewCount: number }>(
+export function selectHotplaceRows<T extends { restaurantIdx: any; restaurantAddr: string | null; restaurantViewCount: number; averageRating: number | null; ratingCount: number }>(
     rows: T[],
     cities: string[],
     limit: number,
@@ -88,14 +88,15 @@ export function selectHotplaceRows<T extends { restaurantIdx: any; restaurantAdd
 ): T[] {
     const keep = new Set<string>(extraIdx);
     const add = (list: T[]) => list.forEach((r) => keep.add(String(r.restaurantIdx)));
-    const topByViews = (list: T[]) =>
-        [...list].sort((a, b) => (b.restaurantViewCount || 0) - (a.restaurantViewCount || 0)).slice(0, limit);
+    const top = (list: T[], cmp: (a: T, b: T) => number) => [...list].sort(cmp).slice(0, limit);
+    const byViews = (a: T, b: T) => (b.restaurantViewCount || 0) - (a.restaurantViewCount || 0);
+    const byRating = (a: T, b: T) => (b.averageRating || 0) - (a.averageRating || 0) || (b.ratingCount || 0) - (a.ratingCount || 0);
 
-    add(topByViews(rows));
+    add(top(rows, byViews));
     for (const city of cities) {
         const matched = rows.filter((r) => addrMatchesCity(r.restaurantAddr || '', city));
-        add(matched.slice(0, limit));
-        add(topByViews(matched));
+        add(top(matched, byRating));                                    // 카드 탭
+        add(top(matched, (a, b) => byRating(a, b) || byViews(a, b)));   // 탐색 탭
     }
     return rows.filter((r) => keep.has(String(r.restaurantIdx)));
 }
