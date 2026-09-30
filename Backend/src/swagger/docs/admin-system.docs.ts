@@ -478,16 +478,19 @@ export const adminSystemDocs: ApiDocMap = {
         summary: '관리자 로그인',
         description:
             '성공하면 24시간짜리 JWT를 본문의 accessToken으로 주고, 같은 값을 httpOnly 쿠키(accessToken, 1시간)에도 심습니다. ' +
-            '비활성 계정은 비밀번호가 맞아도 403을 반환합니다. 운영 환경에서는 IP당 15분에 실패 20회를 넘기면 429로 막힙니다(성공한 로그인은 세지 않음).',
+            '없는 아이디와 틀린 비밀번호는 계정 존재 여부가 드러나지 않도록 같은 401 메시지로 응답하고, 비활성 계정은 비밀번호가 맞아도 403을 반환합니다. ' +
+            '운영 환경에서는 IP당 15분에 실패 20회를 넘기면 429로 막힙니다(성공한 로그인은 세지 않음).',
         body: [
             { name: 'username', required: true, description: '관리자 아이디' },
             { name: 'password', required: true, description: '비밀번호' },
         ],
         responses: {
             200: '{ user: { userId(계정 번호), username, userRole }, accessToken }',
+            400: '{ success: false, message: "아이디와 비밀번호를 입력해주세요." }',
+            401: '{ success: false, message: "아이디 또는 비밀번호가 일치하지 않습니다." } - 없는 계정·비밀번호 불일치 공통',
             403: '비활성화된 계정',
             429: '로그인 실패 횟수 초과',
-            500: '아이디·비밀번호 누락, 없는 계정, 비밀번호 불일치 (운영에서는 메시지가 "서버 오류가 발생했습니다."로 가려짐)',
+            500: '서버 오류',
         },
     },
 

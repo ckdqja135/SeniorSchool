@@ -17,22 +17,27 @@ export class UserService {
         try {
             const { username, password } = userData;
 
+            // 로그인 실패는 HttpException 으로 던진다. 일반 Error 는 전역 필터가 500 + '서버 오류가 발생했습니다'로 덮는다.
             if (!username || !password) {
-                logger.warn(`[signIn] Missing required fields: ${JSON.stringify(userData)}`);
-                throw new Error('아이디나 비밀번호가 입력되지 않았습니다.');
+                logger.warn(`[signIn] Missing required fields (username: ${username ? 'O' : 'X'}, password: ${password ? 'O' : 'X'})`);
+                throw new HttpException({ success: false, message: '아이디와 비밀번호를 입력해주세요.' }, 400);
             }
 
             const user = await this.prisma.user.findFirst({ where: { userId: username } });
 
+            // 없는 계정과 비밀번호 불일치는 같은 응답으로 돌려 계정 존재 여부를 드러내지 않는다
+            const invalidCredentials = () =>
+                new HttpException({ success: false, message: '아이디 또는 비밀번호가 일치하지 않습니다.' }, 401);
+
             if (!user) {
                 logger.warn(`[signIn] User not found ${username}`);
-                throw new Error('해당 사용자를 찾을 수 없습니다.');
+                throw invalidCredentials();
             }
 
             const inputPasswordHash = hashPassword(password);
             if (inputPasswordHash !== user.userPw) {
                 logger.warn(`[signIn] Incorrect password for user: ${username}`);
-                throw new Error('비밀번호가 일치하지 않습니다.');
+                throw invalidCredentials();
             }
 
             // 비활성화된 계정은 로그인시키지 않는다.
