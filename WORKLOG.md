@@ -190,3 +190,10 @@
 - **영향**: 도시별 탭 순서가 원래 의도대로 평점순이 됨(전국 탭은 조회수순 그대로)
 - **검증**: 빌드·타입 검사, 운영 데이터 + 무작위 평점 30회 × 13지역 × 2탭 780건 선택 결과 일치
 - **롤백**: `git revert <commit>`
+
+## 2026-09-29 | FEATURE: 백엔드 Swagger API 문서 (/api-docs)
+- **구성**: `@nestjs/swagger@7`(Nest 10 호환) 추가, `src/swagger/` 신규 - setup-swagger(문서 생성·태그·권한 표시·경로 파라미터 자동 입력칸), tags, api-doc.types, docs/*.docs.ts(모듈별 설명 7개 파일)
+- **설명**: 컨트롤러가 @Req/@Res 라 파라미터를 추론할 수 없어, 301개 API의 요약·설명·쿼리·본문·응답·권한을 코드 기준으로 docs 파일에 작성. 컨트롤러는 수정하지 않음. main.ts 에 setupSwagger 한 줄 추가
+- **노출**: NODE_ENV=production 이면 기본 꺼짐. `SWAGGER_ENABLED=true` 로 켜고 `SWAGGER_USER`/`SWAGGER_PASSWORD` 를 두면 기본 인증
+- **검증**: 빌드·타입 검사, 가짜 DB 로 앱 기동 후 문서 생성 - API 301개 = 설명 301개, 누락·유령 키·경로 파라미터 누락 0, 해요체·긴 대시 0. helmet CSP 아래에서 화면 렌더링 확인
+- **배포**: 의존성 추가라 `npm ci` 필요 (재배포 절차 그대로). 롤백: `git revert <commit>`

@@ -16,6 +16,7 @@ import { applySecurityMiddleware } from './common/express/security.middleware';
 import { applyRateLimit } from './common/express/rate-limit.middleware';
 import { logger, httpLogger } from './logger/winston.logger';
 import { SECRET_KEYS } from './common/utils/secret-keys.util';
+import { setupSwagger } from './swagger/setup-swagger';
 
 dotenv.config();
 
@@ -100,6 +101,9 @@ async function bootstrap() {
             loopDelay.reset();
         }, 10000).unref();
     }
+
+    // API 문서 (/api-docs) - 운영에서는 SWAGGER_ENABLED=true 일 때만
+    setupSwagger(app);
 
     const port = process.env.PORT || '3000';
     await app.listen(port);
