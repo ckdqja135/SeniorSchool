@@ -15,6 +15,7 @@
  */
 
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -89,6 +90,24 @@ function menuBlank(v: string | null): boolean {
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** 이미지·URL 컬럼 길이(VARCHAR 200). 잘라 넣으면 깨진 주소가 '채워진 값'으로 남아 다시 보강되지 않으므로 넘으면 버린다 */
+const MAX_URL_LEN = 200;
+function fitUrl(v: unknown): string | null {
+    const s = typeof v === 'string' ? v.trim() : '';
+    return s && s.length <= MAX_URL_LEN ? s : null;
+}
+
+/**
+ * 필드별 '아직 비어 있을 때만' 조건. 읽은 뒤 저장 전에 관리자가 같은 필드를 채웠으면 덮어쓰지 않는다.
+ * (nextBatch 의 대상 조건과 같은 기준)
+ */
+const BLANK_WHERE: Record<'restaurantMenu' | 'restaurantImage' | 'restaurantURL', Prisma.RestaurantInfoWhereInput> = {
+    restaurantMenu: { OR: [{ restaurantMenu: null }, { restaurantMenu: '' }, { restaurantMenu: '[]' }] },
+    restaurantImage: { OR: [{ restaurantImage: null }, { restaurantImage: '' }] },
+    restaurantURL: { restaurantURL: '' },
+};
+type EnrichField = keyof typeof BLANK_WHERE;
 
 @Injectable()
 export class RestaurantEnrichService {
@@ -206,7 +225,7 @@ export class RestaurantEnrichService {
                 const needMenu = menuBlank(r.restaurantMenu);
                 const needImage = isBlank(r.restaurantImage);
                 const needUrl = isBlank(r.restaurantURL);
-                const data: Record<string, unknown> = {};
+                const data: Partial<Record<EnrichField, string>> = {};
 
                 // 실패해도 재시도하지 않고 다음 필드·다음 식당으로 넘어간다
                 if (needMenu || needImage) {
@@ -214,7 +233,8 @@ export class RestaurantEnrichService {
                         const found = await this.crawler.enrichFromSiksin(r.restaurantName);
                         if (found) {
                             if (needMenu && Array.isArray(found.menu) && found.menu.length > 0) data.restaurantMenu = JSON.stringify(found.menu);
-                            if (needImage && found.image) data.restaurantImage = String(found.image).slice(0, 200);
+                            const image = needImage ? fitUrl(found.image) : null;
+                            if (image) data.restaurantImage = image;
                         }
                     } catch (err) {
                         stats.errors += 1;
@@ -230,9 +250,9 @@ export class RestaurantEnrichService {
                     ];
                     for (const [label, find] of sources) {
                         try {
-                            const url = await find();
+                            const url = fitUrl(await find());
                             if (url) {
-                                data.restaurantURL = url.slice(0, 200);
+                                data.restaurantURL = url;
                                 break;
                             }
                         } catch (err) {
@@ -244,11 +264,21 @@ export class RestaurantEnrichService {
 
                 if (Object.keys(data).length > 0) {
                     try {
-                        await this.prisma.restaurantInfo.updateMany({ where: { restaurantIdx: r.restaurantIdx }, data });
-                        stats.filled += 1;
-                        if (data.restaurantMenu) stats.menu += 1;
-                        if (data.restaurantImage) stats.image += 1;
-                        if (data.restaurantURL) stats.url += 1;
+                        // 필드마다 '아직 비어 있을 때만' 저장 — 그 사이 채워진 필드는 건너뛴다
+                        let saved = 0;
+                        for (const field of Object.keys(data) as EnrichField[]) {
+                            const { count } = await this.prisma.restaurantInfo.updateMany({
+                                where: { restaurantIdx: r.restaurantIdx, ...BLANK_WHERE[field] },
+                                data: { [field]: data[field] },
+                            });
+                            if (count === 0) continue;
+                            saved += 1;
+                            if (field === 'restaurantMenu') stats.menu += 1;
+                            if (field === 'restaurantImage') stats.image += 1;
+                            if (field === 'restaurantURL') stats.url += 1;
+                        }
+                        if (saved > 0) stats.filled += 1;
+                        else stats.missed += 1;
                     } catch (err) {
                         stats.errors += 1;
                         logger.warn(`[RestaurantEnrich] 저장 실패 "${r.restaurantName}": ${err.message}`);
