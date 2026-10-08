@@ -650,6 +650,10 @@ model RestaurantInfo {
   restaurantName        String   @db.VarChar(60)
   restaurantLocation    String   @db.VarChar(45)
   restaurantType        String   @db.VarChar(45)
+  /// 소스가 준 원본 분류 (카카오 category_name 등, 예: "음식점 > 한식 > 육류,고기 > 삼겹살")
+  restaurantCategory    String?  @db.VarChar(100)
+  /// 원본 분류로 붙인 테마 태그, 쉼표 구분 (kakao-fd6/theme-map.ts, 매칭 없으면 '기타')
+  restaurantTheme       String?  @db.VarChar(100)
   restaurantEstablished String   @db.VarChar(45)
   restaurantOwner       String   @db.VarChar(45)
   restaurantLatX        Float

@@ -4,3 +4,7 @@ logs/
 .env
 public/uploads/
 coverage/
+
+# 카카오 FD6 수집 스크립트 결과 (tools/kakao-fd6/crawl.ts)
+kakao-fd6*.csv
+*.csv.state.json

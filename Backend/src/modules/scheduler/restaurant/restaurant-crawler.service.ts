@@ -8,7 +8,9 @@
  *    · bulkCreate(updateOnDuplicate) → uq_restaurant_name_addr(=restaurantName+restaurantAddr) 유니크 기준
  *      per-row upsert 를 $transaction 으로 원자적으로 실행(단일 INSERT ... ON DUPLICATE KEY UPDATE 재현).
  *    · restaurantMenu 는 구 Sequelize setter(JSON.stringify) 를 재현해 TEXT 컬럼에 문자열로 저장한다.
- *  - REGION_COORDS / normalizeToRestaurant / convertNaverCoords 는 순수 헬퍼로 모듈 레벨에 둔다.
+ *  - normalizeToRestaurant / convertNaverCoords 는 순수 헬퍼로 모듈 레벨에 둔다.
+ *  - 카카오는 행정동 단위 FD6 수집(kakao-fd6/) — 45건이 넘는 칸은 4등분해 다시 검색하고 중복은 카카오 id 로만 지운다.
+ *  - 소스의 원본 분류는 restaurantCategory 에, 그걸로 붙인 테마 태그(kakao-fd6/theme-map.ts)는 restaurantTheme 에 남긴다.
  */
 
 import { Injectable } from '@nestjs/common';
@@ -16,6 +18,8 @@ import axios from 'axios';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { normalizeAddress, extractRegionLabel, dedupKey, isNearby } from '../../../common/utils/address.util';
 import { logger } from '../../../logger/winston.logger';
+import { KakaoPlace, KakaoQuotaError, Rect, collectRect, dongsForRegion, newStats, rectAround } from './kakao-fd6/kakao-fd6';
+import { themeLabel } from './kakao-fd6/theme-map';
 
 // ─── 공통 매핑 함수 ─────────────────────────────────────────
 // 주소는 저장 전에 시/도 표기를 정식명으로 통일한다.
@@ -26,10 +30,13 @@ function normalizeToRestaurant(raw: any): any {
     const lotAddr = normalizeAddress(raw.lotAddr || '');
     // "서울 동작구" 형태 — 앞 두 토큰이라는 기존 형태를 유지하되 시/도 표기만 통일
     const location = extractRegionLabel(addr);
+    const category = String(raw.category || '').trim().slice(0, 100);
     return {
         restaurantName: (raw.name || '').slice(0, 60),
         restaurantLocation: location.slice(0, 45),
         restaurantType: (raw.type || '음식점').slice(0, 45),
+        restaurantCategory: category || null,                 // 소스 원본 분류 (카카오 category_name 등)
+        restaurantTheme: category ? themeLabel(category) : null,
         restaurantEstablished: raw.established || '미정',
         restaurantOwner: (raw.owner || '미정').slice(0, 45),
         restaurantLatX: raw.lat || 0,       // 위도
@@ -45,50 +52,10 @@ function normalizeToRestaurant(raw: any): any {
     };
 }
 
-// ─── 지역별 주요 거점 좌표 ───────────────────────────────────
-const REGION_COORDS: Record<string, { name: string; lat: number; lng: number }[]> = {
-    '서울': [
-        { name: '시청/광화문', lat: 37.5665, lng: 126.9780 },
-        { name: '강남/역삼', lat: 37.4979, lng: 127.0276 },
-        { name: '홍대/마포', lat: 37.5563, lng: 126.9236 },
-        { name: '송파/잠실', lat: 37.5145, lng: 127.1060 },
-        { name: '종로/동대문', lat: 37.5704, lng: 127.0090 },
-        { name: '영등포/여의도', lat: 37.5247, lng: 126.9265 },
-        { name: '성북/노원', lat: 37.6320, lng: 127.0574 },
-    ],
-    '부산': [
-        { name: '서면', lat: 35.1580, lng: 129.0596 },
-        { name: '해운대', lat: 35.1631, lng: 129.1637 },
-        { name: '남포동', lat: 35.0975, lng: 129.0365 },
-    ],
-    '대구': [
-        { name: '동성로', lat: 35.8682, lng: 128.5964 },
-        { name: '수성구', lat: 35.8286, lng: 128.6381 },
-    ],
-    '인천': [
-        { name: '부평', lat: 37.5076, lng: 126.7219 },
-        { name: '송도', lat: 37.3818, lng: 126.6568 },
-    ],
-    '대전': [{ name: '둔산', lat: 36.3504, lng: 127.3845 }],
-    '광주': [{ name: '충장로', lat: 35.1468, lng: 126.9167 }],
-    '울산': [{ name: '성남동', lat: 35.5563, lng: 129.3135 }],
-    '세종': [{ name: '세종시', lat: 36.4800, lng: 127.2550 }],
-    '경기': [
-        { name: '수원', lat: 37.2636, lng: 127.0286 },
-        { name: '성남/분당', lat: 37.3595, lng: 127.1132 },
-    ],
-    '강원': [{ name: '춘천', lat: 37.8813, lng: 127.7298 }],
-    '충북': [{ name: '청주', lat: 36.6358, lng: 127.4913 }],
-    '충남': [{ name: '천안', lat: 36.8151, lng: 127.1139 }],
-    '전북': [{ name: '전주', lat: 35.8242, lng: 127.1480 }],
-    '전남': [{ name: '여수', lat: 34.7604, lng: 127.6622 }],
-    '경북': [{ name: '포항', lat: 36.0190, lng: 129.3435 }],
-    '경남': [{ name: '창원', lat: 35.2270, lng: 128.6811 }],
-    '제주': [
-        { name: '제주시', lat: 33.4996, lng: 126.5312 },
-        { name: '서귀포', lat: 33.2530, lng: 126.5601 },
-    ],
-};
+// 카카오 키워드 검색으로 돌릴 필요가 없는 '전체' 검색어 — 이때는 FD6 카테고리 검색으로 동 안의 음식점을 다 훑는다
+const KAKAO_GENERIC_QUERIES = new Set(['', '맛집', '음식점', '식당']);
+// 지역을 못 찾았을 때 쓰는 기본 검색 범위 (서울시청 반경 3km)
+const KAKAO_FALLBACK_RECT: Rect = rectAround(37.5665, 126.9780, 3000);
 
 /**
  * 네이버 좌표 변환 (WGS84 × 10^7 → WGS84)
@@ -137,7 +104,13 @@ export class RestaurantCrawlerService {
         if (typeof (timer as any).unref === 'function') (timer as any).unref();
     }
 
-    // ─── 1) 카카오 Local API ─────────────────────────────────────
+    // ─── 1) 카카오 Local API (행정동 단위 FD6) ────────────────────
+    /**
+     * 지역에 맞는 행정동들을 무작위 순서로 돌며 동 경계 사각형으로 음식점(FD6)을 검색한다.
+     * 한 칸에 45건이 넘으면 4등분해 다시 검색하고, 중복은 카카오 id 로만 지운다. count 만큼 모이면 멈춘다.
+     *  - query 가 '맛집' 같은 전체 검색어면 카테고리 검색, 아니면 키워드 검색 + FD6 필터
+     *  - 좌표가 오면 그 좌표 반경(radius) 사각형 하나에서 같은 방식으로 찾는다
+     */
     async fetchFromKakao({ query = '맛집', lat, lng, radius = 20000, count = 50, region = '' }: any): Promise<any[]> {
         const key = process.env.KAKAO_REST_API_KEY;
         if (!key) {
@@ -145,77 +118,62 @@ export class RestaurantCrawlerService {
             return [];
         }
 
-        const headers = { Authorization: `KakaoAK ${key}` };
+        const keyword = String(query || '').trim();
         const results: any[] = [];
-        const seen = new Set();
+        const stats = newStats();
 
-        // 좌표가 직접 지정되면 단일 좌표 검색, 아니면 지역 거점 분산 검색
-        let searchPoints: any[];
+        let cells: { label: string; rect: Rect }[];
         if (lat && lng) {
-            searchPoints = [{ lat, lng }];
+            cells = [{ label: `${lat},${lng}`, rect: rectAround(Number(lat), Number(lng), Math.min(Number(radius) || 20000, 20000)) }];
         } else {
-            // region에서 매칭되는 거점 좌표 찾기 (랜덤 셔플)
-            const mainRegion = region.split(' ')[0]; // "서울 강동구" → "서울"
-            const regionKey = Object.keys(REGION_COORDS).find(k => mainRegion.includes(k));
-            searchPoints = regionKey
-                ? [...REGION_COORDS[regionKey]].sort(() => Math.random() - 0.5)
-                : [{ lat: 37.5665, lng: 126.9780 }];
+            const dongs = dongsForRegion(region);
+            cells = dongs.length > 0
+                ? dongs.map((d) => ({ label: `${d.sigungu} ${d.dong}`, rect: d.rect })).sort(() => Math.random() - 0.5)
+                : [{ label: '서울시청 주변', rect: KAKAO_FALLBACK_RECT }];
+            if (dongs.length === 0) logger.warn(`[Crawler:Kakao] "${region}" 에 맞는 행정동이 없어 서울시청 주변에서 찾음`);
         }
 
-        const countPerPoint = Math.ceil(count / searchPoints.length);
+        const opt = {
+            apiKey: key,
+            query: KAKAO_GENERIC_QUERIES.has(keyword) ? undefined : keyword,
+            limit: count,
+            pauseMs: 50,
+            seen: new Set<string>(),
+            onPlace: (d: KakaoPlace) => {
+                const typeRaw = d.category_name.split(' > ');
+                results.push(normalizeToRestaurant({
+                    name: d.place_name,
+                    addr: d.road_address_name || d.address_name || '',
+                    lotAddr: d.address_name || '',
+                    type: typeRaw[1] || typeRaw[0] || '음식점',
+                    category: d.category_name,
+                    lat: parseFloat(d.y),
+                    lng: parseFloat(d.x),
+                    url: d.place_url || '',
+                    source: 'kakao',
+                    sourceId: `kakao_${d.id}`,
+                }));
+            },
+            log: (m: string) => logger.warn(`[Crawler:Kakao] ${m}`),
+        };
 
-        for (const point of searchPoints) {
-            if (results.length >= count) break;
-
-            // 키워드 검색 (FD6 카테고리 필터 병용), 랜덤 시작 페이지
-            let page = Math.floor(Math.random() * 5) + 1;
-            const pointTarget = Math.min(countPerPoint, count - results.length);
-            let pointCount = 0;
-
-            while (pointCount < pointTarget && page <= 45) {
-                try {
-                    const { data } = await axios.get('https://dapi.kakao.com/v2/local/search/keyword.json', {
-                        headers,
-                        params: {
-                            query,
-                            category_group_code: 'FD6',
-                            x: point.lng, y: point.lat, radius,
-                            page, size: 15,
-                            sort: 'accuracy'
-                        }
-                    });
-
-                    for (const d of (data.documents || [])) {
-                        if (seen.has(d.id)) continue;
-                        seen.add(d.id);
-
-                        const typeRaw = (d.category_name || '').split(' > ');
-                        results.push(normalizeToRestaurant({
-                            name: d.place_name,
-                            addr: d.road_address_name || d.address_name || '',
-                            lotAddr: d.address_name || '',
-                            type: typeRaw[1] || typeRaw[0] || '음식점',
-                            lat: parseFloat(d.y),
-                            lng: parseFloat(d.x),
-                            url: d.place_url || '',
-                            source: 'kakao',
-                            sourceId: `kakao_${d.id}`,
-                        }));
-
-                        pointCount++;
-                        if (pointCount >= pointTarget) break;
-                    }
-
-                    if (data.meta?.is_end) break;
-                    page++;
-                } catch (err) {
-                    logger.error(`[Crawler:Kakao] ${point.name || 'point'} page ${page} 에러: ${err.message}`);
-                    break;
-                }
+        let visited = 0;
+        try {
+            for (const cell of cells) {
+                if (results.length >= count) break;
+                visited += 1;
+                await collectRect(cell.rect, opt, stats);
             }
+        } catch (err) {
+            // 한도 초과는 더 불러도 실패하므로 여기까지 모은 것만 돌려준다
+            if (!(err instanceof KakaoQuotaError)) throw err;
+            logger.error(`[Crawler:Kakao] ${err.message} — ${results.length}건까지만 수집`);
         }
 
-        logger.info(`[Crawler:Kakao] ${results.length}건 수집 완료 (거점 ${searchPoints.length}개)`);
+        logger.info(
+            `[Crawler:Kakao] ${results.length}건 수집 완료 (${opt.query ? `키워드 "${opt.query}"` : 'FD6 전체'}, 동 ${visited}/${cells.length}개, 호출 ${stats.calls}회` +
+                `${stats.truncatedCells ? `, 45건만 받은 칸 ${stats.truncatedCells}` : ''}${stats.failedCells ? `, 실패 칸 ${stats.failedCells}` : ''})`,
+        );
         return results;
     }
 
@@ -282,6 +240,7 @@ export class RestaurantCrawlerService {
                         addr: item.roadAddress || item.address || '',
                         lotAddr: item.address || '',
                         type: category,
+                        category: item.category || '',
                         lat: coords.lat,
                         lng: coords.lng,
                         url: item.link || '',
@@ -577,6 +536,7 @@ export class RestaurantCrawlerService {
                             addr,
                             lotAddr: store.addr || '',
                             type,
+                            category: type,
                             lat: store.lat || 0,
                             lng: store.lng || 0,
                             rating,
@@ -693,6 +653,7 @@ export class RestaurantCrawlerService {
                         name,
                         addr,
                         type,
+                        category: type === '음식점' ? '' : type,
                         rating: ratingMatch?.[1] || null,
                         url: fullLink,
                         image: imgMatch?.[1] || null,
@@ -820,7 +781,7 @@ export class RestaurantCrawlerService {
 
         if (sources.includes('kakao')) {
             fetchPromises.push(
-                this.fetchFromKakao({ query: `${region} ${query}`, ...(lat && lng ? { lat, lng } : {}), radius, count: countPerSource, region })
+                this.fetchFromKakao({ query, ...(lat && lng ? { lat, lng } : {}), radius, count: countPerSource, region })
                     .then(r => { stats.sources.kakao = r.length; this.markSource(runId, 'kakao', 'done', r.length); return r; })
                     .catch(e => { logger.error(`[Crawler] 카카오 실패: ${e.message}`); stats.sources.kakao = 0; this.markSource(runId, 'kakao', 'error', 0, e.message); return []; })
             );
@@ -959,6 +920,8 @@ export class RestaurantCrawlerService {
                 restaurantName: item.restaurantName,
                 restaurantLocation: item.restaurantLocation || '미정',
                 restaurantType: item.restaurantType || '음식점',
+                restaurantCategory: item.restaurantCategory || null,
+                restaurantTheme: item.restaurantTheme || null,
                 restaurantEstablished: item.restaurantEstablished || '미정',
                 restaurantOwner: item.restaurantOwner || '미정',
                 restaurantLatX: item.restaurantLatX || 0,
@@ -996,11 +959,15 @@ export class RestaurantCrawlerService {
                             restaurantType: item.restaurantType,
                             restaurantLatX: item.restaurantLatX,
                             restaurantLatY: item.restaurantLatY,
+                            // 원본 분류는 새로 받은 게 있을 때만 바꾼다 (분류가 없는 소스가 기존 값을 지우지 않게)
+                            ...(item.restaurantCategory ? { restaurantCategory: item.restaurantCategory, restaurantTheme: item.restaurantTheme } : {}),
                         },
                         create: {
                             restaurantName: item.restaurantName,
                             restaurantLocation: item.restaurantLocation,
                             restaurantType: item.restaurantType,
+                            restaurantCategory: item.restaurantCategory,
+                            restaurantTheme: item.restaurantTheme,
                             restaurantEstablished: item.restaurantEstablished,
                             restaurantOwner: item.restaurantOwner,
                             restaurantLatX: item.restaurantLatX,
@@ -1069,10 +1036,14 @@ export class RestaurantCrawlerService {
         const rows = items
             .map((item) => {
                 const addr = normalizeAddress(item.restaurantAddr || '');
+                // 테마는 화면이 보낸 값을 믿지 않고 원본 분류로 다시 붙인다
+                const category = String(item.restaurantCategory || '').trim().slice(0, 100);
                 return {
                     restaurantName: (item.restaurantName || '').slice(0, 60),
                     restaurantLocation: (item.restaurantLocation || extractRegionLabel(addr) || '미정').slice(0, 45),
                     restaurantType: (item.restaurantType || '음식점').slice(0, 45),
+                    restaurantCategory: category || null,
+                    restaurantTheme: category ? themeLabel(category) : null,
                     restaurantEstablished: (item.restaurantEstablished || '미정').slice(0, 45),
                     restaurantOwner: (item.restaurantOwner || '미정').slice(0, 45),
                     restaurantLatX: Number(item.restaurantLatX) || 0,
@@ -1106,6 +1077,7 @@ export class RestaurantCrawlerService {
                         restaurantType: item.restaurantType,
                         restaurantLatX: item.restaurantLatX,
                         restaurantLatY: item.restaurantLatY,
+                        ...(item.restaurantCategory ? { restaurantCategory: item.restaurantCategory, restaurantTheme: item.restaurantTheme } : {}),
                     },
                     create: {
                         ...item,
