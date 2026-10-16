@@ -5,6 +5,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { validateUserInput } from '../utils/content-filter.util';
 import { logger } from '../../logger/winston.logger';
+import { redactUrl } from '../utils/redact-url.util';
 
 export const contentFilterMiddleware = (req: Request, res: Response, next: NextFunction) => {
   // GET, DELETE 등은 통과
@@ -15,7 +16,7 @@ export const contentFilterMiddleware = (req: Request, res: Response, next: NextF
   const blocked = validateUserInput(req.body);
   if (blocked) {
     const { field, result } = blocked;
-    logger.warn(`[ContentFilter] Blocked ${req.method} ${req.originalUrl} - field: ${field}, category: ${result.category}`);
+    logger.warn(`[ContentFilter] Blocked ${req.method} ${redactUrl(req.originalUrl)} - field: ${field}, category: ${result.category}`);
     return res.status(400).json({
       status: 400,
       message: result.reason,

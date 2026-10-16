@@ -5,6 +5,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, NotFoundException } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { logger } from '../../logger/winston.logger';
+import { redactUrl } from '../utils/redact-url.util';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -38,7 +39,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
         // 그 외 에러: app.js 에러 핸들러와 동일
         const err = exception as any;
-        logger.error(`[${req.method}] ${req.url} - ${err?.message}\n${err?.stack}`);
+        logger.error(`[${req.method}] ${redactUrl(req.url)} - ${err?.message}\n${err?.stack}`);
         const status = err?.status || 500;
         const isProduction = process.env.NODE_ENV === 'production';
         return res.status(status).json({ message: isProduction ? '서버 오류가 발생했습니다.' : err?.message });

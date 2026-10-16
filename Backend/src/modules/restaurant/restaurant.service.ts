@@ -217,7 +217,8 @@ export class RestaurantService {
                 return data;
             });
 
-            logger.info(`[getNearbyRestaurants] lat=${lat}, lng=${lng}, radius=${radiusKm}km → ${result.length}건`);
+            // 좌표는 이용자 현재 위치라 남기지 않는다 (처리방침: 위치는 조회에만 쓰고 저장하지 않음)
+            logger.info(`[getNearbyRestaurants] radius=${radiusKm}km → ${result.length}건`);
             return result;
         } catch (error) {
             logger.error(`[getNearbyRestaurants] Error: ${error.message}`);

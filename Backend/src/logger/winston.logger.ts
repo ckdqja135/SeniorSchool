@@ -3,6 +3,7 @@ import * as winston from 'winston';
 import * as path from 'path';
 import 'winston-daily-rotate-file';
 import { Request, Response, NextFunction } from 'express';
+import { redactUrl } from '../common/utils/redact-url.util';
 
 const logDir = path.join(process.cwd(), 'logs');
 
@@ -58,7 +59,8 @@ export const httpLogger = (req: Request, res: Response, next: NextFunction) => {
         const duration = Date.now() - startTime;
         const statusCode = res.statusCode;
         const method = req.method;
-        const url = req.originalUrl || req.url;
+        // 위치 쿼리(lat/lng)는 값을 지워 남긴다 — 로그 90일 보관 동안 이용자 위치가 쌓이지 않게
+        const url = redactUrl(req.originalUrl || req.url);
         logger.info(`${method} ${url} ${duration}ms`, { statusCode });
     };
 
