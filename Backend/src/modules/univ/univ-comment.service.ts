@@ -1,7 +1,7 @@
 // Backend/service/univCommentService.js의 Prisma 포팅
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashBoardPassword, verifyBoardPassword } from '../../common/utils/hash-password.util';
 import { logger } from '../../logger/winston.logger';
 
 @Injectable()
@@ -40,7 +40,7 @@ export class UnivCommentService {
                     boardIdx: commentData.boardIdx,
                     commentDepth: commentData.depth,
                     writerId: commentData.commentWriter,
-                    writerPw: hashPassword(commentData.commentPw), // SHA256 암호화 적용
+                    writerPw: await hashBoardPassword(commentData.commentPw), // bcrypt(sha256) 로 저장
                     commentPerent: commentData.parentIdx,
                     commentContent: commentData.commentContent,
                     commentLike: commentData.commentLike,
@@ -74,8 +74,7 @@ export class UnivCommentService {
                 }
 
                 // 입력된 비밀번호와 저장된 비밀번호 비교
-                const hashedInputPassword = hashPassword(commentData.commentPw);
-                if (comment.writerPw !== hashedInputPassword) {
+                if (!(await verifyBoardPassword(commentData.commentPw, comment.writerPw))) {
                     logger.warn(`[modifyComment] Password mismatch for comment: ${commentData.commentIdx}`);
                     return false;
                 }
@@ -116,8 +115,7 @@ export class UnivCommentService {
                 }
 
                 // 입력된 비밀번호와 저장된 비밀번호 비교
-                const hashedInputPassword = hashPassword(commentData.commentPw);
-                if (comment.writerPw !== hashedInputPassword) {
+                if (!(await verifyBoardPassword(commentData.commentPw, comment.writerPw))) {
                     logger.warn(`[deleteComment] Password mismatch for comment: ${commentData.commentIdx}`);
                     return false;
                 }

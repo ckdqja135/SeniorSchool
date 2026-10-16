@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { serializeRows } from '../../common/utils/serialize-row.util';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashBoardPassword, verifyBoardPassword } from '../../common/utils/hash-password.util';
 import { DynamicTableNames } from '../../common/utils/slug-validator.util';
 import { logger } from '../../logger/winston.logger';
 
@@ -55,7 +55,7 @@ export class DynamicCommentService {
                 return { status: 404, message: '게시글을 찾을 수 없습니다.' };
             }
 
-            const hashedPW = hashPassword(writerPw);
+            const hashedPW = await hashBoardPassword(writerPw);
 
             const sql = `INSERT INTO ${tables.comments} (\`board_idx\`, \`comment_like\`, \`comment_depth\`, \`writer_id\`, \`writer_pw\`, \`comment_parent\`, \`comment_content\`, \`is_deleted\`) VALUES (?, 0, ?, ?, ?, ?, ?, 0)`;
             const params = [boardIdx, commentDepth || 0, writerId, hashedPW, commentParent || null, commentContent];
@@ -81,11 +81,9 @@ export class DynamicCommentService {
                 return { status: 404, message: '댓글을 찾을 수 없습니다.' };
             }
 
-            if (password) {
-                const hashedPW = hashPassword(password);
-                if (rows[0].writer_pw !== hashedPW) {
-                    return { status: 403, message: '비밀번호가 일치하지 않습니다.' };
-                }
+            // 비밀번호가 비어 있어도 거부한다 (예전엔 안 보내면 확인을 건너뛰어 누구나 지울 수 있었다)
+            if (typeof password !== 'string' || password === '' || !(await verifyBoardPassword(password, rows[0].writer_pw))) {
+                return { status: 403, message: '비밀번호가 일치하지 않습니다.' };
             }
 
             await this.prisma.$executeRawUnsafe(

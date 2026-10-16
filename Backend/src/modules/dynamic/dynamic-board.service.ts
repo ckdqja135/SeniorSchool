@@ -3,7 +3,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { serializeRows } from '../../common/utils/serialize-row.util';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashBoardPassword } from '../../common/utils/hash-password.util';
 import { DynamicTableNames } from '../../common/utils/slug-validator.util';
 import { logger } from '../../logger/winston.logger';
 
@@ -133,7 +133,7 @@ export class DynamicBoardService {
                 return { status: 400, message: '필수값 누락: boardTitle, boardID, boardPW' };
             }
 
-            const hashedPW = hashPassword(boardPW);
+            const hashedPW = await hashBoardPassword(boardPW);
             const regDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
             const sql = `INSERT INTO ${tables.boards} (\`board_title\`, \`board_content\`, \`entity_idx\`, \`board_reg_date\`, \`board_like\`, \`board_hits\`, \`board_id\`, \`board_pw\`, \`board_category\`, \`board_rating\`, \`is_deleted\`) VALUES (?, ?, ?, ?, 0, 0, ?, ?, ?, ?, 0)`;

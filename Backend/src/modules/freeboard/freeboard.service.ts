@@ -12,7 +12,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { serializeRows } from '../../common/utils/serialize-row.util';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashBoardPassword, verifyBoardPassword } from '../../common/utils/hash-password.util';
 import { logger } from '../../logger/winston.logger';
 
 @Injectable()
@@ -220,7 +220,7 @@ export class FreeBoardService {
                     category,
                     tags: JSON.stringify(tags || []),
                     boardID,
-                    boardPW: hashPassword(boardPW) // SHA256 암호화 적용
+                    boardPW: await hashBoardPassword(boardPW) // bcrypt(sha256) 로 저장
                 }
             });
 
@@ -252,7 +252,7 @@ export class FreeBoardService {
             }
 
             // 작성자 확인
-            if (board.boardID !== boardID || board.boardPW !== hashPassword(boardPW)) {
+            if (board.boardID !== boardID || !(await verifyBoardPassword(boardPW, board.boardPW))) {
                 return { status: 403, message: '수정 권한이 없습니다.' };
             }
 
@@ -293,7 +293,7 @@ export class FreeBoardService {
             }
 
             // 작성자 확인
-            if (board.boardID !== boardID || board.boardPW !== hashPassword(boardPW)) {
+            if (board.boardID !== boardID || !(await verifyBoardPassword(boardPW, board.boardPW))) {
                 return { status: 403, message: '삭제 권한이 없습니다.' };
             }
 
@@ -326,7 +326,7 @@ export class FreeBoardService {
                     commentParent: commentParent != null ? Number(commentParent) : null,
                     commentDepth: commentParent ? 1 : 0,
                     writerId,
-                    writerPw: hashPassword(writerPw) // SHA256 암호화 적용
+                    writerPw: await hashBoardPassword(writerPw) // bcrypt(sha256) 로 저장
                 }
             });
 
@@ -355,7 +355,7 @@ export class FreeBoardService {
             }
 
             // 작성자 확인
-            if (comment.writerId !== writerId || comment.writerPw !== hashPassword(writerPw)) {
+            if (comment.writerId !== writerId || !(await verifyBoardPassword(writerPw, comment.writerPw))) {
                 return { status: 403, message: '수정 권한이 없습니다.' };
             }
 
@@ -393,7 +393,7 @@ export class FreeBoardService {
             }
 
             // 작성자 확인
-            if (comment.writerId !== writerId || comment.writerPw !== hashPassword(writerPw)) {
+            if (comment.writerId !== writerId || !(await verifyBoardPassword(writerPw, comment.writerPw))) {
                 return { status: 403, message: '삭제 권한이 없습니다.' };
             }
 
@@ -623,7 +623,7 @@ export class FreeBoardService {
                             category,
                             tags: JSON.stringify(tags || []),
                             boardID,
-                            boardPW: hashPassword(boardPW) // SHA256 암호화 적용
+                            boardPW: await hashBoardPassword(boardPW) // bcrypt(sha256) 로 저장
                         }
                     });
 

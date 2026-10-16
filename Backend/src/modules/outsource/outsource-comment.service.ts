@@ -1,7 +1,7 @@
 // Backend/service/outsourceCommentService.js의 Prisma 포팅
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashBoardPassword, verifyBoardPassword } from '../../common/utils/hash-password.util';
 import { logger } from '../../logger/winston.logger';
 
 @Injectable()
@@ -41,7 +41,7 @@ export class OutsourceCommentService {
                         boardIdx: Number(commentData.boardIdx),
                         commentDepth: Number(commentData.commentDepth) || 0,
                         writerId: commentData.writerId,
-                        writerPw: hashPassword(commentData.writerPw), // SHA256 암호화 적용
+                        writerPw: await hashBoardPassword(commentData.writerPw), // bcrypt(sha256) 로 저장
                         commentParent: Number(commentData.commentPerent) || 0, // 원본의 'commentPerent' 필드명 유지
                         commentContent: commentData.commentContent,
                         commentLike: 0,
@@ -77,11 +77,10 @@ export class OutsourceCommentService {
                     where: {
                         commentIdx: Number(commentIdx),
                         writerId: commentWriter,
-                        writerPw: hashPassword(commentPw) // SHA256 암호화된 비밀번호로 비교
                     }
                 });
 
-                if (!existingComment) {
+                if (!existingComment || !(await verifyBoardPassword(commentPw, existingComment.writerPw))) {
                     throw new Error('댓글을 찾을 수 없거나 작성자 정보가 일치하지 않습니다.');
                 }
 
@@ -123,17 +122,17 @@ export class OutsourceCommentService {
                 // commentWriter가 없으면 commentIdx와 비밀번호만으로 삭제
                 const whereCondition: Record<string, any> = {
                     commentIdx: Number(commentIdx),
-                    writerPw: hashPassword(commentPw) // SHA256 암호화된 비밀번호로 비교
                 };
 
                 if (commentWriter) {
                     whereCondition.writerId = commentWriter;
                 }
 
-                // 작성자 확인 후 삭제
-                const deleteResult = await tx.outsourceComment.deleteMany({
-                    where: whereCondition
-                });
+                // 작성자 확인 후 삭제 — 비밀번호는 bcrypt 라 찾아서 확인한 뒤 지운다
+                const target = await tx.outsourceComment.findFirst({ where: whereCondition });
+                const deleteResult = target && (await verifyBoardPassword(commentPw, target.writerPw))
+                    ? await tx.outsourceComment.deleteMany({ where: { commentIdx: target.commentIdx } })
+                    : { count: 0 };
 
                 if (deleteResult.count === 0) {
                     throw new Error('댓글을 찾을 수 없거나 작성자 정보가 일치하지 않습니다.');

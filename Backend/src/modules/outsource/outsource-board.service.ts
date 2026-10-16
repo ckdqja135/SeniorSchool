@@ -4,7 +4,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BoardLikeHelperService } from '../../common/services/board-like-helper.service';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashBoardPassword, verifyBoardPassword } from '../../common/utils/hash-password.util';
 import { buildBoardSearchConditions } from '../../common/utils/search-helper.util';
 import { logger } from '../../logger/winston.logger';
 import { safeJson, maskSecret } from '../../common/utils/secret-keys.util';
@@ -139,7 +139,7 @@ export class OutsourceBoardService {
                         boardLike: 0,
                         boardHits: 0,
                         boardID: boardID,
-                        boardPW: hashPassword(password) // SHA256 암호화 적용
+                        boardPW: await hashBoardPassword(password) // bcrypt(sha256) 로 저장
                     }
                 });
 
@@ -169,13 +169,12 @@ export class OutsourceBoardService {
                 if (boardID) {
                     whereCondition.boardID = boardID;
                 }
-                whereCondition.boardPW = hashPassword(password);
-
+                // 비밀번호는 bcrypt 라 조건으로 걸 수 없다 — 찾은 뒤 확인한다
                 const existingBoard = await tx.outsourceBoard.findFirst({
                     where: whereCondition
                 });
 
-                if (!existingBoard) {
+                if (!existingBoard || !(await verifyBoardPassword(password, existingBoard.boardPW))) {
                     throw new Error('게시글을 찾을 수 없거나 작성자 정보가 일치하지 않습니다.');
                 }
 
@@ -217,12 +216,11 @@ export class OutsourceBoardService {
                 if (boardID) {
                     whereCondition.boardID = boardID;
                 }
-                whereCondition.boardPW = hashPassword(password);
-
-                // 작성자 확인 후 삭제
-                const deleteResult = await tx.outsourceBoard.deleteMany({
-                    where: whereCondition
-                });
+                // 작성자 확인 후 삭제 — 비밀번호는 bcrypt 라 찾아서 확인한 뒤 지운다
+                const target = await tx.outsourceBoard.findFirst({ where: whereCondition });
+                const deleteResult = target && (await verifyBoardPassword(password, target.boardPW))
+                    ? await tx.outsourceBoard.deleteMany({ where: { boardIdx: target.boardIdx } })
+                    : { count: 0 };
 
                 if (deleteResult.count === 0) {
                     throw new Error('게시글을 찾을 수 없거나 작성자 정보가 일치하지 않습니다.');

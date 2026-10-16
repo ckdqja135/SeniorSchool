@@ -2,7 +2,7 @@
 // univCommentService와 동일한 tb_univcomment 테이블/동작 — 응답 형태 동일.
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashBoardPassword, verifyBoardPassword } from '../../common/utils/hash-password.util';
 import { logger } from '../../logger/winston.logger';
 
 @Injectable()
@@ -36,7 +36,7 @@ export class CommentService {
                     boardIdx: commentData.boardIdx,
                     commentDepth: commentData.depth,
                     writerId: commentData.commentWriter,
-                    writerPw: hashPassword(commentData.commentPw), // SHA256 암호화 적용
+                    writerPw: await hashBoardPassword(commentData.commentPw), // bcrypt(sha256) 로 저장
                     commentPerent: commentData.parentIdx,
                     commentContent: commentData.commentContent,
                     commentLike: commentData.commentLike,
@@ -56,10 +56,12 @@ export class CommentService {
     // 댓글 수정 — writerPw 해시 일치 시에만 수정
     async modifyComment(commentData: { commentPw: string; commentIdx: number; commentContent: string }) {
         try {
-            const result = await this.prisma.univComment.updateMany({
+            // 비밀번호는 bcrypt 라 조건으로 걸 수 없다 — 찾아서 확인한 뒤 고친다 (안 맞으면 0건과 같게 처리)
+            const target = await this.prisma.univComment.findFirst({ where: { commentIdx: Number(commentData.commentIdx) } });
+            const verified = !!target && (await verifyBoardPassword(commentData.commentPw, target.writerPw));
+            const result = !verified ? { count: 0 } : await this.prisma.univComment.updateMany({
                 where: {
                     commentIdx: Number(commentData.commentIdx),
-                    writerPw: hashPassword(commentData.commentPw), // SHA256 암호화 적용
                 },
                 data: {
                     commentContent: commentData.commentContent,
@@ -83,10 +85,12 @@ export class CommentService {
     // 댓글 삭제 — writerPw 해시 일치 행 완전 삭제
     async deleteComment(commentData: { commentPw: string; commentIdx: number }) {
         try {
-            const result = await this.prisma.univComment.deleteMany({
+            // 비밀번호는 bcrypt 라 조건으로 걸 수 없다 — 찾아서 확인한 뒤 지운다
+            const target = await this.prisma.univComment.findFirst({ where: { commentIdx: Number(commentData.commentIdx) } });
+            const verified = !!target && (await verifyBoardPassword(commentData.commentPw, target.writerPw));
+            const result = !verified ? { count: 0 } : await this.prisma.univComment.deleteMany({
                 where: {
                     commentIdx: Number(commentData.commentIdx),
-                    writerPw: hashPassword(commentData.commentPw), // SHA256 암호화 적용
                 }
             });
 

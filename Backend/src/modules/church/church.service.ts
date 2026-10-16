@@ -3,7 +3,7 @@
 // (createChurch/autoComplete/getChurchInfoByName/getTopViewedChurches는 미라우팅 → 제외).
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashBoardPassword, verifyBoardPassword } from '../../common/utils/hash-password.util';
 import { logger } from '../../logger/winston.logger';
 
 @Injectable()
@@ -306,7 +306,7 @@ export class ChurchService {
                         boardLike: Number(boardData.boardLike) || 0,
                         boardHits: Number(boardData.boardHits) || 0,
                         boardID: boardData.boardId,
-                        boardPW: pw && pw.trim() !== '' ? hashPassword(pw.trim()) : (null as any),
+                        boardPW: pw && pw.trim() !== '' ? await hashBoardPassword(pw.trim()) : (null as any),
                     }
                 });
                 logger.debug(`[insertChurchBoard] ChurchBoard created. BoardIdx: ${board.boardIdx}`);
@@ -339,13 +339,11 @@ export class ChurchService {
                     throw new Error('Board not found');
                 }
 
-                // 비밀번호 확인 (비밀번호가 있는 경우)
+                // 비밀번호 확인 — 비어 있어도 거부한다 (예전엔 비밀번호를 안 보내면 확인을 건너뛰어 누구나 고치고 지울 수 있었다)
                 const password = writerPw || boardPw;
-                if (password && typeof password === 'string' && password.trim() !== '') {
-                    const hashedPassword = hashPassword(password.trim());
-                    if (existingBoard.boardPW !== hashedPassword) {
-                        throw new Error('Invalid password');
-                    }
+                if (typeof password !== 'string' || password.trim() === ''
+                    || !(await verifyBoardPassword(password.trim(), existingBoard.boardPW))) {
+                    throw new Error('Invalid password');
                 }
 
                 // 게시글 수정
@@ -385,13 +383,11 @@ export class ChurchService {
                     throw new Error('Board not found');
                 }
 
-                // 비밀번호 확인
+                // 비밀번호 확인 — 비어 있어도 거부한다 (예전엔 비밀번호를 안 보내면 확인을 건너뛰어 누구나 고치고 지울 수 있었다)
                 const password = writerPw || boardPw;
-                if (password && typeof password === 'string' && password.trim() !== '') {
-                    const hashedPassword = hashPassword(password.trim());
-                    if (existingBoard.boardPW !== hashedPassword) {
-                        throw new Error('Invalid password');
-                    }
+                if (typeof password !== 'string' || password.trim() === ''
+                    || !(await verifyBoardPassword(password.trim(), existingBoard.boardPW))) {
+                    throw new Error('Invalid password');
                 }
 
                 // 게시글 삭제

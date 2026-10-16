@@ -6,7 +6,7 @@
 // - getCompDetail은 원본에도 라우트가 없는 미사용 메서드라 포팅하지 않음 (admin 버전은 별도 서비스).
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashBoardPassword, verifyBoardPassword } from '../../common/utils/hash-password.util';
 import { logger } from '../../logger/winston.logger';
 
 // 평점 검증 함수 (0.5 ~ 5.0, 0.5 단위) — 원본 service/compService.js의 normalizeRating
@@ -155,7 +155,7 @@ export class CompService {
                 data: {
                     compIdx: Number(compIdx),
                     writerId,
-                    writerPw: hashPassword(writerPw),
+                    writerPw: await hashBoardPassword(writerPw),
                     interviewTitle,
                     interviewContent: interviewContent || null,
                     interviewDate: interviewDate ? new Date(interviewDate) : null,
@@ -311,8 +311,7 @@ export class CompService {
             }
 
             // 비밀번호 확인
-            const hashedPassword = hashPassword(writerPw);
-            if (interview.writerPw !== hashedPassword) {
+            if (!(await verifyBoardPassword(writerPw, interview.writerPw))) {
                 return {
                     status: 403,
                     message: '비밀번호가 일치하지 않습니다.',
@@ -379,8 +378,7 @@ export class CompService {
             }
 
             // 비밀번호 확인
-            const hashedPassword = hashPassword(writerPw);
-            if (interview.writerPw !== hashedPassword) {
+            if (!(await verifyBoardPassword(writerPw, interview.writerPw))) {
                 return {
                     status: 403,
                     message: '비밀번호가 일치하지 않습니다.',

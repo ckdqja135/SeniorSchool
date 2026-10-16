@@ -1,7 +1,7 @@
 // Backend/service/churchCommentService.js의 Prisma 포팅
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashBoardPassword, verifyBoardPassword } from '../../common/utils/hash-password.util';
 import { logger } from '../../logger/winston.logger';
 import { maskSecret } from '../../common/utils/secret-keys.util';
 
@@ -42,7 +42,7 @@ export class ChurchCommentService {
                         boardIdx: commentData.boardIdx,
                         commentDepth: commentData.depth,
                         writerId: commentData.commentWriter,
-                        writerPw: hashPassword(commentData.commentPw), // SHA256 암호화 적용
+                        writerPw: await hashBoardPassword(commentData.commentPw), // bcrypt(sha256) 로 저장
                         commentParent: commentData.parentIdx,
                         commentContent: commentData.commentContent,
                         commentLike: commentData.commentLike,
@@ -68,10 +68,12 @@ export class ChurchCommentService {
     async modifyChurchComment({ commentPw, commentIdx, commentContent }: { commentPw: string; commentIdx: number; commentContent: string }) {
         try {
             // 댓글 내용 업데이트 (단일 쿼리이므로 트랜잭션 optional)
-            const { count: updateCount } = await this.prisma.churchComment.updateMany({
+            // 비밀번호는 bcrypt 라 조건으로 걸 수 없다 — 찾아서 확인한 뒤 고친다 (안 맞으면 0건과 같게 처리)
+            const target = await this.prisma.churchComment.findFirst({ where: { commentIdx: Number(commentIdx) } });
+            const verified = !!target && (await verifyBoardPassword(commentPw, target.writerPw));
+            const { count: updateCount } = !verified ? { count: 0 } : await this.prisma.churchComment.updateMany({
                 where: {
                     commentIdx: Number(commentIdx),
-                    writerPw: hashPassword(commentPw), // SHA256 암호화 적용
                 },
                 data: {
                     commentContent: commentContent,
@@ -100,10 +102,12 @@ export class ChurchCommentService {
 
         try {
             // 댓글을 데이터베이스에서 완전히 삭제
-            const { count: deleteCount } = await this.prisma.churchComment.deleteMany({
+            // 비밀번호는 bcrypt 라 조건으로 걸 수 없다 — 찾아서 확인한 뒤 지운다
+            const target = await this.prisma.churchComment.findFirst({ where: { commentIdx: Number(commentIdx) } });
+            const verified = !!target && (await verifyBoardPassword(commentPw, target.writerPw));
+            const { count: deleteCount } = !verified ? { count: 0 } : await this.prisma.churchComment.deleteMany({
                 where: {
                     commentIdx: Number(commentIdx),
-                    writerPw: hashPassword(commentPw), // SHA256 암호화 적용
                 }
             });
 

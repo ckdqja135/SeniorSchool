@@ -3,7 +3,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BoardLikeHelperService } from '../../common/services/board-like-helper.service';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashPassword, hashBoardPassword, verifyBoardPassword } from '../../common/utils/hash-password.util';
 import { buildBoardSearchConditions } from '../../common/utils/search-helper.util';
 import { serializeRows } from '../../common/utils/serialize-row.util';
 import { logger } from '../../logger/winston.logger';
@@ -94,7 +94,7 @@ export class ChurchBoardService {
                         boardLike: Number(boardData.boardLike) || 0,
                         boardHits: Number(boardData.boardHits) || 0,
                         boardID: boardData.boardId,
-                        boardPW: hashPassword(boardData.boardPw), // SHA256 암호화 적용
+                        boardPW: await hashBoardPassword(boardData.boardPw), // bcrypt(sha256) 로 저장
                     }
                 });
                 logger.debug(`[insertChurchBoard] ChurchBoard created. BoardIdx: ${board.boardIdx}`);
@@ -112,8 +112,8 @@ export class ChurchBoardService {
      * 교회 게시글 수정
      */
     async correctChurchBoard(boardData: any) {
-        // 입력된 비밀번호 암호화 (원본과 동일하게 트랜잭션 밖에서 수행 — writerPw 부재 시 여기서 throw)
-        const hashedPassword = hashPassword(boardData.writerPw);
+        // 원본과 동일하게 트랜잭션 밖에서 비밀번호를 먼저 다룬다 — writerPw 부재 시 여기서 throw
+        hashPassword(boardData.writerPw);
 
         try {
             return await this.prisma.$transaction(async (tx) => {
@@ -127,11 +127,11 @@ export class ChurchBoardService {
                     throw new Error('Board not found');
                 }
 
-                // ChurchBoard 업데이트
-                const { count: affectedCount } = await tx.churchBoard.updateMany({
+                // ChurchBoard 업데이트 — 비밀번호는 bcrypt 라 조건 대신 먼저 확인한다 (안 맞으면 0건과 같게 처리)
+                const verified = await verifyBoardPassword(boardData.writerPw, existingBoard.boardPW);
+                const { count: affectedCount } = !verified ? { count: 0 } : await tx.churchBoard.updateMany({
                     where: {
                         boardIdx: Number(boardData.boardIdx),
-                        boardPW: hashedPassword, // SHA256 암호화 적용
                     },
                     data: {
                         boardContent: boardData.boardContent,
@@ -164,12 +164,11 @@ export class ChurchBoardService {
                 const boardResult = await tx.churchBoard.findFirst({
                     where: {
                         boardIdx: Number(boardData.boardIdx),
-                        boardPW: hashPassword(boardData.writerPw), // SHA256 암호화 적용
                     }
                 });
 
-                // 대상이 없으면 롤백
-                if (!boardResult) {
+                // 대상이 없거나 비밀번호가 다르면 롤백
+                if (!boardResult || !(await verifyBoardPassword(boardData.writerPw, boardResult.boardPW))) {
                     logger.warn('[deleteChurchBoard] No matching record found for boardIdx and writerPw. Rolling back.');
                     throw new Error('No matching record found for boardIdx and writerPw');
                 }
@@ -178,7 +177,6 @@ export class ChurchBoardService {
                 await tx.churchBoard.deleteMany({
                     where: {
                         boardIdx: Number(boardData.boardIdx),
-                        boardPW: hashPassword(boardData.writerPw), // SHA256 암호화 적용
                     }
                 });
                 logger.debug(`[deleteChurchBoard] ChurchBoard deleted. BoardIdx: ${boardData.boardIdx}`);

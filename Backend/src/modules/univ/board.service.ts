@@ -8,7 +8,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BoardLikeHelperService } from '../../common/services/board-like-helper.service';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashBoardPassword, verifyBoardPassword } from '../../common/utils/hash-password.util';
 import { buildBoardSearchConditions } from '../../common/utils/search-helper.util';
 import { serializeRows } from '../../common/utils/serialize-row.util';
 import { logger } from '../../logger/winston.logger';
@@ -108,7 +108,7 @@ export class BoardService {
                     boardLike: boardData.boardLike != null ? Number(boardData.boardLike) : 0,
                     boardHits: boardData.boardHits != null ? Number(boardData.boardHits) : 0,
                     boardID: boardData.boardId,
-                    boardPW: hashPassword(boardData.boardPw), // SHA256 암호화 적용
+                    boardPW: await hashBoardPassword(boardData.boardPw), // bcrypt(sha256) 로 저장
                 }
             });
             logger.info(`[insertBoard] Board inserted successfully. BoardIdx: ${board.boardIdx}`);
@@ -134,10 +134,11 @@ export class BoardService {
                     throw new Error('Board not found');
                 }
 
-                const result = await tx.univBoard.updateMany({
+                // 비밀번호는 bcrypt 라 조건 대신 먼저 확인한다 (안 맞으면 0건과 같게 처리)
+                const verified = await verifyBoardPassword(boardData.writerPw, existingBoard.boardPW);
+                const result = !verified ? { count: 0 } : await tx.univBoard.updateMany({
                     where: {
                         boardIdx: Number(boardData.boardIdx),
-                        boardPW: hashPassword(boardData.writerPw), // SHA256 암호화 적용
                     },
                     data: {
                         boardContent: boardData.boardContent,
@@ -165,12 +166,13 @@ export class BoardService {
     async deleteBoard(boardData: any) {
         try {
             return await this.prisma.$transaction(async (tx) => {
-                const boardResult = await tx.univBoard.findFirst({
+                const found = await tx.univBoard.findFirst({
                     where: {
                         boardIdx: Number(boardData.boardIdx),
-                        boardPW: hashPassword(boardData.writerPw), // SHA256 암호화 적용
                     }
                 });
+                // 비밀번호는 bcrypt 라 조건으로 걸 수 없다 — 찾은 뒤 확인한다
+                const boardResult = found && (await verifyBoardPassword(boardData.writerPw, found.boardPW)) ? found : null;
 
                 if (!boardResult) {
                     logger.warn('[deleteBoard] No matching record found for boardIdx and writerPw. Rolling back.');
@@ -180,7 +182,6 @@ export class BoardService {
                 await tx.univBoard.deleteMany({
                     where: {
                         boardIdx: Number(boardData.boardIdx),
-                        boardPW: hashPassword(boardData.writerPw),
                     }
                 });
 

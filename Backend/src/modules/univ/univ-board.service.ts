@@ -3,7 +3,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BoardLikeHelperService } from '../../common/services/board-like-helper.service';
-import { hashPassword } from '../../common/utils/hash-password.util';
+import { hashBoardPassword, verifyBoardPassword } from '../../common/utils/hash-password.util';
 import { buildBoardSearchConditions } from '../../common/utils/search-helper.util';
 import { logger } from '../../logger/winston.logger';
 
@@ -86,7 +86,7 @@ export class UnivBoardService {
                     boardTitle: boardData.boardTitle,
                     boardContent: boardData.boardContent,
                     boardID: boardData.boardID,
-                    boardPW: hashPassword(boardData.boardPw), // SHA256 암호화 적용
+                    boardPW: await hashBoardPassword(boardData.boardPw), // bcrypt(sha256) 로 저장
                     boardLike: 0, // 초기 좋아요는 0
                     boardHits: 0, // 초기 조회수는 0
                     boardRegDate: now.toISOString(),
@@ -113,8 +113,7 @@ export class UnivBoardService {
                     throw new Error('Board not found');
                 }
 
-                const hashedInputPassword = hashPassword(boardData.boardPw);
-                if (board.boardPW !== hashedInputPassword) {
+                if (!(await verifyBoardPassword(boardData.boardPw, board.boardPW))) {
                     throw new Error('Incorrect password');
                 }
 
@@ -148,8 +147,7 @@ export class UnivBoardService {
                     throw new Error('Board not found');
                 }
 
-                const hashedInputPassword = hashPassword(boardData.boardPw);
-                if (board.boardPW !== hashedInputPassword) {
+                if (!(await verifyBoardPassword(boardData.boardPw, board.boardPW))) {
                     throw new Error('Incorrect password');
                 }
 
