@@ -16,6 +16,7 @@ import { logger } from '../../../logger/winston.logger';
 import { RestaurantCrawlerSchedulerService } from '../restaurant/restaurant-crawler-scheduler.service';
 import { CompanyCrawlerSchedulerService } from '../company/company-crawler-scheduler.service';
 import { CompanyDataSchedulerService } from '../company/company-data-scheduler.service';
+import { AdminPageViewService, PAGE_VIEW_RETENTION_DAYS } from '../../admin/pageview/admin-pageview.service';
 
 export type Trigger = 'manual' | 'cron';
 
@@ -64,6 +65,7 @@ export class SchedulerRunService {
         private readonly restaurantCrawl: RestaurantCrawlerSchedulerService,
         private readonly companyCrawl: CompanyCrawlerSchedulerService,
         private readonly companyData: CompanyDataSchedulerService,
+        private readonly pageView: AdminPageViewService,
     ) {
         this.jobs = [
             {
@@ -106,6 +108,18 @@ export class SchedulerRunService {
                     return s ? `성공 ${s.successCount ?? 0}건 · 실패 ${s.failedCount ?? 0}건 · 건너뜀 ${s.skippedCount ?? 0}건` : '완료';
                 },
             },
+            {
+                key: 'pageview-purge',
+                label: '방문 기록 정리',
+                description: `접속 IP 가 담긴 방문 기록 중 ${PAGE_VIEW_RETENTION_DAYS}일이 지난 것을 지웁니다.`,
+                group: '접속 분석',
+                cron: '30 4 * * *',
+                supportsPeriod: false,
+                run: async () => {
+                    const n = await this.pageView.purgeOlderThan(PAGE_VIEW_RETENTION_DAYS);
+                    return `${PAGE_VIEW_RETENTION_DAYS}일 지난 기록 ${n.toLocaleString('ko-KR')}건 삭제`;
+                },
+            },
         ];
     }
 
@@ -123,6 +137,12 @@ export class SchedulerRunService {
     @Cron('0 0 * * *')
     cronCompanyData(): void {
         this.enqueue(['company-data'], {}, 'cron');
+    }
+
+    // 매일 04:30 — 회사 주간 수집(월 04:00)과 겹쳐도 큐에서 차례로 돈다
+    @Cron('30 4 * * *')
+    cronPageViewPurge(): void {
+        this.enqueue(['pageview-purge'], {}, 'cron');
     }
 
     // ─── 큐 ────────────────────────────────────────────────────

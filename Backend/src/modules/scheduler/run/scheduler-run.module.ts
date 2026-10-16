@@ -4,11 +4,12 @@
 import { Module } from '@nestjs/common';
 import { CompanySchedulerModule } from '../company/company-scheduler.module';
 import { RestaurantCrawlerModule } from '../restaurant/restaurant-crawler.module';
+import { AdminPageViewModule } from '../../admin/pageview/admin-pageview.module';
 import { SchedulerRunService } from './scheduler-run.service';
 import { SchedulerRunController } from './scheduler-run.controller';
 
 @Module({
-    imports: [CompanySchedulerModule, RestaurantCrawlerModule],
+    imports: [CompanySchedulerModule, RestaurantCrawlerModule, AdminPageViewModule],
     controllers: [SchedulerRunController],
     providers: [SchedulerRunService],
 })

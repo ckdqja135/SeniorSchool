@@ -8,6 +8,11 @@ import { serializeRows } from '../../../common/utils/serialize-row.util';
 
 const EXCLUDE_IPS = ['::1', '127.0.0.1'];
 
+/** 방문 기록 보관 기간(일). 접속 IP 가 담긴 개인정보라 이 기간이 지나면 지운다 (개인정보보호법 제21조 파기) */
+export const PAGE_VIEW_RETENTION_DAYS = 90;
+/** 한 번에 지우는 행 수 — 큰 DELETE 한 방으로 테이블을 오래 잠그지 않게 나눠 지운다 */
+const PURGE_CHUNK = 5000;
+
 @Injectable()
 export class AdminPageViewService {
     constructor(private readonly prisma: PrismaService) {}
@@ -67,6 +72,26 @@ export class AdminPageViewService {
         // only_full_group_by: SELECT 와 같은 식으로 묶어야 한다 (DATE() 와 DATE_FORMAT() 은 다른 식으로 취급)
         sql += " GROUP BY DATE_FORMAT(createdAt, '%Y-%m-%d') ORDER BY DATE_FORMAT(createdAt, '%Y-%m-%d') ASC";
         return serializeRows(await this.prisma.$queryRawUnsafe<any[]>(sql, ...params));
+    }
+
+    /**
+     * 보관 기간이 지난 방문 기록 삭제. 지운 행 수를 돌려준다.
+     * createdAt 인덱스가 없어도 빠르게 돌도록 기본키 순서로 지운다 — 오래된 행은 pvIdx 앞쪽에 몰려 있어
+     * 각 묶음이 테이블 앞부분만 훑고 끝난다.
+     */
+    async purgeOlderThan(days = PAGE_VIEW_RETENTION_DAYS): Promise<number> {
+        const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        let total = 0;
+        for (;;) {
+            const n = await this.prisma.$executeRawUnsafe(
+                'DELETE FROM page_views WHERE createdAt < ? ORDER BY pvIdx LIMIT ?',
+                cutoff,
+                PURGE_CHUNK,
+            );
+            total += n;
+            if (n < PURGE_CHUNK) break;
+        }
+        return total;
     }
 
     // 최근 방문 로그 (페이지네이션)
